@@ -1,0 +1,394 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>For You ♡</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="stylesheet" href="styles.css" />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&family=Dancing+Script:wght@500;700&display=swap"
+    rel="stylesheet"
+  />
+</head>
+<body>
+  <!-- 🌻 Sunflower intro overlay -->
+  <div class="sunflower-intro" id="sunflowerIntro">
+    <div class="sunflower-inner">
+      <div class="sunflower-wrapper">
+        <div class="sunflower-scene">
+          <!-- distant little sunflowers / field -->
+          <div class="sunflower-field"></div>
+
+          <!-- main stem + leaves -->
+          <div class="sunflower-stem"></div>
+          <div class="sunflower-leaf sunflower-leaf--left"></div>
+          <div class="sunflower-leaf sunflower-leaf--right"></div>
+
+          <!-- little bud before the bloom -->
+          <div class="sunflower-bud"></div>
+
+          <!-- main sunflower head -->
+          <div class="sunflower sunflower-main">
+            <div class="sunflower-center"></div>
+
+            <!-- Petals -->
+            <div class="sunflower-petal" style="--r: 0deg; --delay: 0.08s;"></div>
+            <div class="sunflower-petal" style="--r: 30deg; --delay: 0.14s;"></div>
+            <div class="sunflower-petal" style="--r: 60deg; --delay: 0.2s;"></div>
+            <div class="sunflower-petal" style="--r: 90deg; --delay: 0.26s;"></div>
+            <div class="sunflower-petal" style="--r: 120deg; --delay: 0.32s;"></div>
+            <div class="sunflower-petal" style="--r: 150deg; --delay: 0.38s;"></div>
+            <div class="sunflower-petal" style="--r: 180deg; --delay: 0.44s;"></div>
+            <div class="sunflower-petal" style="--r: 210deg; --delay: 0.5s;"></div>
+            <div class="sunflower-petal" style="--r: 240deg; --delay: 0.56s;"></div>
+            <div class="sunflower-petal" style="--r: 270deg; --delay: 0.62s;"></div>
+            <div class="sunflower-petal" style="--r: 300deg; --delay: 0.68s;"></div>
+            <div class="sunflower-petal" style="--r: 330deg; --delay: 0.74s;"></div>
+          </div>
+
+          <!-- two blurry mini sunflowers in the background -->
+          <div class="sunflower-mini sunflower-mini--left"></div>
+          <div class="sunflower-mini sunflower-mini--right"></div>
+        </div>
+      </div>
+      <p class="sunflower-message">buat matahari aku ☼</p>
+      <p class="sunflower-note">scroll atau tap buat lanjut</p>
+    </div>
+  </div>
+
+  <!-- 💗 Floating header -->
+  <header class="site-header">
+    <div class="site-header-inner">
+      <a href="index.html" class="brand">
+        for you<span>♡</span>
+      </a>
+
+      <nav class="main-nav">
+        <a href="#story">cerita</a>
+        <a href="#reasons">alasan</a>
+        <a href="#gallery">foto</a>
+        <a href="#letter">surat</a>
+        <a href="#days">hari</a>
+        <a href="gallery.html" class="nav-pill">foto lengkap</a>
+      </nav>
+
+      <button class="music-toggle" id="musicToggle" aria-label="Toggle music">
+        ▷ music
+      </button>
+    </div>
+  </header>
+
+  <main>
+    <!-- Hero -->
+    <section class="hero" id="top">
+      <div class="hero-inner">
+        <p class="hero-eyebrow">
+          buat:
+          <span class="hero-recipient" contenteditable="true">
+            princess kesayangan akuuu
+          </span>
+        </p>
+        <h1 class="hero-title">
+          selamat datang cintakuuuu, ini website buat kamuuu, semoga kamu suka yaaaa ♡
+        </h1>
+        <p class="hero-subtitle">
+          Aku bikin ini sebagai tanda terima kasih aku kepada kamuu karna masih bertahan sama aku selama inii. Scroll sampe abis yaaa sayanggg ♡
+        </p>
+        <div class="hero-actions">
+          <button class="primary-btn" id="scrollStory">
+            mulai cerita kita
+          </button>
+          <button class="ghost-btn" id="scrollGallery">
+            lihat foto-foto
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <section class="section story" id="story">
+      <div class="section-inner">
+        <header class="section-header reveal-on-scroll">
+          <h2 class="section-title">cerita kita</h2>
+          <p class="section-subtitle">
+            cuplikan kecil tentang bagaimana kamu berubah dari “seseorang yang aku temui” jadi “orang favoritku”. usetttt boleh banget yak :v
+          </p>
+        </header>
+
+        <div class="story-grid">
+          <div class="story-intro-card reveal-on-scroll">
+            <p>
+              Ini bukan semua detailnya, soalnya terlalu banyak. Tapi ini beberapa momen yang selalu muter di kepalaku.
+            </p>
+            <p>
+              Semua ini bisa kita ubah dan jadikan benar-benar milik kita berdua, aku cuma mau kamu tahu kalau setiap bab bersamamu berarti banyak banget buat aku.
+            </p>
+          </div>
+
+          <ol class="timeline">
+            <li class="timeline-item reveal-on-scroll">
+              <div class="timeline-bullet"></div>
+              <div class="timeline-card">
+                <p class="timeline-date">chapter one</p>
+                <h3 class="timeline-title">the first hello</h3>
+                <p class="timeline-text">
+                  Pertama kali aku ketemu kamu itu 13 tahun yang lalu. Aku cuma ngeliat kamu sebentar tapi langsung suka gitu loh, langsung mikir "kok dia beda dari yang lain yak, mana cantik banget lagi jir", ampe nekat nyampering kamu cuma buat nanya nama walaupun aku udaa tau nama kamu :v pengen basa basi aja ngobrol dikit HAHAHAHAHA tapi malah ngumpet belakang kaka, dan ujungnya aku masuk kamar dan kitanya ga ketemu lagi selama bertahun-tahun. Tapi meskipun ga ketemu sama sekali tapi perasaan aku terhadap kamu gapernah pudar, gapernah ilang, tetep aja masii suka sampai bertahun2.
+                </p>
+              </div>
+            </li>
+
+            <li class="timeline-item reveal-on-scroll">
+              <div class="timeline-bullet"></div>
+              <div class="timeline-card">
+                <p class="timeline-date">chapter two</p>
+                <h3 class="timeline-title">our first date</h3>
+                <p class="timeline-text">
+                  Kencan pertama kita (kalo bisa dibilang kencan sii) terjadi di hari terakhir aku di Indonesia cuman beberapa jam sebelum aku pulang ke Brunei. Kita lari pagi bareng, aku jemputin kamu, nungguin kamu selesai terus langsung ke Jatiragas, beli eskrim, beli dimsum, minuman terus langsung cari tempat duduk. Kita foto-foto bareng, ngobrol, terus itu kamu nyuapin aku (PAKE SUMPITAN AMA SENDOK YANG SAMA YAK UHUKKK), berbagi itu indah banget yak sayang :p makasiiii buangett mau luangin masa sama aku yaaaa sayangg meskipun diposisi itu kamu lagi day 1 HAHAHAHAHA
+                </p>
+              </div>
+            </li>
+
+            <li class="timeline-item reveal-on-scroll">
+              <div class="timeline-bullet"></div>
+              <div class="timeline-card">
+                <p class="timeline-date">chapter three</p>
+                <h3 class="timeline-title">my safe place</h3>
+                <p class="timeline-text">
+                  Gatau dari kapan, kamu pelan-pelan jadi tempat paling aman buat aku. Meskipun kamu capek, sibuk, penuh jadwal, kamu tetep nyampetin, nyariin waktu buat aku, mau itu video call ampe larut malem meskipun besoknya kamu kerja/sekola, tlpnn biasa ngobrol ampe larut malem juga sampe ketiduran, chattingan, buat dengerin cerita aku yang biasanya gajelas ama ga penting :v kamu jadi orang pertama yang ingin aku kabari tentang apapun, yang aku percaya tanpa mikir dua kali meskipun (walaupun aku sering gapercaya sama kamu tapi kepercayaan aku tetep 100% yaa ke hadap kamu), sama kamu tu rasanya kek gimana yak, lebii ringan, lebih tenang, kek rumah ke dua gitu loh anjayyyy
+                </p>
+              </div>
+            </li>
+
+            <li class="timeline-item reveal-on-scroll">
+              <div class="timeline-bullet"></div>
+              <div class="timeline-card">
+                <p class="timeline-date">chapter now</p>
+                <h3 class="timeline-title">this moment</h3>
+                <p class="timeline-text">
+                  Setelah 13 tahun ga ketemu, akhirnya kita ketemu lagi pada 26/02/2025. Babah manggil aku keluar kamar buat foto bareng kamu, dan tanpa mikir dua kali aku langsung gas aja, lumayan foto ama cewe ditaksirin :v sejak hari itu kita mulai chattingan walaupun aku agak ragu sii, karna diposisi itu aku mikirnya kamu punya pacar, jadi aku nahan diri buat ga terlalu banyak ngechat baperan. Terus semenjak itu chattingan mulu ampe 26/07/2025 kita ketemu lagi, tapi kali ini kita ga asing banget, kita langsung deket ampe kamu ngajak aku jajan tiap malem, dan hampir setiap hari kita bareng, tapi beneran sii itu minggu paling bahagia banget akunya sepanjang idup aku, cius, padahal waktu itu kita belom jadian jir, tapi yah mau gimana lagi, namanya juga emang udaa suka dari lama HAHAHAHAHA, terus mulai lah kita bercanda dan saling godain, sampai tiba2 semuanya jadi nyata jir, ga ada nembak, ga ada momen dramas gitu langsung aja kita sayang2an dan semuanya mengalir aja. Kita jadikan tanggal 2 Agustus sebagai hari pertama kita karna hari itu kita tahu perasaan kita saling. SETTTTT SAMPE LAH SEKARANG, udaa hampir 5 bulan berlalu, dan kita masii disini bersatu, bahagia, dapet hubugan sehat tanpa drama, dan tanpa pernah lelah mencintai satu sama lain, asekkkkk :p
+                </p>
+              </div>
+            </li>
+          </ol>
+        </div>
+      </div>
+    </section>
+
+    <!-- Reasons I love you -->
+    <section class="section reasons" id="reasons">
+      <div class="section-inner">
+        <header class="section-header reveal-on-scroll">
+          <h2 class="section-title">alasan2 kecanduan ama kamu :v</h2>
+          <p class="section-subtitle">
+            ga semua sii karna kebanyakan itu kalo diomongin satu2, cuman beberapa aja yang aku kepikiran sekarang.
+          </p>
+        </header>
+
+        <div class="reasons-grid">
+          <article class="reason-card reveal-on-scroll">
+            <h3 class="reason-title">cara kamu nyempetin waktu</h3>
+            <p class="reason-text">
+              Kamu capek, sibuk, penuh kegiatan tapi tetap ada buat aku. Kamu bergadang ampe larut malen, video call, chattingan ampe ketiduran dan aku selalu ngerasa beruntung banget.
+            </p>
+          </article>
+
+          <article class="reason-card reveal-on-scroll">
+            <h3 class="reason-title">nyaman yang cuma ada di kamu</h3>
+            <p class="reason-text">
+                Aku bisa cerita semuanya ke kamu, hal penting, hal random, hal bodoh. Kamu selalu jadi tempat paling aman buat aku pulang.
+            </p>
+          </article>
+
+          <article class="reason-card reveal-on-scroll">
+            <h3 class="reason-title">naturalnya hubungan kita</h3>
+            <p class="reason-text">
+              Kita ga butuh nembak, nggak butuh momen dramatis, kita mengalir aja. Tiba-tiba kamu jadi sayangnya aku :v berati emang jodoh gasehh iniii langsung sayang2an bareng HAHAHAHAHA
+            </p>
+          </article>
+
+          <article class="reason-card reveal-on-scroll">
+            <h3 class="reason-title">dukunganmu</h3>
+            <p class="reason-text">
+              Kamu selalu percaya sama aku bahkan di saat aku ragu sama diri sendiri. Itu rasanya dihargai banget.
+            </p>
+          </article>
+
+          <article class="reason-card reveal-on-scroll">
+            <h3 class="reason-title">hadirmu</h3>
+            <p class="reason-text">
+            Walaupun kita jauh, cuma tau kamu ada aja udah bikin semuanya terasa lebih ringan.
+            </p>
+          </article>
+
+          <article class="reason-card reveal-on-scroll">
+            <h3 class="reason-title">kamu</h3>
+            <p class="reason-text">
+              Gaperlu jadi sempurna, gaperlu ngikutin orang lain, gaperlu jadi orang lain, cukup kamu yang sekarang aja sudah lebih dari cukup buat aku. Lebih dari sempurna sii kata gw mah.
+            </p>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <!-- Gallery preview -->
+    <section class="section gallery" id="gallery">
+      <div class="section-inner">
+        <header class="section-header reveal-on-scroll">
+          <h2 class="section-title">beberapa memory kita</h2>
+          <p class="section-subtitle">
+            sekilas lihat beberapa versi favoritku tentang kita.
+          </p>
+        </header>
+
+        <div class="gallery-grid">
+          <button
+            class="gallery-item js-lightbox-trigger reveal-on-scroll"
+            data-full="images/6.jpg"
+            data-caption="makasii babah buat foto pertama kita"
+          >
+            <img src="images/6.jpg" alt="Foto pertama kita" />
+          </button>
+
+          <button
+            class="gallery-item js-lightbox-trigger reveal-on-scroll"
+            data-full="images/7.jpg"
+            data-caption="Ice cream peletan"
+          >
+            <img src="images/7.jpg" alt="Dimana semuanya terjadi" />
+          </button>
+
+          <button
+            class="gallery-item js-lightbox-trigger reveal-on-scroll"
+            data-full="images/5.jpg"
+            data-caption="BLUEEEEEE"
+          >
+            <img src="images/5.jpg" alt="Couple-an" />
+          </button>
+
+          <button
+            class="gallery-item js-lightbox-trigger reveal-on-scroll"
+            data-full="images/8.jpg"
+            data-caption="INI LUCU BANGET JIR"
+          >
+            <img src="images/8.jpg" alt="Foto favorit aku (ada sii lagi, ytta :v)" />
+          </button>
+        </div>
+
+        <div class="gallery-cta reveal-on-scroll">
+          <a href="gallery.html" class="primary-link">
+            buka gallery lengkap →
+          </a>
+        </div>
+      </div>
+    </section>
+
+    <!-- Love letter -->
+    <section class="section letter" id="letter">
+      <div class="section-inner">
+        <header class="section-header reveal-on-scroll">
+          <h2 class="section-title">surat buat kamu</h2>
+          <p class="section-subtitle">
+            kamu bisa baca ini kalo lagi kangen, ataupun kamu lupa betapa disayangnya kamu ama aku.
+          </p>
+        </header>
+
+        <div class="letter-card reveal-on-scroll">
+          <p class="letter-greeting">dear zaujatikuuu,</p>
+          <p
+            class="letter-body"
+            id="letterText"
+            data-text="Ini terpulang kamu sii mau percaya apa kaga, aku cuman mau ungkapin aja apa yang aku ngerasain selama sama kamu.
+            
+Sejak aku ketemu kamu selepas 13 tahun, rasanya kek takdir gasii, kek alam semesta lagi becanda loh sama kita :v siapa sangka coba orang yang dulu aku ketemu ama liat cuman sebentar aja, yang cuekin aku ampe bertahun2 ga ketemu, berujung jadi orang yang paling berati dalam hidupku sekarang.
+            
+Mau ngomong gimana ya, tapi pokonya kyk, aku bersyukur banget jir dapetin kamu, kamu sendiri tau betapa kecilnya dunia aku jadi kek keberadaan kamu disini sama aku sangat berharga banget jir, kamu sentiasa nyamperin dengan cara lembut kamu itu, keperhatian kamu, dan berujungnya kamu bisa bikin aku yakin sama kamu, merasa nyaman banget sama kamu, aku juga kaget si sejujurly :v
+            
+Makasii yaa sayangkuuuu segala effort kamu terhadap akuu, meskipun kamu capek, sibuk, kamu tetep prioritasin aku, kamu selalu nyampetin waktu buat luangin sama aku, pokonya terima kasii karena keberadaan kamu sekarang sama aku, makasii semua effort kamu yang kamu bikin dengan inisiatif kamu sendiri tanpa aku minta.
+            
+Setiap momen sama kamu itu walaupun kita cuman sebentar doang ya, seminggu doang, duduk ngobrol apa aja, selalu punya cara sendiri buat bikin aku bahagia gitu loh, 1 minggu itu, sampai hari ini semuanya masih terasa hangat kalau aku inget. 
+            
+Aku sayang kamu bukan karena kamu baik atau lucu atau cantik doang (ngokk boong sii, emang karna itu :v) tapi kek, kamu udaa jadi rumah buat aku. Tempat aku bisa dirasa didengar, dihargai, diperhatiin, dan diterima apa adanya.
+            
+Aku sumpah bersyukur banget sayang dapet kamu, aku bener2 berharap kamu yang dicatet dalam lauhul mahfuz aku, makasii banyakkkk sudah mau menerima akuu, menemanin aku, dan masuk kedalam hidup aku, aku sayang bangettt sama kamuu, semoga hubungan kita berjalan dengan lancar ampe dunia akhirat yaa sayanggg, tolong jangan berubah setitik pun, tolong tungguin aku, aku bener2 serius sama kamu, meskipun kalo sama aku bakalan lama halalinnya, tapi doain aja yaaa sayangg, aku mohon ke kamu untuk sabar aja yaaa sayangg, tungguin ajaa akuuuu, tapi kalo bener2 udaa ilfeel kamu tinggal bilang aja yaaaa sayangg ke aku, dan aku minta maaf keatas semua kesalahan yang aku buat ke kamu, kalo ada aku bikin kamu sakit hati, kasar, semuanya deh pokonya aku minta maaf banget sayang, pokonyaaa wuvv youuuuu so muchhhh babyyy, aku harap kamu selalu tau ituu. ♡"
+          >
+            Ini terpulang kamu sii mau percaya apa kaga, aku cuman mau ungkapin aja apa yang aku ngerasain selama sama kamu.
+            
+            Sejak aku ketemu kamu selepas 13 tahun, rasanya kek takdir gasii, kek alam semesta lagi becanda loh sama kita :v siapa sangka coba orang yang dulu aku ketemu ama liat cuman sebentar aja, yang cuekin aku ampe bertahun2 ga ketemu, berujung jadi orang yang paling berati dalam hidupku sekarang.
+            
+            Mau ngomong gimana ya, tapi pokonya kyk, aku bersyukur banget jir dapetin kamu, kamu sendiri tau betapa kecilnya dunia aku jadi kek keberadaan kamu disini sama aku sangat berharga banget jir, kamu sentiasa nyamperin dengan cara lembut kamu itu, keperhatian kamu, dan berujungnya kamu bisa bikin aku yakin sama kamu, merasa nyaman banget sama kamu, aku juga kaget si sejujurly :v
+            
+            Makasii yaa sayangkuuuu segala effort kamu terhadap akuu, meskipun kamu capek, sibuk, kamu tetep prioritasin aku, kamu selalu nyampetin waktu buat luangin sama aku, pokonya terima kasii karena keberadaan kamu sekarang sama aku, makasii semua effort kamu yang kamu bikin dengan inisiatif kamu sendiri tanpa aku minta.
+            
+            Setiap momen sama kamu itu walaupun kita cuman sebentar doang ya, seminggu doang, duduk ngobrol apa aja, selalu punya cara sendiri buat bikin aku bahagia gitu loh, 1 minggu itu, sampai hari ini semuanya masih terasa hangat kalau aku inget. 
+            
+            Aku sayang kamu bukan karena kamu baik atau lucu atau cantik doang (ngokk boong sii, emang karna itu :v) tapi kek, kamu udaa jadi rumah buat aku. Tempat aku bisa dirasa didengar, dihargai, diperhatiin, dan diterima apa adanya.
+            
+            Aku sumpah bersyukur banget sayang dapet kamu, aku bener2 berharap kamu yang dicatet dalam lauhul mahfuz aku, makasii banyakkkk sudah mau menerima akuu, menemanin aku, dan masuk kedalam hidup aku, aku sayang bangettt sama kamuu, semoga hubungan kita berjalan dengan lancar ampe dunia akhirat yaa sayanggg, tolong jangan berubah setitik pun, tolong tungguin aku, aku bener2 serius sama kamu, meskipun kalo sama aku bakalan lama halalinnya, tapi doain aja yaaa sayangg, aku mohon ke kamu untuk sabar aja yaaa sayangg, tungguin ajaa akuuuu, tapi kalo bener2 udaa ilfeel kamu tinggal bilang aja yaaaa sayangg ke aku, dan aku minta maaf keatas semua kesalahan yang aku buat ke kamu, kalo ada aku bikin kamu sakit hati, kasar, semuanya deh pokonya aku minta maaf banget sayang, pokonyaaa wuvv youuuuu so muchhhh babyyy, aku harap kamu selalu tau ituu. ♡
+          </p>
+          <p class="letter-signoff">
+            love,<br />
+            <span contenteditable="true">cowo nakal kamu</span>
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Days counter -->
+    <section class="section counter" id="days">
+      <div class="section-inner">
+        <header class="section-header reveal-on-scroll">
+          <h2 class="section-title">hari kita</h2>
+          <p class="section-subtitle">
+            Tanggal dimana semuanya bermula.
+          </p>
+        </header>
+
+        <div class="counter-card reveal-on-scroll">
+          <div class="counter-main">
+            <p class="counter-label">sudah</p>
+            <p class="counter-number" id="daysNumber">000</p>
+            <p class="counter-label">hari (dan terus bertambah)</p>
+          </div>
+          <div class="counter-meta">
+            <p>
+              dimulai dari:
+              <span class="counter-date" id="startDateLabel">02/08/2025</span>
+            </p>
+            <p class="counter-note">
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <p>
+      dibuat dengan <span class="footer-heart">♡</span> khusus buat kamu.
+    </p>
+    <a href="#top" class="back-to-top">kembali ke atas</a>
+  </footer>
+
+  <!-- Optional background music -->
+  <audio id="bgMusic" loop>
+    <source src="audio/audio.mp3" type="audio/mpeg" />
+  </audio>
+
+  <!-- Lightbox for images -->
+  <div class="lightbox" id="lightbox" aria-hidden="true">
+    <div class="lightbox-backdrop"></div>
+    <div class="lightbox-content">
+      <button
+        class="lightbox-close"
+        type="button"
+        aria-label="Close image"
+      >
+        ×
+      </button>
+      <img src="" alt="" class="lightbox-image" id="lightboxImage" />
+      <p class="lightbox-caption" id="lightboxCaption"></p>
+    </div>
+  </div>
+
+  <script src="script.js" defer></script>
+</body>
+</html>
