@@ -1,0 +1,1044 @@
+:root {
+  --bg-deep: #050216;
+  --bg-soft: #201134;
+  --bg-gradient: radial-gradient(circle at top, #3d1d64 0, #0a0413 55%, #03010a 100%);
+  --card-bg: rgba(255, 255, 255, 0.08);
+  --card-border: rgba(255, 255, 255, 0.24);
+  --accent-pink: #ffbddc;
+  --accent-pink-soft: #f9cbe7;
+  --accent-gold: #ffc96b;
+  --accent-purple: #b7a7ff;
+  --accent-mint: #9bf3d1;
+
+  --stem-green: #4dbf8a;
+  --seed-brown: #7a4a22;
+  --sunflower-yellow: #ffd86a;
+  --sunflower-orange: #f3a427;
+  --sunflower-brown: #6c3c16;
+  --lily-petal: #fff7ff;
+  --lily-pink: #f4b5ff;
+
+  --transition-duration: 0.9s;
+}
+
+/* Reset-ish */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  min-height: 100vh;
+  background: var(--bg-gradient);
+  color: #fdf7ff;
+  font-family: "Poppins", system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+  display: flex;
+  justify-content: center;
+  align-items: stretch;
+}
+
+/* Screen-reader only text */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* Layout */
+.memory-garden {
+  width: 100%;
+  max-width: 1120px;
+  padding: 2.5rem 1.6rem 4.5rem;
+  margin: 0 auto;
+}
+
+.mg-header {
+  text-align: center;
+  margin-bottom: 2.4rem;
+}
+
+.mg-tagline {
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  font-size: 0.75rem;
+  color: rgba(255, 220, 247, 0.8);
+  margin-bottom: 0.4rem;
+}
+
+.mg-header h1 {
+  font-family: "Playfair Display", "Times New Roman", serif;
+  font-size: clamp(2.1rem, 4vw, 2.7rem);
+  margin: 0.3rem 0 0.6rem;
+  background: linear-gradient(120deg, #ffe4ff, #ffeaa0, #c4b5ff);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.mg-intro {
+  max-width: 560px;
+  margin: 0 auto;
+  font-size: 0.9rem;
+  line-height: 1.6;
+  color: rgba(255, 237, 255, 0.86);
+}
+
+/* Garden section */
+.garden-section {
+  margin-top: 2.4rem;
+}
+
+.card-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 1.4rem;
+}
+
+/* Card base */
+.garden-card {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 3 / 4;
+  perspective: 1100px;
+  cursor: pointer;
+}
+
+.card-inner {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  transform-style: preserve-3d;
+  transition: transform var(--transition-duration) cubic-bezier(0.16, 0.72, 0.23, 1.01);
+}
+
+.card-inner.flipped {
+  transform: rotateY(180deg);
+}
+
+.card-face {
+  position: absolute;
+  inset: 0;
+  border-radius: 18px;
+  overflow: hidden;
+  backface-visibility: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  box-shadow:
+    0 18px 40px rgba(0, 0, 0, 0.6),
+    0 0 0 1px rgba(255, 255, 255, 0.05);
+}
+
+/* Card front */
+.card-front {
+  background: radial-gradient(circle at 10% 0, #ffd4f7 0, #312053 37%, #13061f 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+}
+
+.heart-icon {
+  font-size: 2.5rem;
+  z-index: 2;
+  text-shadow: 0 0 14px rgba(255, 200, 249, 0.9);
+}
+
+/* Fog veil */
+.fog-veil {
+  position: absolute;
+  inset: -14%;
+  background:
+    radial-gradient(circle at 20% 0, rgba(255, 255, 255, 0.45), transparent 55%),
+    radial-gradient(circle at 80% 30%, rgba(255, 225, 255, 0.5), transparent 60%),
+    radial-gradient(circle at 30% 90%, rgba(255, 240, 255, 0.45), transparent 65%);
+  mix-blend-mode: screen;
+  filter: blur(3px);
+  opacity: 0.85;
+  pointer-events: none;
+  animation: fogDrift 10s ease-in-out infinite alternate;
+}
+
+@keyframes fogDrift {
+  0% {
+    transform: translate3d(-10px, 8px, 0) scale(1.02);
+  }
+  50% {
+    transform: translate3d(8px, -8px, 0) scale(1.06);
+  }
+  100% {
+    transform: translate3d(-12px, -4px, 0) scale(1.04);
+  }
+}
+
+.fog-veil.fog-lifting {
+  animation: fogLift 0.9s ease forwards;
+}
+
+@keyframes fogLift {
+  0% {
+    opacity: 0.9;
+    transform: translateY(0) scale(1.02);
+    filter: blur(4px);
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-45%) scale(1.1);
+    filter: blur(10px);
+  }
+}
+
+/* Card back */
+.card-back {
+  transform: rotateY(180deg);
+  background:
+    radial-gradient(circle at 0 0, rgba(255, 221, 255, 0.25) 0, transparent 55%),
+    radial-gradient(circle at 100% 100%, rgba(214, 255, 231, 0.25) 0, transparent 55%),
+    linear-gradient(145deg, rgba(15, 4, 33, 0.96), rgba(11, 5, 27, 0.98));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Flower container */
+.flower {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  padding-bottom: 18px;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+}
+
+/* Stem */
+.flower-stem {
+  position: absolute;
+  bottom: 18px;
+  width: 6px;
+  height: 72px;
+  border-radius: 999px;
+  background: linear-gradient(180deg, #86f0bd, var(--stem-green));
+  box-shadow: 0 0 10px rgba(141, 255, 209, 0.4);
+  transform-origin: bottom center;
+  transform: scaleY(0);
+  opacity: 0;
+}
+
+/* Seed and center */
+.flower-seed {
+  position: absolute;
+  bottom: 80px;
+  width: 14px;
+  height: 16px;
+  border-radius: 50% 50% 40% 40%;
+  background: linear-gradient(145deg, #b97b41, var(--seed-brown));
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.4);
+  transform: translateY(20px) scale(0);
+  opacity: 0;
+}
+
+.flower-center {
+  position: absolute;
+  bottom: 96px;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  transform: scale(0);
+  opacity: 0;
+}
+
+.garden-card[data-flower="sunflower"] .flower-center {
+  background: radial-gradient(circle at 30% 30%, #fff6c8 0, var(--sunflower-yellow) 40%, var(--sunflower-brown) 100%);
+}
+
+.garden-card[data-flower="lily"] .flower-center {
+  background: radial-gradient(circle at 50% 30%, #fff7ff 0, #f4b5ff 45%, #e08cd9 100%);
+  box-shadow: 0 0 12px rgba(248, 181, 255, 0.6);
+}
+
+/* Petals */
+.flower-petals {
+  position: absolute;
+  bottom: 106px;
+  width: 86px;
+  height: 86px;
+  transform-origin: center 58%;
+  transform: scale(0.15) rotate(0deg);
+  opacity: 0;
+}
+
+/* Sunflower petals (rotating outward) */
+.garden-card[data-flower="sunflower"] .flower-petals {
+  border-radius: 50%;
+  background: conic-gradient(
+    from 0deg,
+    #ffd86a,
+    #f3a427,
+    #ffd86a,
+    #f3a427,
+    #ffd86a
+  );
+  filter: drop-shadow(0 0 12px rgba(255, 213, 120, 0.7));
+  clip-path: polygon(
+    50% 0%,
+    61% 35%,
+    98% 35%,
+    68% 57%,
+    79% 91%,
+    50% 70%,
+    21% 91%,
+    32% 57%,
+    2% 35%,
+    39% 35%
+  );
+}
+
+/* Lily petals (sideways opening) */
+.lily-petals {
+  background: none;
+}
+
+.lily-petals::before,
+.lily-petals::after,
+.lily-petals::marker {
+  /* ::marker here is just unused placeholder to avoid older browser warnings */
+}
+
+.garden-card[data-flower="lily"] .lily-petals::before,
+.garden-card[data-flower="lily"] .lily-petals::after {
+  content: "";
+  position: absolute;
+  width: 34px;
+  height: 76px;
+  top: 8px;
+  left: 50%;
+  transform-origin: bottom center;
+  background: radial-gradient(ellipse at 50% 10%, var(--lily-petal) 0, var(--lily-pink) 55%, rgba(255, 255, 255, 0) 100%);
+  border-radius: 50% 50% 40% 40%;
+  opacity: 0;
+  transform: translateX(-50%) scaleY(0);
+}
+
+.garden-card[data-flower="lily"] .lily-petals::before {
+  filter: drop-shadow(-3px 0 8px rgba(244, 181, 255, 0.6));
+}
+
+.garden-card[data-flower="lily"] .lily-petals::after {
+  filter: drop-shadow(3px 0 8px rgba(244, 181, 255, 0.6));
+}
+
+/* Sparkles / falling petals */
+.flower-sparkles {
+  position: absolute;
+  bottom: 104px;
+  width: 90px;
+  height: 90px;
+  pointer-events: none;
+}
+
+.sparkle {
+  position: absolute;
+  width: 7px;
+  height: 7px;
+  border-radius: 999px;
+  background: radial-gradient(circle, #ffffff 0, rgba(255, 255, 255, 0.15) 70%);
+  opacity: 0;
+}
+
+.sparkle.s1 {
+  left: 16%;
+  top: 30%;
+}
+.sparkle.s2 {
+  left: 68%;
+  top: 22%;
+}
+.sparkle.s3 {
+  left: 30%;
+  top: 0%;
+}
+.sparkle.s4 {
+  left: 72%;
+  top: 4%;
+}
+
+/* Bloom animations – triggered by .flower.blooming */
+.flower.blooming .flower-stem {
+  animation: stemGrow 0.6s ease-out forwards;
+}
+
+.flower.blooming .flower-seed {
+  animation: seedRise 0.45s ease-out 0.35s forwards;
+}
+
+.flower.blooming .flower-center {
+  animation: centerPop 0.55s ease-out 0.7s forwards;
+}
+
+/* Sunflower petals bloom */
+.garden-card[data-flower="sunflower"] .flower.blooming .flower-petals {
+  animation: sunflowerPetalsBloom 0.75s ease-out 1s forwards;
+}
+
+/* Lily petals bloom (sideways opening) */
+.garden-card[data-flower="lily"] .flower.blooming .lily-petals::before {
+  animation: lilyPetalLeft 0.8s ease-out 0.95s forwards;
+}
+
+.garden-card[data-flower="lily"] .flower.blooming .lily-petals::after {
+  animation: lilyPetalRight 0.8s ease-out 0.95s forwards;
+}
+
+.flower.blooming .sparkle {
+  animation: sparkleFall 1.5s ease-out 1.05s forwards;
+}
+
+@keyframes stemGrow {
+  0% {
+    opacity: 0;
+    transform: scaleY(0);
+  }
+  100% {
+    opacity: 1;
+    transform: scaleY(1);
+  }
+}
+
+@keyframes seedRise {
+  0% {
+    opacity: 0;
+    transform: translateY(16px) scale(0.2);
+  }
+  60% {
+    opacity: 1;
+    transform: translateY(-3px) scale(1.05);
+  }
+  100% {
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes centerPop {
+  0% {
+    opacity: 0;
+    transform: scale(0.1);
+  }
+  70% {
+    opacity: 1;
+    transform: scale(1.1);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+@keyframes sunflowerPetalsBloom {
+  0% {
+    opacity: 0;
+    transform: scale(0.1) rotate(0deg);
+  }
+  70% {
+    opacity: 1;
+    transform: scale(1.05) rotate(220deg);
+  }
+  100% {
+    transform: scale(1) rotate(360deg);
+  }
+}
+
+@keyframes lilyPetalLeft {
+  0% {
+    opacity: 0;
+    transform: translateX(-50%) rotate(0deg) scaleY(0.1);
+  }
+  60% {
+    opacity: 1;
+    transform: translateX(-55%) rotate(-18deg) scaleY(1.05);
+  }
+  100% {
+    transform: translateX(-55%) rotate(-32deg) scaleY(1);
+  }
+}
+
+@keyframes lilyPetalRight {
+  0% {
+    opacity: 0;
+    transform: translateX(-45%) rotate(0deg) scaleY(0.1);
+  }
+  60% {
+    opacity: 1;
+    transform: translateX(-45%) rotate(18deg) scaleY(1.05);
+  }
+  100% {
+    transform: translateX(-45%) rotate(32deg) scaleY(1);
+  }
+}
+
+@keyframes sparkleFall {
+  0% {
+    opacity: 0;
+    transform: translate3d(0, -6px, 0) scale(0.6);
+  }
+  30% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    transform: translate3d(-14px, 52px, 0) scale(1);
+  }
+}
+
+/* Portal */
+.portal-wrapper {
+  margin-top: 2.3rem;
+  text-align: center;
+}
+
+.portal-hint {
+  font-size: 0.85rem;
+  color: rgba(255, 235, 255, 0.8);
+  margin-bottom: 0.9rem;
+}
+
+.portal-button {
+  border-radius: 999px;
+  padding: 0.7rem 1.8rem;
+  font-size: 0.95rem;
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  background: radial-gradient(circle at 0 0, #ffe6ff 0, #ffb7da 25%, #c29fff 100%);
+  color: #280a3f;
+  font-weight: 500;
+  letter-spacing: 0.06em;
+  text-transform: lowercase;
+  cursor: pointer;
+  box-shadow:
+    0 12px 25px rgba(0, 0, 0, 0.6),
+    0 0 18px rgba(255, 186, 234, 0.7);
+  transform: translateY(10px) scale(0.97);
+  opacity: 0;
+  pointer-events: none;
+}
+
+.portal-button.visible {
+  opacity: 1;
+  pointer-events: auto;
+  animation: portalFadeIn 0.9s ease-out forwards;
+}
+
+.portal-button:active {
+  transform: translateY(1px) scale(0.97);
+  box-shadow:
+    0 6px 16px rgba(0, 0, 0, 0.6),
+    0 0 12px rgba(255, 186, 234, 0.7);
+}
+
+@keyframes portalFadeIn {
+  0% {
+    opacity: 0;
+    transform: translateY(20px) scale(0.9);
+  }
+  80% {
+    opacity: 1;
+    transform: translateY(-2px) scale(1.02);
+  }
+  100% {
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* Quote popup */
+.quote-popup {
+  position: fixed;
+  inset: 0;
+  background: radial-gradient(circle at top, rgba(40, 10, 100, 0.86), rgba(3, 0, 10, 0.92));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.35s ease;
+  z-index: 60;
+}
+
+.quote-popup.active {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.quote-card {
+  position: relative;
+  background: linear-gradient(145deg, rgba(25, 8, 52, 0.98), rgba(8, 2, 27, 0.98));
+  border-radius: 22px;
+  padding: 1.6rem 1.8rem 1.3rem;
+  max-width: 340px;
+  margin: 0 1.4rem;
+  border: 1px solid rgba(255, 197, 246, 0.5);
+  box-shadow:
+    0 20px 40px rgba(0, 0, 0, 0.7),
+    0 0 22px rgba(196, 163, 255, 0.8);
+}
+
+.quote-title {
+  font-size: 0.85rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: rgba(255, 219, 250, 0.8);
+  margin: 0 0 0.4rem;
+}
+
+.quote-text {
+  margin: 0.3rem 0 0.8rem;
+  font-size: 0.92rem;
+  line-height: 1.7;
+}
+
+.quote-hint {
+  margin: 0;
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.15em;
+  color: rgba(255, 232, 255, 0.6);
+}
+
+.quote-close {
+  position: absolute;
+  top: 0.5rem;
+  right: 0.75rem;
+  border: none;
+  background: transparent;
+  color: rgba(255, 230, 255, 0.9);
+  font-size: 1.2rem;
+  cursor: pointer;
+}
+
+/* Galaxy transition overlay */
+.galaxy-transition {
+  position: fixed;
+  inset: 0;
+  background: #000;
+  opacity: 0;
+  pointer-events: none;
+  z-index: 55;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  transition: opacity 0.6s ease;
+}
+
+.galaxy-transition.active {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.galaxy-transition.fade-out {
+  opacity: 0;
+}
+
+.transition-stars {
+  position: absolute;
+  width: 160%;
+  height: 160%;
+  background:
+    radial-gradient(circle at 10% 20%, rgba(255, 255, 255, 0.9) 1px, transparent 3px),
+    radial-gradient(circle at 80% 40%, rgba(255, 255, 255, 0.8) 1px, transparent 3px),
+    radial-gradient(circle at 30% 80%, rgba(255, 255, 255, 0.9) 1px, transparent 3px);
+  background-size: 110px 110px, 140px 140px, 180px 180px;
+  opacity: 0;
+  transform: scale(0.7);
+}
+
+.galaxy-transition.show-stars .transition-stars {
+  animation: scatterStars 1.4s ease-out forwards;
+}
+
+@keyframes scatterStars {
+  0% {
+    opacity: 0;
+    transform: scale(0.7) translate3d(0, 20px, 0);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1) translate3d(0, 0, 0);
+  }
+}
+
+.transition-shooting-star {
+  position: absolute;
+  width: 2px;
+  height: 120px;
+  background: linear-gradient(to bottom, #ffffff, transparent);
+  border-radius: 999px;
+  filter: drop-shadow(0 0 12px rgba(255, 255, 255, 0.9));
+  opacity: 0;
+  transform: translate(-60vw, -40vh) rotate(47deg);
+}
+
+.galaxy-transition.shooting .transition-shooting-star {
+  animation: shootingAcross 1.2s ease-out forwards;
+}
+
+@keyframes shootingAcross {
+  0% {
+    opacity: 0;
+    transform: translate(-60vw, -40vh) rotate(47deg);
+  }
+  15% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    transform: translate(40vw, 40vh) rotate(47deg);
+  }
+}
+
+/* Orbit + planet */
+.transition-orbit {
+  position: absolute;
+  width: 210px;
+  height: 210px;
+  border-radius: 50%;
+  border: 1px dashed rgba(159, 139, 255, 0.65);
+  opacity: 0;
+  transform: scale(0.6);
+}
+
+.galaxy-transition.show-orbit .transition-orbit {
+  animation: orbitReveal 1.1s ease-out forwards;
+}
+
+@keyframes orbitReveal {
+  0% {
+    opacity: 0;
+    transform: scale(0.5) translateY(30px);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+.transition-planet {
+  position: absolute;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 30% 20%, #ffffff 0, #ffe1a0 40%, #ff8ab4 100%);
+  box-shadow:
+    0 0 16px rgba(255, 225, 164, 0.9),
+    0 0 24px rgba(255, 144, 208, 0.7);
+  top: 50%;
+  left: 50%;
+  transform-origin: -84px 0;
+  transform: translate(-50%, -50%) translateX(84px);
+  animation: planetOrbit 3.6s linear infinite;
+}
+
+@keyframes planetOrbit {
+  from {
+    transform: translate(-50%, -50%) rotate(0deg) translateX(84px);
+  }
+  to {
+    transform: translate(-50%, -50%) rotate(360deg) translateX(84px);
+  }
+}
+
+/* Heart constellation drawing */
+.transition-heart {
+  position: absolute;
+  width: 200px;
+  height: 180px;
+  opacity: 0;
+}
+
+.transition-heart path {
+  fill: none;
+  stroke: #ffb7e4;
+  stroke-width: 1.7;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-dasharray: 330;
+  stroke-dashoffset: 330;
+}
+
+.galaxy-transition.draw-heart .transition-heart {
+  opacity: 1;
+}
+
+.galaxy-transition.draw-heart .transition-heart path {
+  animation: drawHeart 1.5s ease forwards;
+}
+
+@keyframes drawHeart {
+  0% {
+    stroke-dashoffset: 330;
+  }
+  100% {
+    stroke-dashoffset: 0;
+  }
+}
+
+/* Galaxy section (final destination) */
+.galaxy-section {
+  position: relative;
+  min-height: 100vh;
+  margin-top: 4rem;
+  border-radius: 26px;
+  overflow: hidden;
+  background: radial-gradient(circle at top, #6b45ff 0, #2b0c56 45%, #050010 100%);
+  box-shadow:
+    0 24px 55px rgba(0, 0, 0, 0.9),
+    0 0 0 1px rgba(255, 255, 255, 0.03);
+  opacity: 0;
+  transform: translateY(40px) scale(0.98);
+  pointer-events: none;
+  transition:
+    opacity 1.1s ease,
+    transform 1.1s ease;
+}
+
+.galaxy-section.visible {
+  opacity: 1;
+  transform: translateY(0) scale(1);
+  pointer-events: auto;
+}
+
+/* Galaxy sky background */
+.galaxy-sky {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+}
+
+.galaxy-moon-orb {
+  position: absolute;
+  top: 10%;
+  left: 12%;
+  width: 120px;
+  height: 120px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 30% 20%, #ffffff 0, #ffe9ff 40%, #c6baff 100%);
+  box-shadow:
+    0 0 40px rgba(255, 246, 255, 0.9),
+    0 0 80px rgba(205, 186, 255, 0.9);
+}
+
+/* Orbit + planet in galaxy section */
+.galaxy-orbit {
+  position: absolute;
+  top: 18%;
+  right: 12%;
+  width: 220px;
+  height: 220px;
+  border-radius: 50%;
+  border: 1px dashed rgba(192, 170, 255, 0.8);
+}
+
+.galaxy-planet {
+  position: absolute;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 20% 20%, #ffffff 0, #ffe1a0 40%, #ff8ab4 100%);
+  box-shadow:
+    0 0 16px rgba(255, 225, 164, 0.9),
+    0 0 24px rgba(255, 144, 208, 0.7);
+  top: 50%;
+  left: 50%;
+  transform-origin: -95px 0;
+  transform: translate(-50%, -50%) translateX(95px);
+  animation: planetOrbit 5s linear infinite;
+}
+
+/* Galaxy stars */
+.galaxy-stars .star {
+  position: absolute;
+  width: 3px;
+  height: 3px;
+  border-radius: 50%;
+  background: #ffffff;
+  box-shadow: 0 0 8px rgba(255, 255, 255, 0.9);
+  opacity: 0.3;
+  animation: twinkle 3s ease-in-out infinite alternate;
+}
+
+.star.s1 { top: 18%; left: 40%; }
+.star.s2 { top: 25%; left: 60%; }
+.star.s3 { top: 35%; left: 30%; }
+.star.s4 { top: 40%; left: 75%; }
+.star.s5 { top: 52%; left: 20%; }
+.star.s6 { top: 58%; left: 65%; }
+.star.s7 { top: 70%; left: 34%; }
+.star.s8 { top: 76%; left: 52%; }
+.star.s9 { top: 82%; left: 78%; }
+.star.s10 { top: 16%; left: 22%; }
+.star.s11 { top: 60%; left: 10%; }
+.star.s12 { top: 30%; left: 85%; }
+
+@keyframes twinkle {
+  0% {
+    opacity: 0.25;
+    transform: scale(0.8);
+  }
+  50% {
+    opacity: 0.8;
+    transform: scale(1.1);
+  }
+  100% {
+    opacity: 0.4;
+    transform: scale(0.9);
+  }
+}
+
+/* Shooting stars in galaxy */
+.galaxy-shooting-star {
+  position: absolute;
+  width: 2px;
+  height: 90px;
+  border-radius: 999px;
+  background: linear-gradient(to bottom, #ffffff, transparent);
+  opacity: 0.8;
+  filter: drop-shadow(0 0 10px rgba(255, 255, 255, 0.9));
+  transform: rotate(55deg);
+  animation: galaxyShoot 4.2s ease-in-out infinite;
+}
+
+.galaxy-shooting-star.sh1 {
+  top: 8%;
+  right: 30%;
+  animation-delay: 1s;
+}
+.galaxy-shooting-star.sh2 {
+  top: 40%;
+  left: 5%;
+  animation-delay: 2.3s;
+}
+
+@keyframes galaxyShoot {
+  0% {
+    opacity: 0;
+    transform: translate3d(-20vw, 0, 0) rotate(55deg);
+  }
+  20% {
+    opacity: 0.9;
+  }
+  50% {
+    transform: translate3d(10vw, 40vh, 0) rotate(55deg);
+  }
+  100% {
+    opacity: 0;
+    transform: translate3d(20vw, 60vh, 0) rotate(55deg);
+  }
+}
+
+/* Heart constellation in galaxy section */
+.galaxy-heart-constellation {
+  position: absolute;
+  width: 220px;
+  height: 200px;
+  left: 50%;
+  top: 55%;
+  transform: translate(-50%, -50%);
+}
+
+.galaxy-heart-constellation path {
+  fill: none;
+  stroke: #ffd5ff;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-dasharray: 330;
+  stroke-dashoffset: 330;
+  animation: drawHeart 4s ease forwards 0.6s;
+}
+
+/* Galaxy text content */
+.galaxy-content {
+  position: relative;
+  padding: 4.5rem 1.9rem 3.4rem;
+  max-width: 550px;
+  margin: 0 auto;
+  text-align: center;
+  z-index: 1;
+}
+
+.galaxy-content h2 {
+  font-family: "Playfair Display", serif;
+  font-size: clamp(1.8rem, 3vw, 2.2rem);
+  margin-bottom: 0.8rem;
+  letter-spacing: 0.05em;
+  text-transform: lowercase;
+  background: linear-gradient(120deg, #ffe5ff, #ffe597, #b0a2ff);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.galaxy-content p {
+  font-size: 0.95rem;
+  line-height: 1.8;
+  color: rgba(255, 239, 255, 0.93);
+}
+
+.galaxy-subtext {
+  margin-top: 1.2rem;
+  font-size: 0.86rem;
+  color: rgba(250, 232, 255, 0.85);
+}
+
+/* Responsiveness */
+@media (max-width: 720px) {
+  .memory-garden {
+    padding-inline: 1.1rem;
+  }
+
+  .card-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .galaxy-content {
+    padding-top: 3.8rem;
+    padding-bottom: 3rem;
+  }
+
+  .galaxy-moon-orb {
+    width: 96px;
+    height: 96px;
+  }
+}
+
+@media (max-width: 480px) {
+  .card-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 1.1rem;
+  }
+}
+
+/* Back-to-index button area at very bottom */
+.back-home-wrapper {
+  margin-top: 2.5rem;
+  padding-bottom: 3rem;
+  text-align: center;
+}
+
+/* Use same style as .portal-button but always visible */
+.back-home-button {
+  display: inline-block;
+  text-decoration: none;
+  opacity: 1;
+  pointer-events: auto;
+  transform: translateY(0) scale(1);
+  animation: none;
+}
