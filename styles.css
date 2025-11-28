@@ -1178,41 +1178,50 @@ body.no-scroll-lightbox {
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    gap: 10px;
+    gap: 6px;
+    padding: 12px 12px;
   }
 
-  /* brand on top, centered */
+  /* Brand centered */
   .brand {
     width: 100%;
     text-align: center;
     justify-content: center;
+    padding: 10px 20px;
+    font-size: 0.9rem;
   }
 
-  /* nav sits under brand, full width & centered */
+  /* NAV ITEMS — clean, centered 2-row grid */
   .main-nav {
-    order: 2;
-    width: 100%;
+    display: grid;
+    grid-template-columns: repeat(3, auto);
+    gap: 8px 12px;
     justify-content: center;
-    flex-wrap: wrap;
-    text-align: center;
+    width: 100%;
+    order: 2;
+    padding: 0 6px;
   }
 
-  /* music button below nav */
+  .main-nav a,
+  .nav-pill {
+    font-size: 0.85rem;
+    padding: 8px 14px;
+    border-radius: 999px;
+    display: inline-block;
+    text-align: center;
+    white-space: nowrap;
+  }
+
+  /* Make FOTO LENGKAP not giant */
+  .nav-pill {
+    padding: 8px 14px !important;
+  }
+
+  /* Music button centered */
   .music-toggle {
     order: 3;
-  }
-
-  .hero {
-    padding-top: 60px;
-  }
-
-  .story-grid {
-    grid-template-columns: minmax(0, 1fr);
-  }
-
-  .counter-card {
-    flex-direction: column;
-    align-items: flex-start;
+    margin-top: 4px;
+    width: fit-content;
   }
 }
 
