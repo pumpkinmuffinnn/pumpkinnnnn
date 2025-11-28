@@ -1,0 +1,762 @@
+:root {
+  --pink-soft: #ffe3f3;
+  --pink-strong: #ff6aa2;
+  --pink-mid: #ffb3d6;
+  --bg-garden-start: #ffe7f5;
+  --bg-garden-end: #ffeefb;
+  --text-main: #4a2342;
+  --text-soft: #a3678c;
+  --star-sky-top: #2b1046;
+  --star-sky-mid: #3b145f;
+  --star-sky-bottom: #12051c;
+  --radius-lg: 26px;
+  --radius-md: 18px;
+  --radius-pill: 999px;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: "Poppins", system-ui, -apple-system, BlinkMacSystemFont,
+    sans-serif;
+  background: linear-gradient(
+    180deg,
+    var(--bg-garden-start),
+    var(--bg-garden-end)
+  );
+  color: var(--text-main);
+  min-height: 100vh;
+  overflow: hidden;
+}
+
+/* generic scene wrapper */
+
+.scene {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  transition: opacity 700ms ease, transform 700ms ease;
+}
+
+.scene--hidden {
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(10px);
+}
+
+.scene-inner {
+  width: 100%;
+  max-width: 1100px;
+  max-height: 750px;
+  background: radial-gradient(
+      circle at top left,
+      rgba(255, 255, 255, 0.9),
+      transparent 60%
+    ),
+    radial-gradient(
+      circle at bottom right,
+      rgba(255, 192, 221, 0.8),
+      rgba(255, 208, 234, 0.9)
+    );
+  border-radius: 32px;
+  box-shadow: 0 24px 70px rgba(255, 107, 160, 0.45);
+  border: 1px solid rgba(255, 185, 217, 0.9);
+  padding: 20px 20px 26px;
+  position: relative;
+  overflow: hidden;
+}
+
+/* header */
+
+.scene-header {
+  max-width: 520px;
+  margin-bottom: 14px;
+}
+
+.scene-header--stars {
+  position: absolute;
+  top: 18px;
+  left: 50%;
+  transform: translateX(-50%);
+  text-align: center;
+  max-width: 520px;
+  z-index: 2;
+}
+
+.scene-eyebrow {
+  font-size: 0.78rem;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--text-soft);
+  margin: 0 0 2px;
+}
+
+.scene-title {
+  font-size: 1.6rem;
+  text-transform: lowercase;
+  letter-spacing: 0.16em;
+  margin: 0 0 6px;
+}
+
+.scene-subtitle {
+  margin: 0;
+  font-size: 0.9rem;
+  color: var(--text-soft);
+}
+
+/* garden */
+
+.scene--garden {
+  background: radial-gradient(circle at top, #ffe7f7, #ffd8f0 60%, #ffb8df);
+}
+
+.garden-wrapper {
+  position: relative;
+  margin-top: 10px;
+  border-radius: 24px;
+  background: linear-gradient(
+    180deg,
+    rgba(255, 246, 252, 0.95),
+    rgba(255, 233, 246, 0.96)
+  );
+  border: 1px solid rgba(255, 185, 217, 0.9);
+  overflow: hidden;
+  min-height: min(420px, 60vh);
+}
+
+/* ground */
+
+.garden-ground {
+  position: absolute;
+  left: -15%;
+  right: -15%;
+  bottom: -10px;
+  height: 150px;
+  background: radial-gradient(
+      circle at top,
+      #fdf7c5 0%,
+      #f1dea2 35%,
+      #d3b16d 60%,
+      #a1733a 100%
+    ),
+    radial-gradient(circle at bottom, #8abf7a, #4c8b4b 60%, #2e5f2c 95%);
+  border-radius: 50% 50% 0 0 / 120% 120% 0 0;
+  box-shadow: 0 -16px 40px rgba(70, 105, 57, 0.7);
+}
+
+/* flower layer */
+
+.flower-layer {
+  position: relative;
+  padding: 50px 16px 120px;
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 26px 20px;
+  justify-items: center;
+  align-items: flex-end;
+}
+
+/* flower base */
+
+.flower-node {
+  position: relative;
+  width: 76px;
+  height: 120px;
+  cursor: pointer;
+  transform-origin: bottom center;
+  transition: transform 260ms ease-out;
+}
+
+.flower-node:hover {
+  transform: translateY(-4px);
+}
+
+.flower-node.bloomed {
+  animation: flowerBounce 800ms ease-out;
+}
+
+/* stems */
+
+.flower-stem {
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  width: 10px;
+  height: 64px;
+  transform: translateX(-50%);
+  border-radius: 999px;
+  background: linear-gradient(to bottom, #5ca34d, #2f5f2b);
+  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.22);
+}
+
+/* petals per type */
+
+.flower-head {
+  position: absolute;
+  bottom: 58px;
+  left: 50%;
+  transform: translateX(-50%) scale(0.2);
+  transform-origin: center;
+  opacity: 0;
+  transition: transform 350ms ease-out, opacity 350ms ease-out;
+}
+
+/* common bloom state */
+
+.flower-node.bloomed .flower-head {
+  transform: translateX(-50%) scale(1);
+  opacity: 1;
+}
+
+/* sunflower */
+
+.flower--sunflower .flower-head {
+  width: 78px;
+  height: 78px;
+}
+
+.flower--sunflower .flower-petal-ring {
+  position: absolute;
+  inset: 0;
+}
+
+.flower--sunflower .flower-petal {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 30px;
+  height: 58px;
+  margin-left: -15px;
+  margin-top: -44px;
+  border-radius: 999px 999px 12px 12px;
+  background: linear-gradient(to bottom, #ffd763, #f0a51b);
+  box-shadow: 0 8px 12px rgba(151, 79, 14, 0.55);
+  transform-origin: 50% 85%;
+  opacity: 0;
+  transform: rotate(var(--rot, 0deg)) scale(0.1);
+  animation: petalPop 700ms ease-out forwards;
+  animation-delay: var(--delay, 0s);
+}
+
+.flower--sunflower .flower-center {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 46px;
+  height: 46px;
+  margin-left: -23px;
+  margin-top: -23px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 30% 20%, #f6c87b, #a26323 60%, #5c3211);
+  box-shadow:
+    0 0 0 4px rgba(255, 235, 188, 0.9),
+    0 0 24px rgba(255, 206, 108, 0.95);
+  animation: centerPulse 2.5s ease-in-out infinite;
+}
+
+/* lily */
+
+.flower--lily .flower-head {
+  width: 72px;
+  height: 72px;
+}
+
+.flower--lily .lily-petal {
+  position: absolute;
+  width: 52px;
+  height: 68px;
+  left: 10px;
+  top: 2px;
+  border-radius: 999px;
+  background: radial-gradient(circle at 30% 20%, #fff9ff, #ffd6f1);
+  box-shadow: 0 10px 14px rgba(180, 110, 150, 0.55);
+  transform-origin: bottom center;
+  opacity: 0;
+  transform: scaleY(0.2);
+  animation: lilyBloom 700ms ease-out forwards;
+}
+
+.flower--lily .lily-petal--left {
+  transform-origin: right bottom;
+  animation-delay: 0.08s;
+}
+
+.flower--lily .lily-petal--right {
+  transform-origin: left bottom;
+  animation-delay: 0.18s;
+}
+
+.flower--lily .lily-center {
+  position: absolute;
+  width: 18px;
+  height: 18px;
+  left: 27px;
+  top: 24px;
+  border-radius: 50%;
+  background: radial-gradient(circle, #ffe796, #e39c33 60%, #a55a16);
+  box-shadow: 0 0 10px rgba(255, 215, 120, 0.85);
+}
+
+/* sakura */
+
+.flower--sakura .flower-head {
+  width: 72px;
+  height: 72px;
+}
+
+.flower--sakura .sakura-petal {
+  position: absolute;
+  width: 34px;
+  height: 52px;
+  left: 19px;
+  top: 10px;
+  border-radius: 40px 40px 44px 44px;
+  background: radial-gradient(circle at 30% 20%, #ffeaf6, #ffb8d9);
+  box-shadow: 0 10px 12px rgba(156, 88, 124, 0.5);
+  transform-origin: bottom center;
+  opacity: 0;
+  transform: scale(0.2);
+  animation: sakuraBloom 650ms ease-out forwards;
+}
+
+.flower--sakura .sakura-petal--top {
+  left: 19px;
+  top: 0;
+  animation-delay: 0.04s;
+}
+
+.flower--sakura .sakura-petal--left {
+  left: 0;
+  top: 16px;
+  animation-delay: 0.1s;
+}
+
+.flower--sakura .sakura-petal--right {
+  left: 38px;
+  top: 16px;
+  animation-delay: 0.16s;
+}
+
+.flower--sakura .sakura-petal--bottom-left {
+  left: 8px;
+  top: 36px;
+  animation-delay: 0.22s;
+}
+
+.flower--sakura .sakura-petal--bottom-right {
+  left: 30px;
+  top: 36px;
+  animation-delay: 0.28s;
+}
+
+.flower--sakura .sakura-center {
+  position: absolute;
+  width: 14px;
+  height: 14px;
+  left: 29px;
+  top: 26px;
+  border-radius: 50%;
+  background: radial-gradient(circle, #ffe9b1, #e8a749 60%, #aa5c1c);
+}
+
+/* flower message bubble */
+
+.flower-message {
+  position: absolute;
+  left: 50%;
+  bottom: 130px;
+  transform: translateX(-50%) translateY(10px);
+  max-width: 180px;
+  background: rgba(255, 250, 253, 0.95);
+  border-radius: 16px;
+  border: 1px solid rgba(255, 170, 214, 0.9);
+  padding: 6px 10px;
+  font-size: 0.78rem;
+  color: var(--text-main);
+  box-shadow: 0 10px 22px rgba(172, 90, 135, 0.45);
+  opacity: 0;
+  animation: msgPop 350ms ease-out forwards;
+}
+
+.flower-message::before {
+  content: "";
+  position: absolute;
+  left: 50%;
+  bottom: -7px;
+  transform: translateX(-50%) rotate(45deg);
+  width: 12px;
+  height: 12px;
+  background: rgba(255, 250, 253, 0.95);
+  border-right: 1px solid rgba(255, 170, 214, 0.9);
+  border-bottom: 1px solid rgba(255, 170, 214, 0.9);
+}
+
+/* butterflies */
+
+.butterfly {
+  position: absolute;
+  width: 40px;
+  height: 32px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 30% 20%, #fff, #ffb9e3);
+  opacity: 0.7;
+  filter: blur(0.2px);
+}
+
+.butterfly--left {
+  left: 6%;
+  top: 16%;
+  animation: butterflyFloat 7s ease-in-out infinite;
+}
+
+.butterfly--right {
+  right: 10%;
+  top: 28%;
+  animation: butterflyFloatAlt 8s ease-in-out infinite;
+}
+
+/* portal button */
+
+.portal-btn {
+  margin-top: 12px;
+  border-radius: var(--radius-pill);
+  padding: 12px 28px;
+  background: linear-gradient(135deg, #ff9ac5, #ff6aa2);
+  color: #fff;
+  font-weight: 500;
+  font-size: 0.96rem;
+  border: none;
+  cursor: pointer;
+  box-shadow: 0 18px 38px rgba(255, 107, 160, 0.7);
+  transform: translateY(10px);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 260ms ease-out, transform 260ms ease-out,
+    box-shadow 160ms ease-out;
+}
+
+.portal-btn.portal-btn--visible {
+  opacity: 1;
+  transform: translateY(0);
+  pointer-events: auto;
+}
+
+.portal-btn:hover {
+  box-shadow: 0 22px 46px rgba(255, 107, 160, 0.82);
+}
+
+/* stars scene */
+
+/* stars scene */
+
+.scene--stars {
+  background: radial-gradient(circle at top, #442469, #120415 60%, #050109);
+}
+
+.star-sky {
+  position: relative;
+  width: 100%;
+  max-width: 1100px;
+  max-height: 750px;
+  border-radius: 32px;
+  overflow: hidden;
+  border: 1px solid rgba(151, 118, 255, 0.4);
+  background: radial-gradient(circle at top, #5b2f88, #15091f 65%, #050109);
+  box-shadow: 0 28px 80px rgba(26, 4, 43, 0.95);
+}
+
+/* make the header text bright so you can see it */
+
+.scene-header--stars,
+.scene-header--stars .scene-title,
+.scene-header--stars .scene-subtitle {
+  color: #ffeaff;
+}
+
+/* star gradient overlay */
+
+.star-overlay-gradient {
+  position: absolute;
+  inset: 40% -10% -15%;
+  background: radial-gradient(
+    circle at bottom,
+    rgba(237, 167, 255, 0.4),
+    transparent 60%
+  );
+  mix-blend-mode: screen;
+  pointer-events: none;
+}
+
+/* moon orb */
+
+.moon-orb {
+  position: absolute;
+  right: 10%;
+  top: 12%;
+  width: 110px;
+  height: 110px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 30% 20%, #fffefc, #ffe2b0 55%, #d4975f);
+  box-shadow:
+    0 0 22px rgba(255, 235, 185, 0.9),
+    0 0 60px rgba(255, 210, 160, 0.9);
+  opacity: 0.9;
+}
+
+/* stars */
+
+.star-field {
+  position: absolute;
+  inset: 0;
+}
+
+/* make stars MUCH bigger + brighter + obviously clickable */
+
+.star-node {
+  position: absolute;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: radial-gradient(circle, #ffffff, #ffd4ff);
+  box-shadow:
+    0 0 14px rgba(255, 255, 255, 0.95),
+    0 0 26px rgba(255, 181, 238, 0.9);
+  cursor: pointer;
+  animation: starTwinkle 3.5s ease-in-out infinite;
+}
+
+.star-node--small {
+  width: 14px;
+  height: 14px;
+}
+
+.star-node--medium {
+  width: 16px;
+  height: 16px;
+}
+
+/* constellation lines */
+
+.const-line {
+  position: absolute;
+  height: 2px;
+  background: linear-gradient(
+    to right,
+    rgba(255, 222, 255, 0),
+    rgba(255, 222, 255, 0.9),
+    rgba(255, 222, 255, 0)
+  );
+  opacity: 0.8;
+}
+
+/* star message box */
+
+.star-message-box {
+  position: absolute;
+  left: 50%;
+  bottom: 70px;
+  transform: translateX(-50%) translateY(20px);
+  max-width: 420px;
+  width: 90%;
+  padding: 10px 18px;
+  border-radius: 18px;
+  background: rgba(16, 4, 24, 0.9);
+  border: 1px solid rgba(255, 186, 244, 0.9);
+  color: #ffeaff;
+  font-size: 0.9rem;
+  box-shadow: 0 14px 40px rgba(0, 0, 0, 0.8);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 240ms ease-out, transform 240ms ease-out;
+  z-index: 4;
+}
+
+.star-message-box.star-message-box--visible {
+  opacity: 1;
+  pointer-events: auto;
+  transform: translateX(-50%) translateY(0);
+}
+
+/* back button */
+
+.back-btn {
+  position: absolute;
+  bottom: 18px;
+  right: 18px;
+  border-radius: 999px;
+  padding: 8px 18px;
+  border: 1px solid rgba(255, 186, 244, 0.9);
+  background: rgba(17, 5, 30, 0.88);
+  color: #ffeaff;
+  font-size: 0.8rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+
+
+/* keyframes */
+
+@keyframes flowerBounce {
+  0% {
+    transform: translateY(0);
+  }
+  30% {
+    transform: translateY(-6px);
+  }
+  60% {
+    transform: translateY(2px);
+  }
+  100% {
+    transform: translateY(0);
+  }
+}
+
+@keyframes petalPop {
+  0% {
+    opacity: 0;
+    transform: rotate(var(--rot, 0deg)) scale(0.1);
+  }
+  70% {
+    opacity: 1;
+    transform: rotate(var(--rot, 0deg)) scale(1.05);
+  }
+  100% {
+    opacity: 1;
+    transform: rotate(var(--rot, 0deg)) scale(1);
+  }
+}
+
+@keyframes centerPulse {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.1);
+  }
+}
+
+@keyframes lilyBloom {
+  0% {
+    opacity: 0;
+    transform: scaleY(0.2);
+  }
+  100% {
+    opacity: 1;
+    transform: scaleY(1);
+  }
+}
+
+@keyframes sakuraBloom {
+  0% {
+    opacity: 0;
+    transform: scale(0.2);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes msgPop {
+  0% {
+    opacity: 0;
+    transform: translateX(-50%) translateY(14px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+}
+
+@keyframes butterflyFloat {
+  0%,
+  100% {
+    transform: translateY(0) translateX(0) rotate(-4deg);
+  }
+  50% {
+    transform: translateY(-16px) translateX(10px) rotate(4deg);
+  }
+}
+
+@keyframes butterflyFloatAlt {
+  0%,
+  100% {
+    transform: translateY(0) translateX(0) rotate(3deg);
+  }
+  50% {
+    transform: translateY(-20px) translateX(-10px) rotate(-4deg);
+  }
+}
+
+@keyframes starTwinkle {
+  0%,
+  100% {
+    opacity: 0.6;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.25);
+  }
+}
+
+/* responsive */
+
+@media (max-width: 768px) {
+  .scene-inner {
+    max-height: none;
+    height: 100%;
+  }
+
+  .garden-wrapper {
+    min-height: 350px;
+  }
+
+  .flower-layer {
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    gap: 18px 14px;
+  }
+
+  .scene-header {
+    max-width: none;
+  }
+}
+
+@media (max-width: 600px) {
+  .scene-inner {
+    padding: 16px 14px 22px;
+  }
+
+  .flower-layer {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    padding-inline: 10px;
+  }
+
+  .flower-node {
+    width: 70px;
+  }
+
+  .scene-header--stars {
+    padding-inline: 14px;
+  }
+
+  .star-message-box {
+    bottom: 60px;
+    font-size: 0.8rem;
+  }
+}
