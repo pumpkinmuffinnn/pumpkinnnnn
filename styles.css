@@ -1175,12 +1175,31 @@ body.no-scroll-lightbox {
 }
 @media (max-width: 880px) {
   .site-header-inner {
-    flex-wrap: wrap;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
   }
 
+  /* brand on top, centered */
+  .brand {
+    width: 100%;
+    text-align: center;
+    justify-content: center;
+  }
+
+  /* nav sits under brand, full width & centered */
   .main-nav {
+    order: 2;
+    width: 100%;
+    justify-content: center;
+    flex-wrap: wrap;
+    text-align: center;
+  }
+
+  /* music button below nav */
+  .music-toggle {
     order: 3;
-    justify-content: flex-start;
   }
 
   .hero {
@@ -1196,6 +1215,7 @@ body.no-scroll-lightbox {
     align-items: flex-start;
   }
 }
+
 
 @media (max-width: 600px) {
   .hero-title {
