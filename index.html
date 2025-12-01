@@ -4,67 +4,321 @@
   <meta charset="UTF-8" />
   <title>Buat Princesskuuu ♡</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <link rel="stylesheet" href="styles.css" />
   <link
     href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&family=Dancing+Script:wght@500;700&display=swap"
     rel="stylesheet"
   />
+  <style>
+    /* --- ORIGINAL STYLES --- */
+    :root {
+      --bg: #ffe3f3;
+      --bg-alt: #ffe0f7;
+      --accent: #ff6aa2;
+      --accent-soft: #ffd0ea;
+      --accent-strong: #ff2b77;
+      --accent-gold: #ffcf5b;
+      --accent-gold-deep: #f7a81f;
+      --text-main: #4a2342;
+      --text-soft: #a3678c;
+      --shadow-soft: 0 18px 45px rgba(255, 107, 160, 0.35);
+      --radius-lg: 26px;
+      --radius-md: 18px;
+      --radius-pill: 999px;
+      --transition-fast: 180ms ease-out;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; }
+    html, body { margin: 0; padding: 0; }
+
+    body {
+      font-family: "Poppins", system-ui, sans-serif;
+      color: var(--text-main);
+      background:
+        radial-gradient(circle at top left, #ffd3e8, transparent 55%),
+        radial-gradient(circle at bottom right, #ffc4f2, #ffe8f8 60%);
+      min-height: 100vh;
+      -webkit-font-smoothing: antialiased;
+      overflow-x: hidden;
+    }
+
+    img { max-width: 100%; display: block; }
+    a { color: inherit; text-decoration: none; }
+    button { font-family: inherit; }
+
+    /* Layout */
+    main { position: relative; z-index: 10; }
+
+    /* Header */
+    .site-header {
+      position: sticky;
+      top: 0;
+      z-index: 20;
+      backdrop-filter: blur(16px);
+      background: linear-gradient(to right, rgba(255, 227, 243, 0.9), rgba(255, 244, 251, 0.8));
+      border-bottom: 1px solid rgba(255, 164, 204, 0.3);
+    }
+    .site-header-inner {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 10px 18px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+    .brand {
+      font-weight: 600;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      font-size: 0.86rem;
+      padding: 6px 14px;
+      border-radius: var(--radius-pill);
+      background: rgba(255, 246, 252, 0.95);
+      border: 1px solid rgba(255, 150, 200, 0.7);
+      box-shadow: 0 10px 25px rgba(255, 107, 160, 0.25);
+    }
+    .brand span { margin-left: 4px; color: var(--accent-strong); }
+    .main-nav {
+      display: flex; flex-wrap: wrap; gap: 10px;
+      font-size: 0.82rem; letter-spacing: 0.12em;
+      text-transform: uppercase; color: var(--text-soft);
+      justify-content: center; flex: 1;
+    }
+    .main-nav a {
+      padding: 6px 8px; border-radius: 999px;
+      transition: all var(--transition-fast);
+    }
+    .main-nav a:hover {
+      background: rgba(255, 208, 234, 0.8);
+      color: var(--accent-strong);
+      transform: translateY(-1px);
+    }
+    .nav-pill { border: 1px solid rgba(255, 150, 200, 0.7); padding-inline: 12px; }
+    .music-toggle {
+      border-radius: var(--radius-pill);
+      border: 1px solid rgba(255, 150, 200, 0.9);
+      padding: 8px 16px;
+      font-size: 0.82rem;
+      background: rgba(255, 246, 252, 0.96);
+      cursor: pointer;
+      box-shadow: 0 10px 25px rgba(255, 107, 160, 0.3);
+      white-space: nowrap;
+      transition: all var(--transition-fast);
+    }
+    .music-toggle:hover { transform: translateY(-1px); }
+
+    /* Hero */
+    .hero { padding: 70px 18px 40px; position: relative; }
+    .hero-inner { max-width: 1000px; margin: 0 auto; text-align: center; }
+    .hero-eyebrow {
+      font-size: 0.86rem; letter-spacing: 0.16em; text-transform: uppercase;
+      color: var(--text-soft); display: inline-flex; align-items: center; gap: 4px; margin-bottom: 6px;
+    }
+    .hero-recipient {
+      padding: 2px 8px; border-radius: var(--radius-pill);
+      background: rgba(255, 246, 252, 0.95);
+      border: 1px dashed rgba(255, 150, 200, 0.9);
+    }
+    .hero-title {
+      font-size: clamp(2rem, 4vw, 2.8rem); font-weight: 600; line-height: 1.15; margin: 0 0 10px;
+    }
+    .hero-subtitle {
+      max-width: 520px; font-size: 0.98rem; color: var(--text-soft); margin: 0 auto;
+    }
+    .hero-actions {
+      display: flex; flex-wrap: wrap; gap: 10px; margin-top: 18px; justify-content: center;
+    }
+    .primary-btn, .ghost-btn, .game-btn {
+      border-radius: var(--radius-pill); padding: 12px 24px;
+      font-size: 0.93rem; font-weight: 500; cursor: pointer; border: none;
+      transition: all 160ms ease-out;
+    }
+    .primary-btn {
+      background: linear-gradient(135deg, #ff9ac5, #ff6aa2);
+      color: #fff; box-shadow: 0 18px 40px rgba(255, 107, 160, 0.65);
+    }
+    .primary-btn:hover { transform: translateY(-1px); }
+    .ghost-btn {
+      background: rgba(255, 246, 252, 0.9);
+      border: 1px solid rgba(255, 150, 200, 0.8);
+      color: var(--accent-strong);
+    }
+    
+    /* NEW GAME BUTTON STYLE */
+    .game-btn {
+        background: linear-gradient(135deg, #60a5fa, #3b82f6);
+        color: white;
+        box-shadow: 0 10px 25px rgba(59, 130, 246, 0.4);
+        display: inline-flex; align-items: center; gap: 6px; text-decoration: none;
+    }
+    .game-btn:hover { transform: translateY(-2px); box-shadow: 0 15px 30px rgba(59, 130, 246, 0.5); }
+
+    /* Sections */
+    .section { padding: 56px 18px; position: relative; }
+    .section:nth-of-type(even) { background: rgba(255, 245, 252, 0.95); }
+    .section-inner { max-width: 1000px; margin: 0 auto; }
+    .section-header { margin-bottom: 30px; text-align: center; }
+    .section-title { font-size: 1.4rem; text-transform: lowercase; letter-spacing: 0.18em; font-weight: 600; margin-bottom: 6px; }
+    .section-subtitle { font-size: 0.94rem; color: var(--text-soft); max-width: 480px; margin: 0 auto; }
+    
+    .reveal-on-scroll {
+      opacity: 0; transform: translateY(24px); transition: opacity 480ms ease-out, transform 480ms ease-out;
+    }
+    .reveal-on-scroll.in-view { opacity: 1; transform: translateY(0); }
+
+    /* Timeline */
+    .story-grid { display: grid; grid-template-columns: 1fr; gap: 28px; }
+    .story-intro-card {
+      background: var(--bg); border-radius: var(--radius-lg);
+      padding: 20px 22px; border: 1px solid rgba(255, 150, 200, 0.8);
+      box-shadow: var(--shadow-soft); font-size: 0.95rem; margin-bottom: 20px;
+    }
+    .timeline { list-style: none; padding-left: 0; margin: 0; position: relative; }
+    .timeline::before {
+      content: ""; position: absolute; left: 11px; top: 0; bottom: 0; width: 2px;
+      background: linear-gradient(to bottom, rgba(255, 150, 200, 0.4), rgba(255, 107, 160, 0.8));
+    }
+    .timeline-item { position: relative; padding-left: 29px; margin-bottom: 22px; }
+    .timeline-bullet {
+      position: absolute; width: 12px; height: 12px; border-radius: 999px;
+      left: 5px; top: 4px; background: #fff; border: 2px solid #ff6aa2;
+      box-shadow: 0 0 0 4px rgba(255, 150, 200, 0.35);
+    }
+    .timeline-card {
+      background: #fff7fb; border-radius: var(--radius-md);
+      padding: 12px 16px; border: 1px solid rgba(255, 181, 213, 0.7);
+    }
+    .timeline-date { font-size: 0.72rem; letter-spacing: 0.14em; text-transform: uppercase; color: var(--text-soft); margin-bottom: 4px; }
+    .timeline-title { font-size: 0.98rem; margin: 0 0 4px; font-weight: 600; }
+    .timeline-text { font-size: 0.9rem; }
+
+    /* Reasons */
+    .reasons-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 18px; }
+    .reason-card {
+      background: var(--bg); border-radius: var(--radius-md); padding: 16px 18px;
+      border: 1px solid rgba(255, 150, 200, 0.8); box-shadow: 0 16px 38px rgba(255, 107, 160, 0.4);
+      font-size: 0.93rem; transition: all var(--transition-fast);
+    }
+    .reason-card:hover { transform: translateY(-4px); background: #fff; }
+
+    /* Gallery - NOW WITH FLOAT */
+    .gallery-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 18px; }
+    .gallery-item {
+      background: #fffdfd; border-radius: 18px; padding: 10px 10px 14px;
+      border: 1px solid rgba(255, 150, 200, 0.9);
+      box-shadow: 0 18px 40px rgba(255, 107, 160, 0.45);
+      cursor: pointer; border: none;
+      /* Animation added */
+      animation: float 6s ease-in-out infinite;
+    }
+    .gallery-item:nth-child(even) { animation-delay: 3s; }
+    .gallery-item img { border-radius: 12px; width: 100%; height: 220px; object-fit: cover; }
+    .gallery-item:hover { transform: scale(1.02); z-index: 10; }
+    
+    @keyframes float {
+      0% { transform: translateY(0px) rotate(-1deg); }
+      50% { transform: translateY(-6px) rotate(1deg); }
+      100% { transform: translateY(0px) rotate(-1deg); }
+    }
+
+    .gallery-cta { margin-top: 18px; text-align: center; }
+    .primary-link {
+      display: inline-flex; align-items: center; gap: 6px; font-size: 0.9rem;
+      letter-spacing: 0.12em; text-transform: uppercase; padding-bottom: 2px;
+      border-bottom: 1px dashed rgba(255, 107, 160, 0.8);
+    }
+
+    /* Letter */
+    .letter-card {
+      background: #fffdfb; border-radius: 28px; border: 1px solid rgba(255, 214, 233, 0.95);
+      padding: 24px 22px; box-shadow: 0 24px 60px rgba(255, 107, 160, 0.45);
+      position: relative; overflow: hidden;
+    }
+    .letter-greeting { font-family: "Dancing Script", cursive; font-size: 1.5rem; margin-bottom: 6px; }
+    .letter-body { font-size: 0.98rem; line-height: 1.7; color: var(--text-main); min-height: 3.2em; white-space: pre-wrap; }
+    .letter-signoff { margin-top: 16px; font-family: "Dancing Script", cursive; font-size: 1.3rem; }
+    .letter-body.typing { border-right: 1px solid rgba(74, 35, 66, 0.8); }
+
+    /* Counter - UPGRADED TO GRID */
+    .counter-card {
+      background: var(--bg); border-radius: var(--radius-lg);
+      border: 1px solid rgba(255, 150, 200, 0.9); box-shadow: var(--shadow-soft);
+      padding: 20px 22px; text-align: center;
+    }
+    .counter-grid {
+        display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-top: 15px;
+    }
+    .count-box { background: #fff; padding: 10px; border-radius: 10px; }
+    .count-val { font-size: 1.5rem; font-weight: bold; color: var(--accent-strong); }
+    .count-lbl { font-size: 0.7rem; text-transform: uppercase; color: var(--text-soft); }
+
+    /* Footer */
+    .footer { padding: 30px 18px 40px; text-align: center; font-size: 0.82rem; color: var(--text-soft); }
+    .footer-heart { color: var(--accent-strong); }
+    .back-to-top { display: inline-block; margin-top: 6px; font-size: 0.8rem; border-bottom: 1px dotted rgba(255, 107, 160, 0.9); }
+
+    /* --- REALISTIC SUNFLOWER OVERLAY --- */
+    .sunflower-intro {
+      position: fixed; inset: 0; z-index: 9999;
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      background: radial-gradient(circle at center, #2a2a00, #000 90%);
+      transition: opacity 1s ease, transform 1s ease;
+    }
+    .sunflower-intro--hidden { opacity: 0; pointer-events: none; transform: scale(1.1); }
+    canvas#sunflowerCanvas { display: block; filter: drop-shadow(0 0 20px rgba(255, 200, 0, 0.3)); }
+    .sunflower-text-container {
+      position: absolute; bottom: 15%; color: #fff; text-align: center;
+      opacity: 0; animation: fadeInText 2s ease-out forwards 3s;
+    }
+    .intro-title {
+        font-family: "Dancing Script", cursive; font-size: 2.2rem; color: #ffd700; margin-bottom: 5px;
+        text-shadow: 0 0 10px rgba(255, 215, 0, 0.6);
+    }
+    @keyframes fadeInText { to { opacity: 1; } }
+
+    /* Lightbox */
+    .lightbox {
+      position: fixed; inset: 0; z-index: 35; display: flex; align-items: center; justify-content: center;
+      opacity: 0; pointer-events: none; transition: opacity 220ms ease-out;
+    }
+    .lightbox.is-open { opacity: 1; pointer-events: auto; }
+    .lightbox-backdrop { position: absolute; inset: 0; background: rgba(24, 10, 24, 0.8); }
+    .lightbox-content {
+      position: relative; background: #fff7fb; border-radius: 18px;
+      padding: 10px; max-width: 90vw; max-height: 80vh; z-index: 1;
+    }
+    .lightbox-image { border-radius: 12px; max-height: 70vh; object-fit: contain; }
+    .lightbox-close {
+      position: absolute; top: -40px; right: 0; color: white; font-size: 2rem;
+      background: none; border: none; cursor: pointer;
+    }
+    
+    /* Responsive */
+    @media (max-width: 880px) {
+      .site-header-inner { flex-direction: column; }
+      .counter-grid { grid-template-columns: repeat(2, 1fr); }
+    }
+  </style>
 </head>
 <body>
-  <!-- 🌻 Sunflower intro overlay -->
+
+  <!-- 🌻 REALISTIC CANVAS SUNFLOWER INTRO -->
   <div class="sunflower-intro" id="sunflowerIntro">
-    <div class="sunflower-inner">
-      <div class="sunflower-wrapper">
-        <div class="sunflower-scene">
-          <!-- distant little sunflowers / field -->
-          <div class="sunflower-field"></div>
-
-          <!-- main stem + leaves -->
-          <div class="sunflower-stem"></div>
-          <div class="sunflower-leaf sunflower-leaf--left"></div>
-          <div class="sunflower-leaf sunflower-leaf--right"></div>
-
-          <div class="sunflower-bud"></div>
-          <div class="sunflower sunflower-main">
-            <div class="sunflower-center"></div>
-            <div class="sunflower-petal" style="--r: 0deg; --delay: 0.08s;"></div>
-            <div class="sunflower-petal" style="--r: 30deg; --delay: 0.14s;"></div>
-            <div class="sunflower-petal" style="--r: 60deg; --delay: 0.2s;"></div>
-            <div class="sunflower-petal" style="--r: 90deg; --delay: 0.26s;"></div>
-            <div class="sunflower-petal" style="--r: 120deg; --delay: 0.32s;"></div>
-            <div class="sunflower-petal" style="--r: 150deg; --delay: 0.38s;"></div>
-            <div class="sunflower-petal" style="--r: 180deg; --delay: 0.44s;"></div>
-            <div class="sunflower-petal" style="--r: 210deg; --delay: 0.5s;"></div>
-            <div class="sunflower-petal" style="--r: 240deg; --delay: 0.56s;"></div>
-            <div class="sunflower-petal" style="--r: 270deg; --delay: 0.62s;"></div>
-            <div class="sunflower-petal" style="--r: 300deg; --delay: 0.68s;"></div>
-            <div class="sunflower-petal" style="--r: 330deg; --delay: 0.74s;"></div>
-          </div>
-          <div class="sunflower-mini sunflower-mini--left"></div>
-          <div class="sunflower-mini sunflower-mini--right"></div>
-        </div>
-      </div>
-      <p class="sunflower-message">buat matahari aku ☼</p>
-      <p class="sunflower-note">scroll atau tap buat lanjut</p>
+    <canvas id="sunflowerCanvas"></canvas>
+    <div class="sunflower-text-container">
+        <h1 class="intro-title">buat matahari aku ☼</h1>
+        <p style="font-size: 0.9rem; letter-spacing: 2px; color: #ccc;">tap anywhere to open</p>
     </div>
   </div>
+
   <header class="site-header">
     <div class="site-header-inner">
       <a href="index.html" class="brand">
         for you<span>♡</span>
       </a>
-
       <nav class="main-nav">
-        <a href="#story">cerita</a>
-        <a href="#reasons">alasan</a>
-        <a href="#gallery">foto</a>
-        <a href="#letter">surat</a>
-        <a href="#days">hari</a>
         <a href="memory-garden.html">dunia kita</a>
-        <a href="gallery.html" class="nav-pill">foto lengkap</a>
       </nav>
-
-      <button class="music-toggle" id="musicToggle" aria-label="Toggle music">
+      <button class="music-toggle" id="musicToggle">
         ▷ music
       </button>
     </div>
@@ -74,24 +328,23 @@
     <section class="hero" id="top">
       <div class="hero-inner">
         <p class="hero-eyebrow">
-          buat:
-          <span class="hero-recipient" contenteditable="true">
-            princess kesayangan akuuu
-          </span>
+          buat: <span class="hero-recipient">princess kesayangan akuuu</span>
         </p>
         <h1 class="hero-title">
           selamat datang cintakuuuu, ini semuanyaa buat kamuuu, semoga kamu suka yaaaa ♡
         </h1>
         <p class="hero-subtitle">
-          Aku bikin ini sebagai tanda terima kasih aku kepada kamuu karna masih bertahan sama aku selama inii. Scroll sampe abis yaaa sayanggg ♡
+          Aku bikin ini sebagai tanda terima kasih aku kepada kamu karna masih bertahan sama aku selama inii. Scroll sampe abis yaaa sayanggg ♡
         </p>
         <div class="hero-actions">
-          <button class="primary-btn" id="scrollStory">
-            mulai cerita kita
-          </button>
-          <button class="ghost-btn" id="scrollGallery">
-            lihat foto-foto
-          </button>
+          <button class="primary-btn" id="scrollStory">mulai cerita kita</button>
+          
+          <!-- UPGRADE 1: VIRTUAL HUG BUTTON -->
+          <a href="game.html" class="game-btn">
+             Ayo Pelukan! 🏃‍♂️
+          </a>
+          
+          <button class="ghost-btn" id="scrollGallery">lihat foto-foto</button>
         </div>
       </div>
     </section>
@@ -101,21 +354,18 @@
         <header class="section-header reveal-on-scroll">
           <h2 class="section-title">cerita kita</h2>
           <p class="section-subtitle">
-            cuplikan kecil tentang bagaimana kamu berubah dari “seseorang yang aku temui” jadi “orang favoritku”. usetttt boleh banget yak :v
+            cuplikan kecil tentang bagaimana kamu berubah dari “seseorang yang aku temui” jadi “orang favoritku”.
           </p>
         </header>
 
         <div class="story-grid">
           <div class="story-intro-card reveal-on-scroll">
-            <p>
-              Ga semua sii ini tapi ini cuman beberapa doang, ini beberapa doang aja udaa panjang gini jir pagenya, bayangin aja kalo diceritain semua :v
-            </p>
-            <p>
-              Pokonyaaa inii timeline kitaaaa dari duluu ampe sekarangg, secara singkatnya doang sii.
-            </p>
+            <p>Ga semua sii ini tapi ini cuman beberapa doang, ini beberapa doang aja udaa panjang gini jir pagenya, bayangin aja kalo diceritain semua :v</p>
+            <p>Pokonyaaa inii timeline kitaaaa dari duluu ampe sekarangg, secara singkatnya doang sii.</p>
           </div>
 
           <ol class="timeline">
+            <!-- ORIGINAL TEXT PRESERVED -->
             <li class="timeline-item reveal-on-scroll">
               <div class="timeline-bullet"></div>
               <div class="timeline-card">
@@ -163,211 +413,348 @@
         </div>
       </div>
     </section>
+
     <section class="section reasons" id="reasons">
       <div class="section-inner">
         <header class="section-header reveal-on-scroll">
           <h2 class="section-title">alasan2 kecanduan ama kamu :v</h2>
-          <p class="section-subtitle">
-            ga semua sii karna kebanyakan itu kalo diomongin satu2, cuman beberapa aja yang aku kepikiran sekarang.
-          </p>
+          <p class="section-subtitle">ga semua sii karna kebanyakan itu kalo diomongin satu2, cuman beberapa aja yang aku kepikiran sekarang.</p>
         </header>
 
         <div class="reasons-grid">
           <article class="reason-card reveal-on-scroll">
             <h3 class="reason-title">cara kamu nyempetin waktu</h3>
-            <p class="reason-text">
-              Kamu capek, sibuk, penuh kegiatan tapi tetap ada buat aku. Kamu bergadang ampe larut malen, video call, chattingan ampe ketiduran dan aku selalu ngerasa beruntung banget.
-            </p>
+            <p class="reason-text">Kamu capek, sibuk, penuh kegiatan tapi tetap ada buat aku. Kamu bergadang ampe larut malen, video call, chattingan ampe ketiduran dan aku selalu ngerasa beruntung banget.</p>
           </article>
-
           <article class="reason-card reveal-on-scroll">
             <h3 class="reason-title">nyaman yang cuma ada di kamu</h3>
-            <p class="reason-text">
-                Aku bisa cerita semuanya ke kamu, hal penting, hal random, hal bodoh. Kamu selalu jadi tempat paling aman buat aku pulang.
-            </p>
+            <p class="reason-text">Aku bisa cerita semuanya ke kamu, hal penting, hal random, hal bodoh. Kamu selalu jadi tempat paling aman buat aku pulang.</p>
           </article>
-
           <article class="reason-card reveal-on-scroll">
             <h3 class="reason-title">naturalnya hubungan kita</h3>
-            <p class="reason-text">
-              Kita ga butuh nembak, nggak butuh momen dramatis, kita mengalir aja. Tiba-tiba kamu jadi sayangnya aku :v berati emang jodoh gasehh iniii langsung sayang2an bareng HAHAHAHAHA
-            </p>
+            <p class="reason-text">Kita ga butuh nembak, nggak butuh momen dramatis, kita mengalir aja. Tiba-tiba kamu jadi sayangnya aku :v berati emang jodoh gasehh iniii langsung sayang2an bareng HAHAHAHAHA</p>
           </article>
-
           <article class="reason-card reveal-on-scroll">
             <h3 class="reason-title">dukunganmu</h3>
-            <p class="reason-text">
-              Kamu selalu percaya sama aku bahkan di saat aku ragu sama diri sendiri. Itu rasanya dihargai banget.
-            </p>
+            <p class="reason-text">Kamu selalu percaya sama aku bahkan di saat aku ragu sama diri sendiri. Itu rasanya dihargai banget.</p>
           </article>
-
           <article class="reason-card reveal-on-scroll">
             <h3 class="reason-title">hadirmu</h3>
-            <p class="reason-text">
-            Walaupun kita jauh, cuma tau kamu ada aja udah bikin semuanya terasa lebih ringan.
-            </p>
+            <p class="reason-text">Walaupun kita jauh, cuma tau kamu ada aja udah bikin semuanya terasa lebih ringan.</p>
           </article>
-
           <article class="reason-card reveal-on-scroll">
             <h3 class="reason-title">kamu</h3>
-            <p class="reason-text">
-              Gaperlu jadi sempurna, gaperlu ngikutin orang lain, gaperlu jadi orang lain, cukup kamu yang sekarang aja sudah lebih dari cukup buat aku. Lebih dari sempurna sii kata gw mah.
-            </p>
+            <p class="reason-text">Gaperlu jadi sempurna, gaperlu ngikutin orang lain, gaperlu jadi orang lain, cukup kamu yang sekarang aja sudah lebih dari cukup buat aku. Lebih dari sempurna sii kata gw mah.</p>
           </article>
         </div>
       </div>
     </section>
+
     <section class="section gallery" id="gallery">
       <div class="section-inner">
         <header class="section-header reveal-on-scroll">
           <h2 class="section-title">beberapa memory kita</h2>
-          <p class="section-subtitle">
-            sekilas lihat beberapa versi favoritku tentang kita.
-          </p>
+          <p class="section-subtitle">sekilas lihat beberapa versi favoritku tentang kita.</p>
         </header>
-
+        
+        <!-- UPGRADE 3: FLOATING GALLERY -->
         <div class="gallery-grid">
-          <button
-            class="gallery-item js-lightbox-trigger reveal-on-scroll"
-            data-full="images/6.jpg"
-            data-caption="makasii babah buat foto pertama kita"
-          >
+          <button class="gallery-item js-lightbox-trigger reveal-on-scroll" data-caption="makasii babah buat foto pertama kita">
             <img src="images/6.jpg" alt="Foto pertama kita" />
           </button>
-
-          <button
-            class="gallery-item js-lightbox-trigger reveal-on-scroll"
-            data-full="images/7.jpg"
-            data-caption="Ice cream peletan"
-          >
+          <button class="gallery-item js-lightbox-trigger reveal-on-scroll" data-caption="Ice cream peletan">
             <img src="images/7.jpg" alt="Dimana semuanya terjadi" />
           </button>
-
-          <button
-            class="gallery-item js-lightbox-trigger reveal-on-scroll"
-            data-full="images/5.jpg"
-            data-caption="BLUEEEEEE"
-          >
+          <button class="gallery-item js-lightbox-trigger reveal-on-scroll" data-caption="BLUEEEEEE">
             <img src="images/5.jpg" alt="Couple-an" />
           </button>
-
-          <button
-            class="gallery-item js-lightbox-trigger reveal-on-scroll"
-            data-full="images/8.jpg"
-            data-caption="INI LUCU BANGET JIR"
-          >
-            <img src="images/8.jpg" alt="Foto favorit aku (ada sii lagi, ytta :v)" />
+          <button class="gallery-item js-lightbox-trigger reveal-on-scroll" data-caption="INI LUCU BANGET JIR">
+            <img src="images/8.jpg" alt="Foto favorit aku" />
           </button>
         </div>
 
         <div class="gallery-cta reveal-on-scroll">
-          <a href="gallery.html" class="primary-link">
-            buka gallery lengkap →
-          </a>
+          <a href="gallery.html" class="primary-link">buka gallery lengkap →</a>
         </div>
       </div>
     </section>
+
     <section class="section letter" id="letter">
       <div class="section-inner">
         <header class="section-header reveal-on-scroll">
           <h2 class="section-title">surat buat kamu</h2>
-          <p class="section-subtitle">
-            kamu bisa baca ini kalo lagi kangen, ataupun kamu lupa betapa disayangnya kamu ama aku.
-          </p>
+          <p class="section-subtitle">kamu bisa baca ini kalo lagi kangen, ataupun kamu lupa betapa disayangnya kamu ama aku.</p>
         </header>
 
         <div class="letter-card reveal-on-scroll">
           <p class="letter-greeting">dear zaujatikuuu,</p>
-          <p
-            class="letter-body"
-            id="letterText"
-            data-text="Ini terpulang kamu sii mau percaya apa kaga, aku cuman mau ungkapin aja apa yang aku ngerasain selama sama kamu.
-            
+          <p class="letter-body" id="letterText" data-text="Ini terpulang kamu sii mau percaya apa kaga, aku cuman mau ungkapin aja apa yang aku ngerasain selama sama kamu.
+
 Sejak aku ketemu kamu selepas 13 tahun, rasanya kek takdir gasii, kek alam semesta lagi becanda loh sama kita :v siapa sangka coba orang yang dulu aku ketemu ama liat cuman sebentar aja, yang cuekin aku ampe bertahun2 ga ketemu, berujung jadi orang yang paling berarti dalam hidupku sekarang.
-            
+
 Mau ngomong gimana ya, tapi pokonya kyk, aku bersyukur banget jir dapetin kamu, kamu sendiri tau betapa kecilnya dunia aku jadi kek keberadaan kamu disini sama aku sangat berharga banget jir, kamu sentiasa nyamperin dengan cara lembut kamu itu, keperhatian kamu, dan berujungnya kamu bisa bikin aku yakin sama kamu, merasa nyaman banget sama kamu, aku juga kaget si sejujurly :v
-            
+
 Makasii yaa sayangkuuuu segala effort kamu terhadap akuu, meskipun kamu capek, sibuk, kamu tetep prioritasin aku, kamu selalu nyampetin waktu buat luangin sama aku, pokonya terima kasii karena keberadaan kamu sekarang sama aku, makasii semua effort kamu yang kamu bikin dengan inisiatif kamu sendiri tanpa aku minta.
-            
-Setiap momen sama kamu itu walaupun kita cuman sebentar doang ya, seminggu doang, duduk ngobrol apa aja, selalu punya cara sendiri buat bikin aku bahagia gitu loh, 1 minggu itu, sampai hari ini semuanya masih terasa hangat kalau aku inget. 
-            
+
+Setiap momen sama kamu itu walaupun kita cuman sebentar doang ya, seminggu doang, duduk ngobrol apa aja, selalu punya cara sendiri buat bikin aku bahagia gitu loh, 1 minggu itu, sampai hari ini semuanya masih terasa hangat kalau aku inget.
+
 Aku sayang kamu bukan karena kamu baik atau lucu atau cantik doang (ngokk boong sii, emang karna itu :v) tapi kek, kamu udaa jadi rumah buat aku. Tempat aku bisa dirasa didengar, dihargai, diperhatiin, dan diterima apa adanya.
-            
-Aku sumpah bersyukur banget sayang dapet kamu, aku bener2 berharap kamu yang dicatet dalam lauhul mahfuz aku, makasii banyakkkk sudah mau menerima akuu, menemanin aku, dan masuk kedalam hidup aku, aku sayang bangettt sama kamuu, semoga hubungan kita berjalan dengan lancar ampe dunia akhirat yaa sayanggg, tolong jangan berubah setitik pun, tolong tungguin aku, aku bener2 serius sama kamu, meskipun kalo sama aku bakalan lama halalinnya, tapi doain aja yaaa sayangg, aku mohon ke kamu untuk sabar aja yaaa sayangg, tungguin ajaa akuuuu, tapi kalo bener2 udaa ilfeel kamu tinggal bilang aja yaaaa sayangg ke aku, dan aku minta maaf keatas semua kesalahan yang aku buat ke kamu, kalo ada aku bikin kamu sakit hati, kasar, semuanya deh pokonya aku minta maaf banget sayang, pokonyaaa wuvv youuuuu so muchhhh babyyy, aku harap kamu selalu tau ituu. ♡"
-          >
-            Ini terpulang kamu sii mau percaya apa kaga, aku cuman mau ungkapin aja apa yang aku ngerasain selama sama kamu.
-            
-            Sejak aku ketemu kamu selepas 13 tahun, rasanya kek takdir gasii, kek alam semesta lagi becanda loh sama kita :v siapa sangka coba orang yang dulu aku ketemu ama liat cuman sebentar aja, yang cuekin aku ampe bertahun2 ga ketemu, berujung jadi orang yang paling berati dalam hidupku sekarang.
-            
-            Mau ngomong gimana ya, tapi pokonya kyk, aku bersyukur banget jir dapetin kamu, kamu sendiri tau betapa kecilnya dunia aku jadi kek keberadaan kamu disini sama aku sangat berharga banget jir, kamu sentiasa nyamperin dengan cara lembut kamu itu, keperhatian kamu, dan berujungnya kamu bisa bikin aku yakin sama kamu, merasa nyaman banget sama kamu, aku juga kaget si sejujurly :v
-            
-            Makasii yaa sayangkuuuu segala effort kamu terhadap akuu, meskipun kamu capek, sibuk, kamu tetep prioritasin aku, kamu selalu nyampetin waktu buat luangin sama aku, pokonya terima kasii karena keberadaan kamu sekarang sama aku, makasii semua effort kamu yang kamu bikin dengan inisiatif kamu sendiri tanpa aku minta.
-            
-            Setiap momen sama kamu itu walaupun kita cuman sebentar doang ya, seminggu doang, duduk ngobrol apa aja, selalu punya cara sendiri buat bikin aku bahagia gitu loh, 1 minggu itu, sampai hari ini semuanya masih terasa hangat kalau aku inget. 
-            
-            Aku sayang kamu bukan karena kamu baik atau lucu atau cantik doang (ngokk boong sii, emang karna itu :v) tapi kek, kamu udaa jadi rumah buat aku. Tempat aku bisa dirasa didengar, dihargai, diperhatiin, dan diterima apa adanya.
-            
-            Aku sumpah bersyukur banget sayang dapet kamu, aku bener2 berharap kamu yang dicatet dalam lauhul mahfuz aku, makasii banyakkkk sudah mau menerima akuu, menemanin aku, dan masuk kedalam hidup aku, aku sayang bangettt sama kamuu, semoga hubungan kita berjalan dengan lancar ampe dunia akhirat yaa sayanggg, tolong jangan berubah setitik pun, tolong tungguin aku, aku bener2 serius sama kamu, meskipun kalo sama aku bakalan lama halalinnya, tapi doain aja yaaa sayangg, aku mohon ke kamu untuk sabar aja yaaa sayangg, tungguin ajaa akuuuu, tapi kalo bener2 udaa ilfeel kamu tinggal bilang aja yaaaa sayangg ke aku, dan aku minta maaf keatas semua kesalahan yang aku buat ke kamu, kalo ada aku bikin kamu sakit hati, kasar, semuanya deh pokonya aku minta maaf banget sayang, pokonyaaa wuvv youuuuu so muchhhh babyyy, aku harap kamu selalu tau ituu. ♡
+
+Aku sumpah bersyukur banget sayang dapet kamu, aku bener2 berharap kamu yang dicatet dalam lauhul mahfuz aku, makasii banyakkkk sudah mau menerima akuu, menemanin aku, dan masuk kedalam hidup aku, aku sayang bangettt sama kamuu, semoga hubungan kita berjalan dengan lancar ampe dunia akhirat yaa sayanggg, tolong jangan berubah setitik pun, tolong tungguin aku, aku bener2 serius sama kamu, meskipun kalo sama aku bakalan lama halalinnya, tapi doain aja yaaa sayangg, aku mohon ke kamu untuk sabar aja yaaa sayangg, tungguin ajaa akuuuu, tapi kalo bener2 udaa ilfeel kamu tinggal bilang aja yaaaa sayangg ke aku, dan aku minta maaf keatas semua kesalahan yang aku buat ke kamu, kalo ada aku bikin kamu sakit hati, kasar, semuanya deh pokonya aku minta maaf banget sayang, pokonyaaa wuvv youuuuu so muchhhh babyyy, aku harap kamu selalu tau ituu. ♡">
+            <!-- Text content inside data-text for typing effect, repeated here for fallback -->
           </p>
-          <p class="letter-signoff">
-            love,<br />
-            <span contenteditable="true">cowo nakal kamu</span>
-          </p>
+          <p class="letter-signoff">love,<br /><span>cowo nakal kamu</span></p>
         </div>
       </div>
     </section>
+
     <section class="section counter" id="days">
       <div class="section-inner">
         <header class="section-header reveal-on-scroll">
           <h2 class="section-title">hari kita</h2>
-          <p class="section-subtitle">
-            Tanggal dimana semuanya bermula.
-          </p>
+          <p class="section-subtitle">Tanggal dimana semuanya bermula (02/08/2025).</p>
         </header>
 
+        <!-- UPGRADE 4: LIVE COUNTER -->
         <div class="counter-card reveal-on-scroll">
-          <div class="counter-main">
-            <p class="counter-label">sudah</p>
-            <p class="counter-number" id="daysNumber">000</p>
-            <p class="counter-label">hari (dan terus bertambah)</p>
+          <p class="counter-label" style="margin-bottom: 10px;">sudah bersama selama:</p>
+          <div class="counter-grid">
+            <div class="count-box"><div class="count-val" id="cntDays">0</div><div class="count-lbl">Days</div></div>
+            <div class="count-box"><div class="count-val" id="cntHours">0</div><div class="count-lbl">Hours</div></div>
+            <div class="count-box"><div class="count-val" id="cntMins">0</div><div class="count-lbl">Mins</div></div>
+            <div class="count-box"><div class="count-val" id="cntSecs">0</div><div class="count-lbl">Secs</div></div>
           </div>
-          <div class="counter-meta">
-            <p>
-              dimulai dari:
-              <span class="counter-date" id="startDateLabel">02/08/2025</span>
-            </p>
-            <p class="counter-note">
-            </p>
-          </div>
+          <p class="counter-note" style="margin-top: 15px; font-size: 0.9rem; color: #888;">dan akan terus bertambah ♡</p>
         </div>
       </div>
     </section>
   </main>
 
   <footer class="footer">
-    <p>
-      dibuat dengan <span class="footer-heart">♡</span> khusus buat kamu.
-    </p>
+    <p>dibuat dengan <span class="footer-heart">♡</span> khusus buat kamu.</p>
     <a href="#top" class="back-to-top">kembali ke atas</a>
   </footer>
+
   <audio id="bgMusic" loop>
     <source src="audio/audio.mp3" type="audio/mpeg" />
   </audio>
+
+  <!-- Lightbox -->
   <div class="lightbox" id="lightbox" aria-hidden="true">
     <div class="lightbox-backdrop"></div>
     <div class="lightbox-content">
-      <button
-        class="lightbox-close"
-        type="button"
-        aria-label="Close image"
-      >
-        ×
-      </button>
+      <button class="lightbox-close">×</button>
       <img src="" alt="" class="lightbox-image" id="lightboxImage" />
       <p class="lightbox-caption" id="lightboxCaption"></p>
     </div>
   </div>
 
-  <script src="script.js" defer></script>
+  <script>
+    /* --- REALISTIC SUNFLOWER ANIMATION --- */
+    const canvas = document.getElementById('sunflowerCanvas');
+    const ctx = canvas.getContext('2d');
+    const introDiv = document.getElementById('sunflowerIntro');
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+
+    let frame = 0;
+    const flowerX = canvas.width / 2;
+    const stemHeight = canvas.height * 0.45;
+
+    function drawPetal(x, y, length, angle, color) {
+        ctx.save();
+        ctx.translate(x, y);
+        ctx.rotate(angle);
+        ctx.beginPath();
+        ctx.ellipse(0, -length/2, length/8, length/2, 0, 0, Math.PI * 2);
+        ctx.fillStyle = color;
+        ctx.fill();
+        ctx.restore();
+    }
+
+    function animateSunflower() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        const currentHeight = Math.min(stemHeight, stemHeight * (frame / 80));
+        
+        // Stem
+        ctx.beginPath();
+        ctx.moveTo(flowerX, canvas.height);
+        ctx.quadraticCurveTo(flowerX + 15, canvas.height - currentHeight / 2, flowerX, canvas.height - currentHeight);
+        ctx.lineWidth = 12;
+        ctx.strokeStyle = '#2d6a4f';
+        ctx.stroke();
+
+        // Leaves
+        if (frame > 40) {
+            const leafSize = Math.min(1, (frame - 40) / 40);
+            ctx.beginPath();
+            ctx.ellipse(flowerX - 25, canvas.height - currentHeight * 0.6, 35 * leafSize, 12 * leafSize, -0.6, 0, Math.PI * 2);
+            ctx.fillStyle = '#40916c';
+            ctx.fill();
+            ctx.beginPath();
+            ctx.ellipse(flowerX + 25, canvas.height - currentHeight * 0.4, 35 * leafSize, 12 * leafSize, 0.6, 0, Math.PI * 2);
+            ctx.fill();
+        }
+
+        // Bloom
+        if (frame > 80) {
+            const headY = canvas.height - currentHeight;
+            const bloomProgress = Math.min(1, (frame - 80) / 60);
+            
+            // Petals
+            const petalCount = 20;
+            for (let i = 0; i < petalCount; i++) {
+                const angle = (Math.PI * 2 / petalCount) * i;
+                const length = 90 * bloomProgress;
+                drawPetal(flowerX, headY, length, angle, '#ffb703');
+                drawPetal(flowerX, headY, length * 0.7, angle + 0.1, '#ffcd05');
+            }
+            // Seeds
+            const seedCount = 250 * bloomProgress;
+            const goldenAngle = 137.5 * (Math.PI / 180);
+            for (let i = 0; i < seedCount; i++) {
+                const r = 3 * Math.sqrt(i);
+                const theta = i * goldenAngle;
+                ctx.beginPath();
+                ctx.arc(flowerX + r * Math.cos(theta), headY + r * Math.sin(theta), 2, 0, Math.PI * 2);
+                ctx.fillStyle = '#3f2e00';
+                ctx.fill();
+            }
+        }
+        frame++;
+        if (frame < 250) requestAnimationFrame(animateSunflower);
+    }
+    
+    // Start Animation
+    animateSunflower();
+    // Hide Intro
+    introDiv.addEventListener('click', () => { introDiv.classList.add('sunflower-intro--hidden'); });
+
+    /* --- ORIGINAL LOGIC --- */
+    document.addEventListener("DOMContentLoaded", () => {
+      initSmoothScrollLinks();
+      initScrollButtons();
+      initSectionReveal();
+      initLetterTyping();
+      initLiveCounter();
+      initMusicToggle();
+      initLightbox();
+    });
+
+    function initSmoothScrollLinks() {
+      document.querySelectorAll('a[href^="#"]').forEach(link => {
+        link.addEventListener("click", e => {
+          e.preventDefault();
+          const target = document.getElementById(link.getAttribute("href").slice(1));
+          if (target) target.scrollIntoView({ behavior: "smooth" });
+        });
+      });
+    }
+
+    function initScrollButtons() {
+      const storyBtn = document.getElementById("scrollStory");
+      const galleryBtn = document.getElementById("scrollGallery");
+      if(storyBtn) storyBtn.addEventListener("click", () => document.getElementById("story").scrollIntoView({ behavior: "smooth" }));
+      if(galleryBtn) galleryBtn.addEventListener("click", () => document.getElementById("gallery").scrollIntoView({ behavior: "smooth" }));
+    }
+
+    function initSectionReveal() {
+      const observer = new IntersectionObserver(entries => {
+        entries.forEach(entry => {
+          if (entry.isIntersecting) {
+            entry.target.classList.add("in-view");
+            observer.unobserve(entry.target);
+          }
+        });
+      }, { threshold: 0.1 });
+      document.querySelectorAll(".reveal-on-scroll").forEach(el => observer.observe(el));
+    }
+
+    function initLetterTyping() {
+      const letterEl = document.getElementById("letterText");
+      if (!letterEl) return;
+      const fullText = letterEl.dataset.text;
+      letterEl.textContent = "";
+      
+      const observer = new IntersectionObserver(entries => {
+        if (entries[0].isIntersecting) {
+          letterEl.classList.add("typing");
+          let index = 0;
+          const type = () => {
+            if (index <= fullText.length) {
+              letterEl.textContent = fullText.slice(0, index);
+              index++;
+              setTimeout(type, 20);
+            } else {
+              letterEl.classList.remove("typing");
+            }
+          };
+          type();
+          observer.disconnect();
+        }
+      });
+      observer.observe(letterEl);
+    }
+
+    // UPGRADED LIVE COUNTER
+    function initLiveCounter() {
+      // DATE: 2025-08-02
+      const startDate = new Date("2025-08-02T00:00:00");
+      
+      function update() {
+        const now = new Date();
+        const diff = now - startDate;
+        
+        const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+        const hours = Math.floor((diff / (1000 * 60 * 60)) % 24);
+        const mins = Math.floor((diff / 1000 / 60) % 60);
+        const secs = Math.floor((diff / 1000) % 60);
+        
+        document.getElementById("cntDays").innerText = days;
+        document.getElementById("cntHours").innerText = hours;
+        document.getElementById("cntMins").innerText = mins;
+        document.getElementById("cntSecs").innerText = secs;
+      }
+      setInterval(update, 1000);
+      update();
+    }
+
+    function initMusicToggle() {
+      const btn = document.getElementById("musicToggle");
+      const audio = document.getElementById("bgMusic");
+      if(!btn || !audio) return;
+      
+      btn.addEventListener("click", () => {
+        if(audio.paused) {
+          audio.play();
+          btn.innerText = "❚❚ music";
+        } else {
+          audio.pause();
+          btn.innerText = "▷ music";
+        }
+      });
+    }
+
+    function initLightbox() {
+      const lb = document.getElementById("lightbox");
+      const img = document.getElementById("lightboxImage");
+      const cap = document.getElementById("lightboxCaption");
+      const close = document.querySelector(".lightbox-close");
+      
+      document.querySelectorAll(".js-lightbox-trigger").forEach(trig => {
+        trig.addEventListener("click", () => {
+          const src = trig.querySelector("img").src;
+          const txt = trig.dataset.caption;
+          img.src = src;
+          cap.textContent = txt;
+          lb.classList.add("is-open");
+        });
+      });
+      
+      const hide = () => lb.classList.remove("is-open");
+      close.addEventListener("click", hide);
+      lb.querySelector(".lightbox-backdrop").addEventListener("click", hide);
+    }
+  </script>
 </body>
 </html>

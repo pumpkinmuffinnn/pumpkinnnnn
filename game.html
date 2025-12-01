@@ -1,0 +1,636 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>For You ❤️</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Pacifico&family=Quicksand:wght@400;600&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Quicksand', sans-serif;
+            overflow: hidden;
+            background-color: #fdf2f8;
+            touch-action: manipulation;
+        }
+
+        /* --- LILY ANIMATION STYLES (unchanged) --- */
+        #intro-layer {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: #1a1a1a;
+            z-index: 50;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            transition: opacity 1s ease;
+        }
+
+        .flower-container {
+            position: relative;
+            width: 200px;
+            height: 400px;
+            display: flex;
+            justify-content: center;
+            align-items: flex-end;
+        }
+
+        .stem {
+            width: 4px;
+            background: #4ade80;
+            height: 0;
+            border-radius: 4px;
+            animation: growStem 2.5s ease-out forwards;
+            position: absolute;
+            bottom: 0;
+        }
+
+        .petals-wrapper {
+            position: absolute;
+            bottom: 250px;
+            opacity: 0;
+            transform: scale(0);
+            animation: bloomFlower 1.5s ease-out forwards;
+            animation-delay: 2.5s;
+        }
+
+        .petal {
+            width: 50px;
+            height: 90px;
+            background: radial-gradient(circle at 50% 0%, #ffffff, #fbcfe8);
+            border-radius: 50% 50% 10% 10%;
+            position: absolute;
+            bottom: 0;
+            left: -25px;
+            transform-origin: bottom center;
+            box-shadow: 0 0 10px rgba(255,255,255,0.5);
+        }
+
+        .petal.center { z-index: 3; transform: rotate(0deg); }
+        .petal.left   { z-index: 2; animation: openLeft 2s ease-out forwards 2.6s; }
+        .petal.right  { z-index: 2; animation: openRight 2s ease-out forwards 2.6s; }
+        .petal.back-l { z-index: 1; width: 40px; height: 80px; background: #f9a8d4; left: -20px; animation: openBackLeft 2s ease-out forwards 2.7s; }
+        .petal.back-r { z-index: 1; width: 40px; height: 80px; background: #f9a8d4; left: -20px; animation: openBackRight 2s ease-out forwards 2.7s; }
+
+        .leaf {
+            width: 30px;
+            height: 15px;
+            background: #4ade80;
+            border-radius: 0 50% 0 50%;
+            position: absolute;
+            opacity: 0;
+        }
+        .leaf.one { bottom: 100px; left: 2px; transform: rotate(-45deg); animation: showLeaf 1s forwards 1.5s; }
+        .leaf.two { bottom: 150px; right: 2px; transform: rotate(135deg) scaleX(-1); animation: showLeaf 1s forwards 2s; }
+
+        @keyframes growStem { to { height: 250px; } }
+        @keyframes bloomFlower { to { opacity: 1; transform: scale(1); } }
+        @keyframes openLeft { to { transform: rotate(-35deg) translate(-10px, 5px); } }
+        @keyframes openRight { to { transform: rotate(35deg) translate(10px, 5px); } }
+        @keyframes openBackLeft { to { transform: rotate(-60deg) translate(-15px, 10px); } }
+        @keyframes openBackRight { to { transform: rotate(60deg) translate(15px, 10px); } }
+        @keyframes showLeaf { to { opacity: 1; } }
+
+        .tap-instruction {
+            margin-top: 40px;
+            color: #fff;
+            opacity: 0;
+            animation: fadeIn 1s forwards 5s;
+        }
+
+        /* --- GAME LAYER STYLES --- */
+        #game-layer {
+            display: none;
+            height: 100vh;
+            flex-direction: column;
+            align-items: center;
+            justify-content: space-between;
+            padding: 20px;
+            position: relative;
+            background: linear-gradient(180deg, #fce7f3 0%, #fbcfe8 100%);
+            overflow: hidden;
+        }
+
+        /* --- NEW ANIMATION SYSTEM FOR BODIES --- */
+        
+        /* The Container for the whole character */
+        .character-container {
+            position: absolute;
+            bottom: 25%;
+            width: 80px;
+            height: 140px;
+            z-index: 20;
+            /* Added transform to transition for smooth tilting */
+            transition: left 0.5s ease-out, right 0.5s ease-out, transform 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        /* Running Bob Animation (The whole body bounces) */
+        @keyframes run-bob {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-8px); }
+        }
+        .running {
+            animation: run-bob 0.3s infinite;
+        }
+
+        /* The Head (User Photo) */
+        .head-wrapper {
+            width: 70px;
+            height: 70px;
+            position: absolute;
+            top: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 5;
+            background-color: white;
+            border-radius: 50%;
+            border: 3px solid white;
+            overflow: hidden;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        .head-wrapper img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        /* The Body (Torso) */
+        .torso {
+            width: 34px;
+            height: 45px;
+            position: absolute;
+            top: 65px; /* Just below head */
+            left: 50%;
+            transform: translateX(-50%);
+            border-radius: 10px;
+            z-index: 3;
+        }
+
+        /* Limbs (Arms & Legs) - Generic shapes */
+        .limb {
+            width: 10px;
+            height: 35px;
+            position: absolute;
+            border-radius: 10px;
+            transform-origin: top center; /* Swing from top */
+            transition: transform 0.5s ease; /* Smooth arm movement for hug */
+        }
+
+        /* Running Bob Animation (The whole body bounces) */
+        @keyframes run-bob {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-8px); }
+        }
+        .running {
+            animation: run-bob 0.3s infinite;
+        }
+
+        /* The Head (User Photo) */
+        .head-wrapper {
+            width: 70px;
+            height: 70px;
+            position: absolute;
+            top: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 5;
+            background-color: white;
+            border-radius: 50%;
+            border: 3px solid white;
+            overflow: hidden;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        .head-wrapper img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        /* The Body (Torso) */
+        .torso {
+            width: 34px;
+            height: 45px;
+            position: absolute;
+            top: 65px; /* Just below head */
+            left: 50%;
+            transform: translateX(-50%);
+            border-radius: 10px;
+            z-index: 3;
+        }
+
+        /* Limbs (Arms & Legs) - Generic shapes */
+        .limb {
+            width: 10px;
+            height: 35px;
+            position: absolute;
+            border-radius: 10px;
+            transform-origin: top center; /* Swing from top */
+        }
+
+        /* Specific Limb Positioning */
+        .arm { top: 70px; z-index: 4; }
+        .arm.left { left: 15px; }
+        .arm.right { right: 15px; }
+
+        .leg { top: 105px; z-index: 2; height: 40px; }
+        .leg.left { left: 25px; }
+        .leg.right { right: 25px; }
+
+        /* Limb Animations */
+        @keyframes swing-left {
+            0% { transform: rotate(30deg); }
+            50% { transform: rotate(-30deg); }
+            100% { transform: rotate(30deg); }
+        }
+        @keyframes swing-right {
+            0% { transform: rotate(-30deg); }
+            50% { transform: rotate(30deg); }
+            100% { transform: rotate(-30deg); }
+        }
+
+        /* Apply animations when "running" class is active */
+        .running .arm.left { animation: swing-left 0.6s infinite linear; }
+        .running .arm.right { animation: swing-right 0.6s infinite linear; }
+        .running .leg.left { animation: swing-right 0.6s infinite linear; } /* Opposite to arm */
+        .running .leg.right { animation: swing-left 0.6s infinite linear; }
+
+        /* --- CHARACTER CUSTOMIZATION --- */
+        
+        /* BOY (You/Left) */
+        #char-me { left: 5%; }
+        #char-me .torso { background-color: #3b82f6; }   /* Blue Shirt */
+        #char-me .limb { background-color: #bfdbfe; }     /* Skin/Light Blue */
+        #char-me .leg { background-color: #1f2937; }      /* Dark Pants */
+        
+        /* GIRL (Me/Right) */
+        #char-girl { right: 5%; transform: scaleX(-1); } /* Flip to face left */
+        #char-girl .head-wrapper { transform: translateX(-50%) scaleX(-1); } /* Unflip head so face isn't backwards */
+        #char-girl .torso { background-color: #f472b6; } /* Pink Shirt */
+        #char-girl .limb { background-color: #fbcfe8; }   /* Skin/Light Pink */
+        #char-girl .leg { background-color: #4b5563; }    /* Pants/Leggings */
+
+        .track {
+            width: 100%;
+            height: 4px;
+            background: rgba(255, 255, 255, 0.6);
+            border-radius: 2px;
+            position: absolute;
+            bottom: 25%;
+            z-index: 0;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        /* Falling Petals Background */
+        .falling-petal {
+            position: absolute;
+            background: #ffb7b2;
+            opacity: 0.8;
+            border-radius: 100% 0 100% 0;
+            animation: fall linear infinite;
+        }
+
+        @keyframes fall {
+            0% { transform: translate(0, -10px) rotate(0deg); opacity: 1; }
+            100% { transform: translate(100px, 100vh) rotate(360deg); opacity: 0; }
+        }
+
+        /* UI Elements */
+        .text-shadow-pink { text-shadow: 2px 2px 0px #f9a8d4; }
+        
+        .pulse-btn { animation: pulse-heart 1.5s infinite; }
+        @keyframes pulse-heart {
+            0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(236, 72, 153, 0.7); }
+            70% { transform: scale(1.05); box-shadow: 0 0 0 10px rgba(236, 72, 153, 0); }
+            100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(236, 72, 153, 0); }
+        }
+
+        /* Messages */
+        .bubble {
+            position: absolute;
+            background: white;
+            color: #ec4899;
+            padding: 6px 12px;
+            border-radius: 15px;
+            font-weight: bold;
+            font-size: 14px;
+            top: -30px;
+            left: 50%;
+            transform: translateX(-50%);
+            white-space: nowrap;
+            opacity: 0;
+            transition: opacity 0.3s;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            border: 2px solid #fbcfe8;
+            z-index: 30;
+        }
+        .show-bubble { opacity: 1; }
+
+        .heart-particle {
+            position: absolute;
+            font-size: 24px;
+            pointer-events: none;
+            animation: floatUp 1s ease-out forwards;
+            z-index: 20;
+        }
+        @keyframes floatUp {
+            0% { transform: translateY(0) scale(1); opacity: 1; }
+            100% { transform: translateY(-120px) scale(1.5); opacity: 0; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- LAYER 1: BLOOMING LILY -->
+    <div id="intro-layer" onclick="finishIntro()">
+        <div class="flower-container">
+            <div class="stem"></div>
+            <div class="leaf one"></div>
+            <div class="leaf two"></div>
+            <div class="petals-wrapper">
+                <div class="petal back-l"></div>
+                <div class="petal back-r"></div>
+                <div class="petal left"></div>
+                <div class="petal right"></div>
+                <div class="petal center"></div>
+            </div>
+        </div>
+        <div class="tap-instruction text-center">
+            <h1 class="text-2xl font-pacifico mb-2">Hello, Love</h1>
+            <p class="text-sm font-light">My love for you grows every day.</p>
+            <p class="mt-4 text-xs uppercase tracking-widest text-gray-400 animate-bounce">(Tap to begin)</p>
+        </div>
+    </div>
+
+    <!-- LAYER 2: THE GAME -->
+    <div id="game-layer">
+        
+        <!-- Background Falling Petals Container -->
+        <div id="bg-petals" class="absolute inset-0 pointer-events-none overflow-hidden"></div>
+
+        <div class="mt-12 text-center game-content z-20">
+            <h2 id="status-text" class="text-4xl font-bold text-pink-500 font-pacifico text-shadow-pink">PELUKAN YUKKKK!</h2>
+            <p id="sub-text" class="text-pink-400 text-sm mt-2 font-semibold">Pencet lopnyaaaa cayanggg</p>
+        </div>
+
+        <div class="w-full relative h-64 game-content">
+            <div class="track"></div>
+            
+            <!-- 
+                 IMPORTANT: 
+                 Ensure the image files (WhatsApp Image....jpg) are in the SAME FOLDER 
+                 as this HTML file for them to show up! 
+            -->
+
+            <!-- HIS CHARACTER (Left) -->
+            <div id="char-me" class="character-container running">
+                <div class="bubble">Siniiiii!</div>
+                <div class="head-wrapper">
+                    <!-- Updated with his filename -->
+                    <img src="hugimages/boy.jpg" alt="His Face">
+                </div>
+                <div class="torso"></div>
+                <div class="limb arm left"></div>
+                <div class="limb arm right"></div>
+                <div class="limb leg left"></div>
+                <div class="limb leg right"></div>
+            </div>
+
+            <!-- HER CHARACTER (Right) -->
+            <div id="char-girl" class="character-container running">
+                <div class="bubble">Nungguin nihhh</div>
+                <div class="head-wrapper">
+                    <!-- Updated with her filename -->
+                    <img src="hugimages/girl.jpg" alt="Her Face">
+                </div>
+                <div class="torso"></div>
+                <div class="limb arm left"></div>
+                <div class="limb arm right"></div>
+                <div class="limb leg left"></div>
+                <div class="limb leg right"></div>
+            </div>
+
+        </div>
+
+        <div class="mb-16 flex flex-col items-center game-content z-20">
+            <button id="step-btn" onclick="takeStep()" class="pulse-btn bg-pink-500 active:bg-pink-600 text-white rounded-full w-24 h-24 text-4xl shadow-xl border-4 border-pink-200 flex items-center justify-center transition-all select-none hover:scale-105">
+                ❤️
+            </button>
+            <button id="reset-btn" onclick="resetGame()" class="hidden mt-6 text-pink-400 font-bold text-sm hover:text-pink-600 transition-colors">Peluk lagi?</button>
+        </div>
+
+    </div>
+
+    <div id="particles" class="fixed inset-0 pointer-events-none z-50"></div>
+
+    <script>
+        // --- LOGIC ---
+
+        const introLayer = document.getElementById('intro-layer');
+        const gameLayer = document.getElementById('game-layer');
+        const charGirl = document.getElementById('char-girl');
+        const charMe = document.getElementById('char-me');
+        const stepBtn = document.getElementById('step-btn');
+        const statusText = document.getElementById('status-text');
+        const subText = document.getElementById('sub-text');
+        const resetBtn = document.getElementById('reset-btn');
+        const bgPetals = document.getElementById('bg-petals');
+
+        let posYou = 5;
+        let posMe = 5; 
+        let isGameWon = false;
+
+        const messages = ["KANGENNNN", "COMING BABYYY", "DIKIT LAGIII", "LOVE YOU SAYANGGG", "AKU DATANGGG", "JANGAN KEMANA2", "❤️"];
+
+        // 1. Intro Transition
+        function finishIntro() {
+            setTimeout(() => {
+                introLayer.style.opacity = '0';
+                setTimeout(() => {
+                    introLayer.style.display = 'none';
+                    gameLayer.style.display = 'flex';
+                    startFallingPetals();
+                }, 1000);
+            }, 500);
+        }
+
+        // 2. Game Logic
+        function takeStep() {
+            if (isGameWon) return;
+
+            const currentGap = 100 - posYou - posMe - 15; // Adjusted for character width
+
+            if (currentGap <= 5) { // Slightly larger trigger zone for smoother end
+                winGame();
+            } else {
+                // Move logic
+                const stepSize = 3 + Math.random() * 2; 
+                posYou += stepSize;
+                // Move Male Character (Primary)
+                charMe.style.left = posYou + '%';
+
+                if (currentGap < 40) {
+                    posMe += 1.5;
+                    // Move Female Character (Secondary)
+                    charGirl.style.right = posMe + '%';
+                }
+
+                // Interaction on Male Character
+                spawnHeart(charMe);
+                showBubble(charMe);
+                
+                // Button effect
+                stepBtn.style.transform = `scale(0.9)`;
+                setTimeout(() => stepBtn.style.transform = 'scale(1)', 100);
+            }
+        }
+
+        function winGame() {
+            isGameWon = true;
+            
+            // 1. Force positions to CENTER with OVERLAP
+            // Using calc to ensure they touch regardless of screen size
+            // -30px creates a nice intimate overlap
+            // Male goes to center from left
+            charMe.style.left = 'calc(50% - 35px)'; 
+            // Female goes to center from right
+            charGirl.style.right = 'calc(50% - 35px)';
+            
+            // 2. Stop running animation immediately
+            charGirl.classList.remove('running');
+            charMe.classList.remove('running');
+            
+            // 3. Bring Female to front so her arms wrap around Him (or vice versa)
+            // Let's keep the original logic where the one on the right (now female) is in front
+            charGirl.style.zIndex = 25; 
+
+            setTimeout(() => {
+                // --- THE HUG POSE ---
+                
+                // Male: Tilts back slightly (looking up at her)
+                // We use rotate(15deg) because he is on the left
+                charMe.style.transform = "scale(1.1) rotate(15deg)";
+                
+                // Female: Tilts forward (leaning in)
+                // Since she is flipped (scaleX(-1)), rotate(15deg) makes her lean towards him
+                charGirl.style.transform = "scaleX(-1) scale(1.1) rotate(15deg)";
+                
+                // --- ARM POSITIONS ---
+                
+                // Male's Arms: Reach UP (Around Neck)
+                // -110deg rotates them up and forward
+                const boyArms = charMe.querySelectorAll('.arm');
+                boyArms.forEach(arm => {
+                    arm.style.transform = "rotate(-110deg)";
+                    arm.style.height = "40px"; // Stretch slightly to reach
+                });
+                
+                // Female's Arms: Reach STRAIGHT/DOWN (Around Waist)
+                // -70deg rotates them forward to grab
+                const girlArms = charGirl.querySelectorAll('.arm');
+                girlArms.forEach(arm => {
+                    arm.style.transform = "rotate(-70deg)";
+                    arm.style.height = "40px";
+                });
+
+            }, 100); // Tiny delay to let the slide finish slightly
+
+            // Explosion of hearts on Male
+            for(let i=0; i<50; i++) {
+                setTimeout(() => spawnHeart(charMe, true), i * 30);
+            }
+
+            statusText.innerText = "PELUKAN VIRTUAL DULU AJA YAAA!";
+            subText.innerText = "Sejauh mana pun kita, harus tetep kuat yaa sayang, bakalan tetep ada juga caranya :v";
+            stepBtn.innerText = "👩‍❤️‍👨";
+            stepBtn.classList.remove("pulse-btn");
+            stepBtn.disabled = true;
+            stepBtn.classList.add("opacity-50");
+            
+            setTimeout(() => resetBtn.classList.remove("hidden"), 1500);
+        }
+
+        function resetGame() {
+            isGameWon = false;
+            posYou = 5;
+            posMe = 5;
+            
+            // Reset positions
+            charMe.style.left = '5%';
+            charGirl.style.right = '5%';
+            
+            // Reset transforms
+            charMe.style.transform = "none";
+            charGirl.style.transform = "scaleX(-1)"; // Reset Girl Flip
+            
+            // Restart running animation
+            charGirl.classList.add('running');
+            charMe.classList.add('running');
+            
+            // Reset arms
+            const allArms = document.querySelectorAll('.arm');
+            allArms.forEach(arm => arm.style.transform = "");
+
+            statusText.innerText = "PELUKAN YUKKKKK";
+            subText.innerText = "Pencet lopnyaaaa";
+            stepBtn.innerText = "❤️";
+            stepBtn.disabled = false;
+            stepBtn.classList.remove("opacity-50");
+            stepBtn.classList.add("pulse-btn");
+            resetBtn.classList.add("hidden");
+        }
+
+        // --- UTILS ---
+
+        function spawnHeart(element, isBigExplosion = false) {
+            const heart = document.createElement('div');
+            heart.classList.add('heart-particle');
+            heart.innerText = ['❤️','💖','✨','🌸'][Math.floor(Math.random()*4)];
+            
+            const rect = element.getBoundingClientRect();
+            // Randomize near center of avatar
+            const randomX = (Math.random() - 0.5) * 40;
+            
+            heart.style.left = (rect.left + rect.width/2 + randomX) + 'px';
+            heart.style.top = (rect.top) + 'px';
+            
+            if (isBigExplosion) {
+                heart.style.fontSize = (20 + Math.random() * 30) + 'px';
+                heart.style.animationDuration = (1 + Math.random()) + 's';
+                const xDir = (Math.random() - 0.5) * 300;
+                heart.style.setProperty('--tw-translate-x', `${xDir}px`);
+            }
+
+            document.getElementById('particles').appendChild(heart);
+            setTimeout(() => heart.remove(), 1500);
+        }
+
+        function showBubble(avatar) {
+            const bubble = avatar.querySelector('.bubble');
+            if(bubble) {
+                bubble.innerText = messages[Math.floor(Math.random() * messages.length)];
+                bubble.classList.add('show-bubble');
+                setTimeout(() => bubble.classList.remove('show-bubble'), 800);
+            }
+        }
+
+        // Falling Petals Generator
+        function startFallingPetals() {
+            setInterval(() => {
+                const petal = document.createElement('div');
+                petal.classList.add('falling-petal');
+                petal.style.left = Math.random() * 100 + 'vw';
+                petal.style.width = (10 + Math.random() * 10) + 'px';
+                petal.style.height = (10 + Math.random() * 10) + 'px';
+                petal.style.animationDuration = (4 + Math.random() * 5) + 's';
+                bgPetals.appendChild(petal);
+                setTimeout(() => petal.remove(), 9000);
+            }, 300);
+        }
+
+    </script>
+</body>
+</html>
