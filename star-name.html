@@ -2,112 +2,489 @@
 <html lang="id">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Bintanggg</title>
-  <link rel="stylesheet" href="star-name.css">
+  <style>
+    /* --- CONFIG & VARIABLES --- */
+    :root {
+      --neon-white: #ffffff;
+      --neon-pink: #ff77ff;
+      --neon-purple: #bd00ff;
+      --glass-bg: rgba(255, 255, 255, 0.05);
+      --glass-border: rgba(255, 255, 255, 0.1);
+      --dark-bg: radial-gradient(circle at center, #1a0b2e 0%, #05020a 100%);
+    }
+
+    /* GENERAL */
+    body {
+      margin: 0;
+      padding: 0;
+      background: #000;
+      background-image: var(--dark-bg);
+      font-family: "Poppins", sans-serif;
+      overflow: hidden;
+      color: white;
+      height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      position: fixed; 
+      width: 100%;
+    }
+
+    /* --- CANVAS LAYERS --- */
+    #warp-canvas {
+      position: fixed;
+      inset: 0;
+      z-index: 0;
+      pointer-events: none;
+      opacity: 1;
+      transition: opacity 2s ease;
+    }
+
+    /* --- UTILS --- */
+    .hidden {
+      opacity: 0 !important;
+      pointer-events: none !important;
+      visibility: hidden !important;
+    }
+
+    /* --- THANK BUTTON --- */
+    .thank-wrapper {
+      position: fixed;
+      inset: 0;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      z-index: 10;
+      transition: opacity 1s ease;
+      padding: 20px;
+    }
+
+    .thank-btn {
+      background: rgba(20, 0, 40, 0.6);
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255, 255, 255, 0.3);
+      padding: 1.2rem 3rem;
+      border-radius: 999px;
+      font-size: 1.4rem;
+      font-weight: 500;
+      color: #fff;
+      cursor: pointer;
+      box-shadow: 
+        0 0 20px rgba(189, 0, 255, 0.4),
+        inset 0 0 20px rgba(189, 0, 255, 0.1);
+      opacity: 0;
+      transform: scale(0.9);
+      transition: all 0.5s ease;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      min-width: 200px; 
+      touch-action: manipulation;
+    }
+
+    .thank-btn.show {
+      opacity: 1;
+      transform: scale(1);
+    }
+
+    /* --- LETTER POPUP --- */
+    .letter-popup {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.6);
+      backdrop-filter: blur(8px);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 1.5rem;
+      z-index: 20;
+      transition: opacity 0.5s ease;
+    }
+
+    .letter-card {
+      background: linear-gradient(145deg, rgba(255,255,255,0.1), rgba(255,255,255,0.05));
+      padding: 2rem;
+      border-radius: 24px;
+      border: 1px solid var(--glass-border);
+      box-shadow: 0 20px 50px rgba(0,0,0,0.5);
+      max-width: 400px;
+      width: 100%;
+      text-align: center;
+      transform: translateY(20px);
+      animation: floatUp 0.6s ease forwards;
+      max-height: 80vh;
+      overflow-y: auto;
+    }
+
+    .letter-card h2 {
+      margin-top: 0;
+      font-family: 'Playfair Display', serif;
+      color: #e0ccff;
+      text-shadow: 0 0 10px rgba(224, 204, 255, 0.5);
+      font-size: 1.8rem;
+    }
+
+    .letter-card p {
+      line-height: 1.6;
+      color: #eee;
+      font-size: 0.95rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .note {
+      font-size: 0.8rem !important;
+      color: #aaa !important;
+      font-style: italic;
+    }
+
+    .tap-hint {
+      margin-top: 1rem;
+      font-size: 0.8rem;
+      text-transform: uppercase;
+      letter-spacing: 2px;
+      color: #bd00ff;
+      animation: pulse 2s infinite;
+      cursor: pointer;
+    }
+
+    @keyframes floatUp { to { transform: translateY(0); } }
+    @keyframes pulse { 0%, 100% { opacity: 0.5; } 50% { opacity: 1; } }
+
+    /* --- FINAL NAME SVG --- */
+    .name-container {
+      position: fixed;
+      inset: 0;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      z-index: 5;
+      /* Background removed so stars show through */
+      transition: opacity 1s ease;
+      padding: 10px;
+      pointer-events: none; 
+    }
+
+    svg {
+      width: 100%;
+      max-width: 900px;
+      height: auto;
+      overflow: visible;
+    }
+
+    path, circle {
+      fill: none;
+      stroke: #fff;
+      stroke-width: 4px;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      stroke-dasharray: 1000;
+      stroke-dashoffset: 1000;
+      filter: drop-shadow(0 0 2px #fff) 
+              drop-shadow(0 0 5px #bd00ff) 
+              drop-shadow(0 0 10px #bd00ff);
+    }
+
+    /* --- END BUTTONS (COSMIC STYLE) --- */
+    .end-buttons {
+      position: fixed;
+      bottom: 60px;
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 15px;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 1.5s ease;
+      z-index: 30;
+      padding: 0 20px;
+    }
+
+    .end-buttons.visible {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    .end-button {
+      text-decoration: none;
+      padding: 1rem 2rem;
+      border-radius: 50px;
+      font-size: 1rem;
+      font-weight: 500;
+      color: white;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      
+      /* Cosmic Gradient */
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      border: 1px solid rgba(255, 255, 255, 0.3);
+      
+      /* Glowing Shadow */
+      box-shadow: 0 0 15px rgba(118, 75, 162, 0.5), inset 0 0 10px rgba(255,255,255,0.1);
+      
+      transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+      white-space: nowrap;
+      text-align: center;
+      width: 100%;
+      max-width: 300px;
+    }
+
+    .end-button:hover {
+      transform: translateY(-3px) scale(1.02);
+      box-shadow: 0 0 25px rgba(118, 75, 162, 0.8), inset 0 0 15px rgba(255,255,255,0.2);
+      border-color: rgba(255,255,255,0.6);
+    }
+    
+    .end-button:active {
+        transform: translateY(1px);
+    }
+
+    .final-fade {
+      position: fixed; inset: 0; background: #000; opacity: 0; pointer-events: none; transition: opacity 2s ease; z-index: 25;
+    }
+    .final-fade.show { opacity: 1; }
+
+    @media (min-width: 600px) {
+      .end-buttons {
+        flex-direction: row;
+      }
+    }
+
+  </style>
 </head>
 
 <body>
 
-  <!-- ★ Floating stars background -->
-  <div id="floating-stars"></div>
+  <!-- 1. CANVAS WARP INTRO -->
+  <canvas id="warp-canvas"></canvas>
 
-  <!-- ★ Shooting stars -->
-  <div class="shooting-star s1"></div>
-  <div class="shooting-star s2"></div>
-
-  <!-- Warp animation -->
-  <div id="warp-screen" class="warp-screen"></div>
-
-  <!-- Sparkle sound -->
+  <!-- AUDIO -->
   <audio id="sparkle-sound" src="audio/glitter.mp3" preload="auto"></audio>
 
-  <!-- Thank you button -->
+  <!-- 2. THANK YOU BUTTON -->
   <div id="thank-wrapper" class="thank-wrapper hidden">
     <button id="thank-btn" class="thank-btn">Makaciwwww ✦</button>
   </div>
 
-  <!-- LETTER -->
+  <!-- 3. LETTER -->
   <div id="letter-popup" class="letter-popup hidden">
     <div class="letter-card">
       <h2>Untukmu</h2>
       <p>
         Makasii sayang udaa menjadi seseorang yang sangat berarti dalam hidupku babyyy, makasii buat semua yang kamu lakukan buat aku sayang, aku bersyukur bangettt bisa dapetin kamuu, jangan nakal2 yaaaa sayangg mentang2 kitanya lagi ldr, taun depan aku iketin kamu yaa sayanggg harap bersabarrrr. Pokonya makasii dah buat semuanya cintakuuuuu, wuvv you sooo muchhhh babyyy!!
       </p>
-      <p>
+      <p class="note">
         (nota : seharusnya ini panjang, cuman karna kamu buru2in jadi gini doang.)
       </p>
       <p class="tap-hint">tap untuk melanjutkan ✦</p>
     </div>
   </div>
 
-  <!-- FINAL NAME: Artika ♡ Dainel -->
+  <!-- 4. FINAL NAME ANIMATION -->
   <div id="final-container" class="name-container hidden">
-    <svg id="final-svg" viewBox="0 0 900 300">
-
-      <!-- A -->
-      <path d="M50 200 L80 80 L110 200" />
-      <path d="M62 150 L98 150" />
-
-      <!-- r -->
-      <path d="M140 150 L140 200" />
-      <path d="M140 150 L165 150" />
-
-      <!-- t -->
-      <path d="M195 120 L195 200" />
-      <path d="M175 120 L215 120" />
-
-      <!-- i -->
-      <path d="M245 150 L245 200" />
-      <circle cx="245" cy="135" r="5" />
-
-      <!-- k -->
-      <path d="M290 150 L290 200" />
-      <path d="M290 175 L320 150" />
-      <path d="M290 175 L320 200" />
-
-      <!-- a -->
-      <path d="M350 200 L350 150 L380 150 L380 200" />
-      <path d="M350 175 L380 175" />
+    <svg id="final-svg" viewBox="0 0 900 300" preserveAspectRatio="xMidYMid meet">
+      <!-- Artika -->
+      <path d="M 60 200 Q 90 60 120 200" />
+      <path d="M 75 150 Q 95 170 115 150" />
+      <path d="M 145 160 L 145 200 M 145 175 Q 165 150 170 170" />
+      <path d="M 195 130 L 195 190 Q 195 200 205 200" />
+      <path d="M 185 150 L 205 150" />
+      <path d="M 225 160 L 225 190 Q 225 200 235 200" />
+      <circle cx="225" cy="140" r="4" />
+      <path d="M 255 120 L 255 200" />
+      <path d="M 280 160 L 255 180 L 280 200" />
+      <path d="M 315 170 Q 295 160 295 185 Q 295 200 315 200 Q 325 200 325 170 L 325 200" />
 
       <!-- ♥ Heart -->
-      <path d="
-        M420 170
-        Q450 130 480 170
-        Q450 210 420 170
-      " />
+      <path d="M 480 230 C 420 180 410 130 450 130 C 470 130 480 150 480 150 C 480 150 490 130 510 130 C 550 130 540 180 480 230" 
+            style="stroke: #ff0055; filter: drop-shadow(0 0 10px #ff0055);" />
 
-      <!-- D -->
-      <path d="M530 200 L530 120" />
-      <path d="M530 120 L580 120 L580 200 L530 200" />
-
-      <!-- a -->
-      <path d="M610 200 L610 150 L640 150 L640 200" />
-      <path d="M610 175 L640 175" />
-
-      <!-- i -->
-      <path d="M670 150 L670 200" />
-      <circle cx="670" cy="135" r="5" />
-
-      <!-- n -->
-      <path d="M710 200 L710 150 L740 150 L740 200" />
-      <path d="M710 150 L740 200" />
-
-      <!-- e -->
-      <path d="M780 175 L820 175 L820 150 L780 150 L780 200 L820 200" />
-
-      <!-- l -->
-      <path d="M850 150 L850 200" />
-
+      <!-- Dainel -->
+      <path d="M 580 120 L 580 200" />
+      <path d="M 580 120 Q 640 160 580 200" />
+      <path d="M 670 170 Q 650 160 650 185 Q 650 200 670 200 Q 680 200 680 170 L 680 200" />
+      <path d="M 700 160 L 700 190 Q 700 200 710 200" />
+      <circle cx="700" cy="140" r="4" />
+      <path d="M 730 160 L 730 200 M 730 170 Q 755 150 755 180 L 755 200" />
+      <path d="M 770 180 L 790 180 Q 790 160 770 160 Q 760 160 760 180 Q 760 200 790 200" />
+      <path d="M 815 120 L 815 190 Q 815 200 825 200" />
     </svg>
   </div>
+
   <div id="final-fade" class="final-fade hidden"></div>
-  <!-- END BUTTONS -->
+
+  <!-- 5. END BUTTONS -->
   <div id="end-buttons" class="end-buttons hidden">
-    <a href="memory-garden.html" class="end-button">kembali ke halaman tadi ✦</a>
-    <a href="index.html" class="end-button end2">kembali ke halaman awal ✦</a>
+    <a href="index.html" class="end-button">kembali ke halaman awal ✦</a>
+    <a href="game.html" class="end-button">yukk mainnn ✦</a>
   </div>
 
-<script src="star-name.js"></script>
+  <script>
+    // --- CANVAS WARP ANIMATION ---
+    const canvas = document.getElementById('warp-canvas');
+    const ctx = canvas.getContext('2d');
+    let width, height;
+    let stars = [];
+    let speed = 20;
+
+    function resize() {
+      width = canvas.width = window.innerWidth;
+      height = canvas.height = window.innerHeight;
+    }
+    window.addEventListener('resize', resize);
+    resize();
+
+    class Star {
+      constructor() {
+        this.x = Math.random() * width - width / 2;
+        this.y = Math.random() * height - height / 2;
+        this.z = Math.random() * width;
+      }
+      update() {
+        this.z -= speed;
+        if (this.z <= 0) {
+          this.z = width;
+          this.x = Math.random() * width - width / 2;
+          this.y = Math.random() * height - height / 2;
+        }
+      }
+      draw() {
+        let x = (this.x / this.z) * width + width / 2;
+        let y = (this.y / this.z) * height + height / 2;
+        let radius = (1 - this.z / width) * 3;
+        
+        let prevZ = this.z + speed * 2;
+        let prevX = (this.x / prevZ) * width + width / 2;
+        let prevY = (this.y / prevZ) * height + height / 2;
+
+        ctx.beginPath();
+        ctx.moveTo(prevX, prevY);
+        ctx.lineTo(x, y);
+        ctx.strokeStyle = `rgba(200, 200, 255, ${1 - this.z / width})`;
+        ctx.lineWidth = radius;
+        ctx.stroke();
+      }
+    }
+
+    function initStars() {
+      for (let i = 0; i < 400; i++) {
+        stars.push(new Star());
+      }
+    }
+    initStars();
+
+    function animate() {
+      // Clear with slight transparency for trails, but keep it mostly transparent
+      // The CSS background handles the deep purple color
+      ctx.clearRect(0,0,width,height);
+      
+      stars.forEach(star => {
+        star.update();
+        star.draw();
+      });
+      requestAnimationFrame(animate);
+    }
+    animate();
+
+    // --- PAGE LOGIC ---
+    window.onload = () => {
+      const thankWrapper = document.getElementById("thank-wrapper");
+      const thankBtn = document.getElementById("thank-btn");
+      const sparkleSound = document.getElementById("sparkle-sound");
+      const letter = document.getElementById("letter-popup");
+      const finalCon = document.getElementById("final-container");
+      const finalSVG = document.querySelectorAll("#final-svg path, #final-svg circle");
+      const endButtons = document.getElementById("end-buttons");
+      const canvasEl = document.getElementById("warp-canvas");
+
+      // Initial Delay
+      setTimeout(() => {
+        thankWrapper.classList.remove("hidden");
+        thankBtn.classList.add("show");
+        const slowDownInterval = setInterval(() => {
+            if(speed > 2) speed -= 0.5;
+            else clearInterval(slowDownInterval);
+        }, 100);
+      }, 4000);
+
+      // Button Click
+      thankBtn.addEventListener("click", () => {
+        thankWrapper.classList.add("hidden");
+        // Canvas stays visible (slightly dimmed)
+        canvasEl.style.opacity = "0.4"; 
+        setTimeout(() => {
+          letter.classList.remove("hidden");
+        }, 400);
+      });
+
+      // Letter Click
+      letter.addEventListener("click", () => {
+        letter.classList.add("hidden");
+        // Canvas stays visible (maybe even brighter for the name)
+        canvasEl.style.opacity = "0.5"; 
+
+        setTimeout(() => {
+          finalCon.classList.remove("hidden");
+          let delay = 0;
+          let totalTime = 0; 
+
+          finalSVG.forEach(p => {
+            setTimeout(() => sparkleSound.play().catch(()=>{}), delay * 1000);
+            p.style.animation = `draw 2.4s ${delay}s ease forwards`;
+            delay += 0.35;
+          });
+          
+          totalTime = (delay * 1000) + 2400; 
+
+          // FORCE SHOW BUTTONS via Timer
+          setTimeout(() => {
+             showEndButtons();
+          }, totalTime + 500); 
+
+        }, 300);
+      });
+
+      // Tap to skip/show logic
+      finalCon.addEventListener("click", () => {
+         showEndButtons();
+      });
+
+      function showEndButtons() {
+        if(endButtons.classList.contains("visible")) return;
+        
+        const finalFade = document.getElementById("final-fade");
+        
+        // 1. Show black overlay
+        finalFade.classList.remove("hidden");
+        finalFade.classList.add("show");
+        
+        setTimeout(() => {
+          // 2. KEEP NAME VISIBLE (Do NOT hide finalCon)
+          // Just make buttons interactable
+          endButtons.classList.remove("hidden"); 
+          
+          // 3. Fade OUT black overlay (revealing names + buttons)
+          finalFade.classList.remove("show");
+          
+          // 4. Bring stars back slightly for ambiance (optional)
+          canvasEl.style.opacity = "0.2";
+
+          // 5. Show buttons
+          endButtons.classList.add("visible");
+        }, 1000);
+      }
+    };
+
+    // --- DYNAMIC STYLES ---
+    const style = document.createElement("style");
+    style.innerHTML = `
+      @keyframes draw {
+        to { stroke-dashoffset: 0; }
+      }
+    `;
+    document.head.appendChild(style);
+  </script>
 </body>
 </html>

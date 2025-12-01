@@ -3,306 +3,692 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Bunga2 kesukaan</title>
-
-  <!-- Fonts (still only 3 project files, these are remote assets) -->
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <title>Taman Kenangan 🌸</title>
+  <script src="https://cdn.tailwindcss.com"></script>
   <link
-    href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;700&family=Poppins:wght@300;400;500&display=swap"
+    href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Poppins:wght@300;400;500;600&display=swap"
     rel="stylesheet"
   />
+  <style>
+    /* --- CONFIG & VARIABLES --- */
+    :root {
+      --sunflower-yellow: #ffc107;
+      --sunflower-dark: #ff9800;
+      --lily-white: #f3e5f5;
+      --lily-pink: #e1bee7;
+    }
 
-  <link rel="stylesheet" href="memory-garden.css" />
+    *, *::before, *::after { box-sizing: border-box; }
+    
+    body {
+      margin: 0;
+      padding: 0;
+      background: radial-gradient(circle at 50% 0%, #1a1a2e 0%, #16213e 40%, #000000 100%);
+      color: #fff;
+      font-family: 'Poppins', sans-serif;
+      min-height: 100vh;
+      overflow-x: hidden;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    /* --- BACKGROUND AMBIENCE --- */
+    .fireflies {
+      position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+      pointer-events: none; z-index: 0;
+    }
+    .firefly {
+      position: absolute; width: 3px; height: 3px; background: #ffff00;
+      border-radius: 50%; box-shadow: 0 0 10px #ffff00;
+      animation: fly 10s infinite linear; opacity: 0;
+    }
+    @keyframes fly {
+      0% { transform: translate(0, 0); opacity: 0; }
+      50% { opacity: 1; }
+      100% { transform: translate(var(--moveX), var(--moveY)); opacity: 0; }
+    }
+
+    /* --- HEADER --- */
+    .mg-header {
+      text-align: center; margin: 3rem 1rem 2rem; position: relative; z-index: 10;
+    }
+    .mg-tagline {
+      text-transform: uppercase; letter-spacing: 4px; font-size: 0.8rem; color: #a8a8ff; margin-bottom: 0.5rem;
+      animation: fadeIn 2s ease-out;
+    }
+    .mg-header h1 {
+      font-family: 'Playfair Display', serif; font-size: clamp(2rem, 5vw, 3.5rem); margin: 0;
+      background: linear-gradient(to right, #fff, #ffb6ff, #b6ffff);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+      text-shadow: 0 0 30px rgba(255, 255, 255, 0.3);
+      animation: slideUp 1s ease-out;
+    }
+    .mg-intro {
+      max-width: 600px; margin: 1rem auto; color: rgba(255,255,255,0.7);
+      font-weight: 300; line-height: 1.6; font-size: 0.9rem;
+      animation: slideUp 1s ease-out 0.3s backwards;
+    }
+
+    /* --- GARDEN GRID --- */
+    .garden-section {
+      width: 100%; max-width: 1200px; padding: 1rem 2rem 4rem; z-index: 10; perspective: 1000px;
+    }
+    .card-grid {
+      display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 1.5rem; justify-content: center;
+    }
+
+    /* --- CARD STYLES --- */
+    .garden-card {
+      position: relative; aspect-ratio: 3/4; border-radius: 20px; cursor: pointer;
+      transform-style: preserve-3d; transition: transform 0.1s ease-out;
+    }
+    .card-inner {
+      position: relative; width: 100%; height: 100%; border-radius: 20px; text-align: center;
+      transition: transform 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+      transform-style: preserve-3d; box-shadow: 0 20px 50px rgba(0,0,0,0.3);
+    }
+    .garden-card.flipped .card-inner { transform: rotateY(180deg); }
+    .card-face {
+      position: absolute; width: 100%; height: 100%; backface-visibility: hidden;
+      border-radius: 20px; overflow: hidden; border: 1px solid rgba(255,255,255,0.1);
+    }
+    .card-front {
+      background: linear-gradient(135deg, rgba(255,255,255,0.1), rgba(255,255,255,0.05));
+      backdrop-filter: blur(10px); display: flex; flex-direction: column; align-items: center; justify-content: center;
+    }
+    .mystery-icon { font-size: 2.5rem; color: rgba(255,255,255,0.8); z-index: 2; transition: transform 0.3s ease; }
+    .garden-card:hover .mystery-icon { transform: scale(1.2); }
+    .tap-hint { position: absolute; bottom: 20px; font-size: 0.7rem; text-transform: uppercase; letter-spacing: 2px; color: rgba(255,255,255,0.5); }
+    .card-back {
+      background: radial-gradient(circle at center, #2e1c45, #0a0510); transform: rotateY(180deg);
+      display: flex; align-items: flex-end; justify-content: center; padding-bottom: 20px;
+    }
+
+    /* --- FLOWER ANIMATIONS --- */
+    .flower-container {
+      position: relative; width: 100px; height: 200px; display: flex; flex-direction: column; align-items: center; justify-content: flex-end;
+    }
+    .stem {
+      width: 6px; background: linear-gradient(to right, #43a047, #66bb6a); border-radius: 4px; height: 0;
+      transform-origin: bottom center; position: relative; z-index: 1;
+    }
+    .leaf {
+      position: absolute; width: 20px; height: 10px; background: #4caf50; border-radius: 0 50% 0 50%;
+      transform-origin: 0 50%; opacity: 0; transform: scale(0);
+    }
+    .leaf.left { left: 0; bottom: 30%; transform: rotate(-45deg) scale(0); }
+    .leaf.right { right: 0; bottom: 50%; transform: rotate(135deg) scale(0) scaleX(-1); }
+    .flower-head {
+      position: absolute; top: 0; width: 0; height: 0; z-index: 5; display: flex; align-items: center; justify-content: center;
+    }
+
+    /* Animation Classes */
+    .blooming .stem { animation: growStem 1s ease-out forwards; }
+    @keyframes growStem { to { height: 120px; } }
+    .blooming .leaf { animation: growLeaf 0.5s ease-out forwards 0.5s; }
+    @keyframes growLeaf { to { opacity: 1; transform: scale(1) rotate(var(--r)); } }
+    .blooming .flower-head { animation: popHead 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards 1s; }
+    @keyframes popHead { to { width: 60px; height: 60px; top: -30px; } }
+
+    /* Petals */
+    .petal-sun {
+      position: absolute; width: 15px; height: 40px; background: linear-gradient(to top, var(--sunflower-dark), var(--sunflower-yellow));
+      border-radius: 50% 50% 10% 10%; transform-origin: bottom center; bottom: 50%; opacity: 0; transform: rotate(var(--rot)) scale(0);
+    }
+    .sunflower-disk {
+      position: absolute; width: 100%; height: 100%; background: radial-gradient(circle, #5d4037, #3e2723);
+      border-radius: 50%; z-index: 10; transform: scale(0);
+    }
+    .blooming .sunflower-disk { animation: scaleUp 0.3s ease-out forwards 1.2s; }
+    @keyframes scaleUp { to { transform: scale(1); } }
+    .blooming .petal-sun { animation: openPetalSun 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) forwards; animation-delay: var(--delay); }
+    @keyframes openPetalSun { to { opacity: 1; transform: rotate(var(--rot)) translateY(-25px) scale(1); } }
+
+    .petal-lily {
+      position: absolute; width: 25px; height: 50px; background: linear-gradient(to top, var(--lily-white), var(--lily-pink));
+      border-radius: 0% 100% 10% 100% / 0% 100% 10% 100%; transform-origin: bottom center; bottom: 20%; opacity: 0; box-shadow: inset 0 0 5px rgba(0,0,0,0.1);
+    }
+    .blooming .petal-lily { animation: openPetalLily 1s ease-out forwards; animation-delay: var(--delay); }
+    @keyframes openPetalLily { to { opacity: 1; transform: rotate(var(--rot)) translateY(-20px) scale(1.2); } }
+
+    /* --- PORTAL BUTTON --- */
+    .portal-wrapper { margin-top: 3rem; text-align: center; height: 60px; }
+    .portal-btn {
+      background: linear-gradient(45deg, #ff00cc, #333399); border: none; padding: 15px 40px; border-radius: 50px;
+      color: white; font-family: 'Poppins', sans-serif; font-weight: 600; text-transform: uppercase; letter-spacing: 2px;
+      cursor: pointer; opacity: 0; transform: translateY(20px); transition: all 0.5s ease; box-shadow: 0 0 20px rgba(255, 0, 204, 0.5);
+    }
+    .portal-btn.visible { opacity: 1; transform: translateY(0); }
+    .portal-btn:hover { transform: scale(1.05); box-shadow: 0 0 40px rgba(255, 0, 204, 0.8); }
+
+    /* --- QUOTE POPUP --- */
+    .quote-overlay {
+      position: fixed; inset: 0; background: rgba(0,0,0,0.6); backdrop-filter: blur(5px);
+      display: flex; align-items: center; justify-content: center; z-index: 50; opacity: 0; pointer-events: none; transition: opacity 0.3s;
+    }
+    .quote-overlay.active { opacity: 1; pointer-events: auto; }
+    .quote-box {
+      background: rgba(20, 20, 35, 0.95); border: 1px solid rgba(255,255,255,0.2); padding: 2rem; border-radius: 15px;
+      max-width: 90%; width: 400px; text-align: center; transform: scale(0.8); transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+      box-shadow: 0 0 30px rgba(100,100,255,0.2);
+    }
+    .quote-overlay.active .quote-box { transform: scale(1); }
+    .quote-text { font-size: 1rem; margin-bottom: 1rem; line-height: 1.5; color: #e0e0ff; }
+    .close-quote { color: #aaa; font-size: 0.8rem; cursor: pointer; text-decoration: underline; }
+
+    /* --- GALAXY WARP --- */
+    #warpCanvas { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 100; pointer-events: none; opacity: 0; transition: opacity 1s; }
+    
+    /* --- ADVANCED GALAXY SECTION --- */
+    .galaxy-section {
+      display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+      background: #000; z-index: 90; flex-direction: column; align-items: center; justify-content: center;
+      overflow: hidden; perspective: 1500px;
+    }
+
+    /* 3D Solar System Container */
+    .solar-system-3d {
+      position: relative; width: 400px; height: 400px;
+      transform-style: preserve-3d;
+      transform: rotateX(60deg); /* Tilt */
+      margin-bottom: 80px; 
+    }
+
+    /* REVERTED: SUN CONTAINER (Inside 3D) */
+    .sun-wrapper {
+      position: absolute; top: 50%; left: 50%;
+      transform: translate(-50%, -50%) rotateX(-60deg); /* Counter-rotate */
+      transform-style: preserve-3d;
+      z-index: 10;
+    }
+
+    /* REVERTED: SUN BODY */
+    .sun-body {
+      width: 60px; height: 60px;
+      background: radial-gradient(circle, #ffd700, #ff8c00);
+      border-radius: 50%;
+      box-shadow: 0 0 15px #ff8c00;
+      position: relative; z-index: 2;
+    }
+
+    /* REVERTED: THE GLOW (Gradient, not box-shadow) */
+    .sun-glow {
+      position: absolute; top: 50%; left: 50%;
+      width: 250px; height: 250px;
+      transform: translate(-50%, -50%);
+      background: radial-gradient(circle, rgba(255, 140, 0, 0.6) 0%, rgba(255, 69, 0, 0.2) 40%, transparent 70%);
+      border-radius: 50%;
+      z-index: 1;
+      pointer-events: none;
+      animation: glowPulse 3s infinite alternate;
+    }
+    
+    @keyframes glowPulse { 
+      from { transform: translate(-50%, -50%) scale(0.9); opacity: 0.8; }
+      to { transform: translate(-50%, -50%) scale(1.1); opacity: 1; }
+    }
+
+    /* Orbits */
+    .orbit-3d {
+      position: absolute; top: 50%; left: 50%;
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      border-radius: 50%;
+      transform: translate(-50%, -50%);
+      transform-style: preserve-3d;
+    }
+    .o1 { width: 160px; height: 160px; animation: orbitSpin 6s linear infinite; }
+    .o2 { width: 260px; height: 260px; animation: orbitSpin 10s linear infinite; }
+    .o3 { width: 380px; height: 380px; animation: orbitSpin 16s linear infinite; }
+
+    @keyframes orbitSpin {
+      from { transform: translate(-50%, -50%) rotateZ(0deg); }
+      to { transform: translate(-50%, -50%) rotateZ(360deg); }
+    }
+
+    /* Planets */
+    .planet-wrapper {
+      position: absolute; top: 0; left: 50%; width: 20px; height: 20px;
+      transform: translate(-50%, -50%); transform-style: preserve-3d;
+    }
+    .planet-body {
+      width: 100%; height: 100%; border-radius: 50%;
+      transform: rotateX(-60deg); /* Keep planets upright */
+      box-shadow: inset -4px -4px 8px rgba(0,0,0,0.6);
+    }
+    .planet-1 { background: #00bcd4; width: 15px; height: 15px; }
+    .planet-2 { background: #e91e63; width: 22px; height: 22px; }
+    .planet-3 { background: #9c27b0; width: 18px; height: 18px; }
+
+    /* Heart Constellation */
+    .constellation-svg {
+      position: absolute; top: 15%; left: 10%; width: 350px; height: 350px;
+      pointer-events: none; z-index: 5; opacity: 0.8;
+      animation: floatConstellation 8s ease-in-out infinite;
+    }
+    @keyframes floatConstellation {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-15px); }
+    }
+    .star-dot { fill: white; filter: drop-shadow(0 0 4px white); }
+    .constellation-line {
+      fill: none; stroke: #ff69b4; stroke-width: 2;
+      stroke-dasharray: 1000; stroke-dashoffset: 1000;
+      filter: drop-shadow(0 0 5px #ff69b4);
+      animation: drawLines 4s ease-out forwards 1s;
+    }
+    @keyframes drawLines { to { stroke-dashoffset: 0; } }
+
+    /* Shooting Stars */
+    .shooting-star-container {
+      position: absolute; width: 100%; height: 100%; pointer-events: none; z-index: 1;
+    }
+    .s-star {
+      position: absolute; width: 150px; height: 2px;
+      background: linear-gradient(90deg, rgba(255,255,255,0), #fff); opacity: 0;
+    }
+    .s1 { top: 15%; left: 0; animation: shootRight 4s infinite 1s; }
+    .s2 { top: 40%; left: -20%; animation: shootRight 6s infinite 0s; width: 200px; }
+    .s3 { top: 70%; right: 0; animation: shootLeft 5s infinite 2s; }
+
+    @keyframes shootRight {
+      0% { transform: translateX(-100%) rotate(35deg); opacity: 1; }
+      100% { transform: translateX(120vw) rotate(35deg); opacity: 0; }
+    }
+    @keyframes shootLeft {
+      0% { transform: translateX(100%) rotate(-35deg); opacity: 1; }
+      100% { transform: translateX(-120vw) rotate(-35deg); opacity: 0; }
+    }
+
+    .galaxy-text {
+      text-align: center; z-index: 100; position: relative;
+      animation: fadeInUp 2s ease forwards; opacity: 0;
+      text-shadow: 0 0 10px rgba(0,0,0,0.8);
+    }
+    @keyframes fadeInUp { to { opacity: 1; transform: translateY(-30px); } }
+
+    /* Back button */
+    .back-btn {
+      display: inline-block; margin-top: 2rem; color: white; text-decoration: none;
+      border: 1px solid rgba(255,255,255,0.5); padding: 10px 20px; border-radius: 30px;
+      background: rgba(0,0,0,0.5); transition: all 0.3s;
+    }
+    .back-btn:hover { background: white; color: black; }
+
+    /* UTILS */
+    @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+    @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+  </style>
 </head>
 <body>
-  <main class="memory-garden">
-    <header class="mg-header">
-      <p class="mg-tagline">🌸 dunia kita 🌸</p>
-      <h1>buat kita berdua</h1>
-      <p class="mg-intro">
-        Coba buka disebalik setiap kartu, pasti kamu tau itu bunga apa EHE, engga sii, agak burik sii bunganya karna buru-buru, tapi nanti deh aku benerinnya :v
-      </p>
-    </header>
 
-    <!-- Garden cards -->
-    <section id="garden-section" class="garden-section">
-      <div class="card-grid">
-        <!-- 1: Sunflower -->
-        <div
-          class="garden-card"
-          data-flower="sunflower"
-          data-quote="Seperti bunga matahari, cintamu membuat duniaku selalu mengadap pada cahaya. ASEKKKK"
-        >
-          <div class="card-inner">
-            <div class="card-face card-front">
-              <div class="fog-veil"></div>
-              <span class="heart-icon" aria-hidden="true">✦</span>
-              <span class="sr-only">Mystery flower card</span>
-            </div>
-            <div class="card-face card-back">
-              <div class="flower" aria-hidden="true">
-                <div class="flower-stem"></div>
-                <div class="flower-seed"></div>
-                <div class="flower-center"></div>
-                <div class="flower-petals"></div>
-                <div class="flower-sparkles">
-                  <span class="sparkle s1"></span>
-                  <span class="sparkle s2"></span>
-                  <span class="sparkle s3"></span>
-                  <span class="sparkle s4"></span>
-                </div>
-              </div>
-            </div>
+  <!-- BACKGROUND FIREFLIES -->
+  <div class="fireflies" id="fireflies"></div>
+
+  <!-- HEADER -->
+  <header class="mg-header">
+    <p class="mg-tagline">✦ dunia kita ✦</p>
+    <h1>Taman Rahasia</h1>
+    <p class="mg-intro">
+      Di balik setiap kartu ada bunga yang mekar khusus buat kamu. Buka semuanya untuk menemukan rahasia alam semesta kita.
+    </p>
+  </header>
+
+  <!-- GARDEN CARDS -->
+  <section class="garden-section" id="garden">
+    <div class="card-grid">
+      
+      <!-- CARD 1: SUNFLOWER -->
+      <div class="garden-card" data-flower="sunflower" data-quote="Seperti bunga matahari, cintamu membuat duniaku selalu menghadap pada cahaya. 🌻">
+        <div class="card-inner">
+          <div class="card-face card-front">
+            <div class="mystery-icon">✦</div>
+            <span class="tap-hint">Tap to Grow</span>
           </div>
-        </div>
-
-        <!-- 2: Sunflower -->
-        <div
-          class="garden-card"
-          data-flower="sunflower"
-          data-quote="Senyumanmu adalah matahari terbit favoritku, lembut, keemasan, dan penuh harapan (palsu uhukk) :v"
-        >
-          <div class="card-inner">
-            <div class="card-face card-front">
-              <div class="fog-veil"></div>
-              <span class="heart-icon" aria-hidden="true">✦</span>
-              <span class="sr-only">Mystery flower card</span>
-            </div>
-            <div class="card-face card-back">
-              <div class="flower" aria-hidden="true">
-                <div class="flower-stem"></div>
-                <div class="flower-seed"></div>
-                <div class="flower-center"></div>
-                <div class="flower-petals"></div>
-                <div class="flower-sparkles">
-                  <span class="sparkle s1"></span>
-                  <span class="sparkle s2"></span>
-                  <span class="sparkle s3"></span>
-                  <span class="sparkle s4"></span>
-                </div>
+          <div class="card-face card-back">
+            <div class="flower-container">
+              <div class="stem">
+                <div class="leaf left" style="--r: -30deg"></div>
+                <div class="leaf right" style="--r: 30deg"></div>
               </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- 3: Sunflower -->
-        <div
-          class="garden-card"
-          data-flower="sunflower"
-          data-quote="Sama kamu itu kek, hari-hari biasa pun berubah menjadi sore yang hangat berwarna keemasan gitu loh :v (lyric golden hour HAHHAHAHAHA)"
-        >
-          <div class="card-inner">
-            <div class="card-face card-front">
-              <div class="fog-veil"></div>
-              <span class="heart-icon" aria-hidden="true">✦</span>
-              <span class="sr-only">Mystery flower card</span>
-            </div>
-            <div class="card-face card-back">
-              <div class="flower" aria-hidden="true">
-                <div class="flower-stem"></div>
-                <div class="flower-seed"></div>
-                <div class="flower-center"></div>
-                <div class="flower-petals"></div>
-                <div class="flower-sparkles">
-                  <span class="sparkle s1"></span>
-                  <span class="sparkle s2"></span>
-                  <span class="sparkle s3"></span>
-                  <span class="sparkle s4"></span>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- 4: Sunflower -->
-        <div
-          class="garden-card"
-          data-flower="sunflower"
-          data-quote="Kamu tempat hangat yang selalu dituju hatiku, sekelam apa pun langitnya asekkkkk."
-        >
-          <div class="card-inner">
-            <div class="card-face card-front">
-              <div class="fog-veil"></div>
-              <span class="heart-icon" aria-hidden="true">✦</span>
-              <span class="sr-only">Mystery flower card</span>
-            </div>
-            <div class="card-face card-back">
-              <div class="flower" aria-hidden="true">
-                <div class="flower-stem"></div>
-                <div class="flower-seed"></div>
-                <div class="flower-center"></div>
-                <div class="flower-petals"></div>
-                <div class="flower-sparkles">
-                  <span class="sparkle s1"></span>
-                  <span class="sparkle s2"></span>
-                  <span class="sparkle s3"></span>
-                  <span class="sparkle s4"></span>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- 5: Lily -->
-        <div
-          class="garden-card"
-          data-flower="lily"
-          data-quote="Dalam momen2 yang sunyi, hati aku mekar lembut untukmu seperti bunga lily yang anggun."
-        >
-          <div class="card-inner">
-            <div class="card-face card-front">
-              <div class="fog-veil"></div>
-              <span class="heart-icon" aria-hidden="true">✦</span>
-              <span class="sr-only">Mystery flower card</span>
-            </div>
-            <div class="card-face card-back">
-              <div class="flower" aria-hidden="true">
-                <div class="flower-stem"></div>
-                <div class="flower-seed"></div>
-                <div class="flower-center"></div>
-                <div class="flower-petals lily-petals"></div>
-                <div class="flower-sparkles">
-                  <span class="sparkle s1"></span>
-                  <span class="sparkle s2"></span>
-                  <span class="sparkle s3"></span>
-                  <span class="sparkle s4"></span>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- 6: Lily -->
-        <div
-          class="garden-card"
-          data-flower="lily"
-          data-quote="Cinta kita terasa seperti taman rahasia, tenang, penuh bunga lily putih yang lembut, dan hanya kita berdua yang bisa melihatnya."
-        >
-          <div class="card-inner">
-            <div class="card-face card-front">
-              <div class="fog-veil"></div>
-              <span class="heart-icon" aria-hidden="true">✦</span>
-              <span class="sr-only">Mystery flower card</span>
-            </div>
-            <div class="card-face card-back">
-              <div class="flower" aria-hidden="true">
-                <div class="flower-stem"></div>
-                <div class="flower-seed"></div>
-                <div class="flower-center"></div>
-                <div class="flower-petals lily-petals"></div>
-                <div class="flower-sparkles">
-                  <span class="sparkle s1"></span>
-                  <span class="sparkle s2"></span>
-                  <span class="sparkle s3"></span>
-                  <span class="sparkle s4"></span>
-                </div>
+              <div class="flower-head sunflower-head">
+                <div class="sunflower-disk"></div>
+                <!-- Petals via JS -->
               </div>
             </div>
           </div>
         </div>
       </div>
 
-      <!-- Portal unlock area -->
-      <div class="portal-wrapper">
-        <p class="portal-hint">
-          Buka semua bunganya untuk meliat galaksi kita.
-        </p>
-        <button id="portal-button" class="portal-button" type="button">
-          menuju dunia kita ✦
-        </button>
-      </div>
-    </section>
-
-    <!-- Galaxy section (hidden until portal is used) -->
-    <section id="galaxy-section" class="galaxy-section">
-      <div class="galaxy-sky" aria-hidden="true">
-        <div class="galaxy-moon-orb"></div>
-
-        <div class="galaxy-orbit">
-          <div class="galaxy-planet"></div>
+      <!-- CARD 2: LILY -->
+      <div class="garden-card" data-flower="lily" data-quote="Dalam momen sunyi, hatiku mekar lembut untukmu seperti bunga lily yang anggun. 🌸">
+        <div class="card-inner">
+          <div class="card-face card-front">
+            <div class="mystery-icon">✦</div>
+            <span class="tap-hint">Tap to Grow</span>
+          </div>
+          <div class="card-face card-back">
+            <div class="flower-container">
+              <div class="stem">
+                <div class="leaf left" style="--r: -20deg"></div>
+              </div>
+              <div class="flower-head lily-head">
+                <!-- Petals via JS -->
+              </div>
+            </div>
+          </div>
         </div>
+      </div>
 
-        <div class="galaxy-stars">
-          <span class="star s1"></span>
-          <span class="star s2"></span>
-          <span class="star s3"></span>
-          <span class="star s4"></span>
-          <span class="star s5"></span>
-          <span class="star s6"></span>
-          <span class="star s7"></span>
-          <span class="star s8"></span>
-          <span class="star s9"></span>
-          <span class="star s10"></span>
-          <span class="star s11"></span>
-          <span class="star s12"></span>
+      <!-- CARD 3: SUNFLOWER -->
+      <div class="garden-card" data-flower="sunflower" data-quote="Senyumanmu adalah matahari terbit favoritku. Lembut, keemasan, dan penuh harapan. ☀️">
+        <div class="card-inner">
+          <div class="card-face card-front">
+            <div class="mystery-icon">✦</div>
+            <span class="tap-hint">Tap to Grow</span>
+          </div>
+          <div class="card-face card-back">
+            <div class="flower-container">
+              <div class="stem">
+                <div class="leaf left" style="--r: -30deg"></div>
+                <div class="leaf right" style="--r: 30deg"></div>
+              </div>
+              <div class="flower-head sunflower-head">
+                <div class="sunflower-disk"></div>
+              </div>
+            </div>
+          </div>
         </div>
-
-        <div class="galaxy-shooting-star sh1"></div>
-        <div class="galaxy-shooting-star sh2"></div>
-
-        <svg class="galaxy-heart-constellation" viewBox="0 0 100 90">
-          <path
-            d="M50 78
-               C 20 55 8 40 10 27
-               C 12 16 21 10 30 10
-               C 39 10 45 15 50 23
-               C 55 15 61 10 70 10
-               C 79 10 88 16 90 27
-               C 92 40 80 55 50 78 Z"
-          />
-        </svg>
       </div>
 
-      <div class="galaxy-content">
-        <h2>Galaksi kecil milik kita</h2>
-        <p>
-         Dari semua bunga yang bermekaran tadi, kamulah satu-satunya bunga matahari yang paling menonjol. Hangat, cerah, dan selalu menarik hatiku untuk melihat ke arahmu. Di antara semua keindahan, hanya kamu yang membuat dunia ini terasa lebih terang. ytta maksudnya apa ini :v 
-        </p>
+      <!-- CARD 4: LILY -->
+      <div class="garden-card" data-flower="lily" data-quote="Cinta kita terasa seperti taman rahasia ini. Hanya kita yang tahu betapa indahnya. 💖">
+        <div class="card-inner">
+          <div class="card-face card-front">
+            <div class="mystery-icon">✦</div>
+            <span class="tap-hint">Tap to Grow</span>
+          </div>
+          <div class="card-face card-back">
+            <div class="flower-container">
+              <div class="stem">
+                <div class="leaf right" style="--r: 20deg"></div>
+              </div>
+              <div class="flower-head lily-head">
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
-    </section>
-        <div class="back-home-wrapper">
-      <a href="star-name.html" class="portal-button back-home-button">
-        halaman berikutnya ✦
-      </a>
+
     </div>
 
-  </main>
-
-  <!-- Quote popup -->
-  <div id="quote-popup" class="quote-popup" role="dialog" aria-modal="true" aria-hidden="true">
-    <div class="quote-card">
-      <button class="quote-close" type="button" aria-label="Close message">×</button>
-      <p class="quote-title">Nota buat kamu</p>
-      <p class="quote-text"></p>
-      <p class="quote-hint">Pencet dimana2 aja buat tutup</p>
+    <div class="portal-wrapper">
+      <button class="portal-btn" id="portalBtn">Menuju Galaksi Kita 🚀</button>
     </div>
-  </div>
+  </section>
 
-  <!-- Galaxy transition overlay -->
-  <div id="galaxy-transition" class="galaxy-transition">
-    <div class="transition-stars"></div>
-    <div class="transition-shooting-star"></div>
-    <div class="transition-orbit">
-      <div class="transition-planet"></div>
+  <!-- GALAXY WARP CANVAS -->
+  <canvas id="warpCanvas"></canvas>
+
+  <!-- ADVANCED GALAXY SECTION -->
+  <section class="galaxy-section" id="galaxy">
+    
+    <!-- Shooting Stars -->
+    <div class="shooting-star-container">
+        <div class="s-star s1"></div>
+        <div class="s-star s2"></div>
+        <div class="s-star s3"></div>
     </div>
-    <svg class="transition-heart" viewBox="0 0 100 90">
-      <path
-        d="M50 78
-           C 20 55 8 40 10 27
-           C 12 16 21 10 30 10
-           C 39 10 45 15 50 23
-           C 55 15 61 10 70 10
-           C 79 10 88 16 90 27
-           C 92 40 80 55 50 78 Z"
-      />
+
+    <!-- Heart Constellation -->
+    <svg class="constellation-svg" viewBox="0 0 200 200">
+        <!-- Stars -->
+        <circle cx="100" cy="160" r="3" class="star-dot" />
+        <circle cx="50" cy="100" r="3" class="star-dot" />
+        <circle cx="30" cy="60" r="3" class="star-dot" />
+        <circle cx="60" cy="40" r="3" class="star-dot" />
+        <circle cx="100" cy="70" r="3" class="star-dot" />
+        <circle cx="140" cy="40" r="3" class="star-dot" />
+        <circle cx="170" cy="60" r="3" class="star-dot" />
+        <circle cx="150" cy="100" r="3" class="star-dot" />
+        <!-- Lines -->
+        <path d="M100 160 L50 100 L30 60 L60 40 L100 70 L140 40 L170 60 L150 100 Z" class="constellation-line" />
     </svg>
+
+    <!-- 3D Tilted Solar System -->
+    <div class="solar-system-3d">
+      
+      <!-- Sun Inside -->
+      <div class="sun-wrapper">
+        <div class="sun-glow"></div>
+        <div class="sun-body"></div>
+      </div>
+      
+      <div class="orbit-3d o1">
+          <div class="planet-wrapper">
+              <div class="planet-body planet-1"></div>
+          </div>
+      </div>
+      
+      <div class="orbit-3d o2">
+          <div class="planet-wrapper">
+              <div class="planet-body planet-2"></div>
+          </div>
+      </div>
+      
+      <div class="orbit-3d o3">
+          <div class="planet-wrapper">
+              <div class="planet-body planet-3"></div>
+          </div>
+      </div>
+    </div>
+
+    <div class="galaxy-text">
+      <h2 style="font-size: 2rem; margin-bottom: 10px; font-family: 'Playfair Display', serif; color: #b6ffff;">
+        Galaksi Kecil Kita
+      </h2>
+      <p style="max-width: 600px; line-height: 1.8; color: #ddd; margin-bottom: 30px;">
+        Dari semua bunga yang bermekaran tadi, kamulah satu-satunya yang paling bersinar. 
+        Di antara milyaran bintang di angkasa, cuma kamu gravitasi aku. 
+        <br><br>
+        <i>I love you to the moon and back.</i>
+      </p>
+      <a href="index.html" class="back-btn">Kembali ke Rumah</a>
+    </div>
+  </section>
+
+  <!-- POPUP -->
+  <div class="quote-overlay" id="quoteOverlay">
+    <div class="quote-box">
+      <p class="quote-text" id="popupText">...</p>
+      <div class="close-quote" onclick="closePopup()">tutup</div>
+    </div>
   </div>
 
-  <!-- Background music (replace src with your soft romantic track) -->
-  <!-- Keep just these 3 project files; the audio can be a remote URL or a local file you add later. -->
-  <audio id="bg-music" src="audio/galaxy.mp3" preload="auto" loop></audio>
+  <audio id="bgMusic" loop>
+    <source src="audio/galaxy.mp3" type="audio/mpeg" />
+  </audio>
 
-  <script src="memory-garden.js" defer></script>
+  <script>
+    /* --- 1. FIREFLIES GENERATOR --- */
+    const firefliesContainer = document.getElementById('fireflies');
+    for (let i = 0; i < 20; i++) {
+      let div = document.createElement('div');
+      div.classList.add('firefly');
+      div.style.left = Math.random() * 100 + 'vw';
+      div.style.top = Math.random() * 100 + 'vh';
+      div.style.setProperty('--moveX', (Math.random() * 200 - 100) + 'px');
+      div.style.setProperty('--moveY', (Math.random() * 200 - 100) + 'px');
+      div.style.animationDuration = (Math.random() * 10 + 15) + 's';
+      div.style.animationDelay = Math.random() * 5 + 's';
+      firefliesContainer.appendChild(div);
+    }
+
+    /* --- 2. 3D TILT EFFECT (Desktop Only) --- */
+    const cards = document.querySelectorAll('.garden-card');
+    const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+
+    if (!isMobile) {
+      cards.forEach(card => {
+        card.addEventListener('mousemove', (e) => {
+          if(card.classList.contains('flipped')) return;
+          const rect = card.getBoundingClientRect();
+          const x = e.clientX - rect.left;
+          const y = e.clientY - rect.top;
+          const centerX = rect.width / 2;
+          const centerY = rect.height / 2;
+          const rotateX = ((y - centerY) / centerY) * -10;
+          const rotateY = ((x - centerX) / centerX) * 10;
+          card.style.transform = `perspective(1000px) rotateX(${rotateX}deg) rotateY(${rotateY}deg)`;
+        });
+        card.addEventListener('mouseleave', () => {
+          card.style.transform = `perspective(1000px) rotateX(0) rotateY(0)`;
+        });
+      });
+    }
+
+    /* --- 3. COMPLEX FLOWER GENERATOR --- */
+    function createPetals(head, type) {
+      if (type === 'sunflower') {
+        for (let i = 0; i < 14; i++) {
+          let p = document.createElement('div');
+          p.classList.add('petal-sun');
+          p.style.setProperty('--rot', `${i * (360/14)}deg`);
+          p.style.setProperty('--delay', `${1.2 + (i * 0.1)}s`); 
+          head.appendChild(p);
+        }
+      } else if (type === 'lily') {
+        for (let i = 0; i < 6; i++) {
+          let p = document.createElement('div');
+          p.classList.add('petal-lily');
+          p.style.setProperty('--rot', `${i * 60}deg`);
+          p.style.setProperty('--delay', `${1.2 + (i * 0.1)}s`);
+          head.appendChild(p);
+        }
+      }
+    }
+
+    document.querySelectorAll('.sunflower-head').forEach(el => createPetals(el, 'sunflower'));
+    document.querySelectorAll('.lily-head').forEach(el => createPetals(el, 'lily'));
+
+    /* --- 4. INTERACTION LOGIC --- */
+    let openedCount = 0;
+    const totalCards = cards.length;
+    const portalBtn = document.getElementById('portalBtn');
+    const overlay = document.getElementById('quoteOverlay');
+    const popupText = document.getElementById('popupText');
+    const bgMusic = document.getElementById('bgMusic');
+
+    function closePopup() {
+      overlay.classList.remove('active');
+    }
+
+    cards.forEach(card => {
+      card.addEventListener('click', function() {
+        if (this.classList.contains('flipped')) return;
+
+        bgMusic.volume = 0.4;
+        bgMusic.play().catch(e => {});
+
+        this.classList.add('flipped');
+        
+        // Trigger Growth Animation Sequence
+        const flowerContainer = this.querySelector('.flower-container');
+        setTimeout(() => {
+          flowerContainer.classList.add('blooming');
+        }, 300);
+
+        // Show Quote (Delayed until fully bloomed)
+        const quote = this.dataset.quote;
+        setTimeout(() => {
+          popupText.innerText = quote;
+          overlay.classList.add('active');
+        }, 3000); 
+
+        openedCount++;
+        if (openedCount === totalCards) {
+          setTimeout(() => {
+            portalBtn.classList.add('visible');
+          }, 3500);
+        }
+      });
+    });
+
+    /* --- 5. HYPERSPACE WARP (UPDATED DARKER GRADIENT) --- */
+    const warpCanvas = document.getElementById('warpCanvas');
+    const ctx = warpCanvas.getContext('2d');
+    let stars = [];
+    let isWarping = false;
+
+    warpCanvas.width = window.innerWidth;
+    warpCanvas.height = window.innerHeight;
+
+    portalBtn.addEventListener('click', () => {
+      document.getElementById('garden').style.display = 'none';
+      document.querySelector('.mg-header').style.display = 'none';
+      warpCanvas.style.opacity = 1;
+      isWarping = true;
+      initStars();
+      animateWarp();
+
+      setTimeout(() => {
+        isWarping = false;
+        warpCanvas.style.opacity = 0;
+        document.getElementById('galaxy').style.display = 'flex';
+      }, 3000);
+    });
+
+    function initStars() {
+      stars = [];
+      for(let i=0; i<300; i++) {
+        stars.push({
+          x: Math.random() * warpCanvas.width - warpCanvas.width/2,
+          y: Math.random() * warpCanvas.height - warpCanvas.height/2,
+          z: Math.random() * 1000
+        });
+      }
+    }
+
+    function animateWarp() {
+      if(!isWarping) return;
+      
+      // --- UPDATE: DARKER PURPLE GRADIENT ---
+      const bg = ctx.createLinearGradient(0, 0, 0, warpCanvas.height);
+      bg.addColorStop(0, '#050214'); // Very dark purple-black
+      bg.addColorStop(0.5, '#1a0b38'); // Dark purple
+      bg.addColorStop(1, '#0d0221'); // Darkest purple
+      ctx.fillStyle = bg;
+      ctx.fillRect(0, 0, warpCanvas.width, warpCanvas.height);
+
+      const cx = warpCanvas.width / 2;
+      const cy = warpCanvas.height / 2;
+
+      // Draw Warp Lines
+      stars.forEach(star => {
+        star.z -= 20; 
+        if (star.z <= 0) {
+          star.z = 1000;
+          star.x = Math.random() * warpCanvas.width - warpCanvas.width/2;
+          star.y = Math.random() * warpCanvas.height - warpCanvas.height/2;
+        }
+
+        const x = (star.x / star.z) * 1000 + cx;
+        const y = (star.y / star.z) * 1000 + cy;
+        
+        const prevZ = star.z + 40;
+        const prevX = (star.x / prevZ) * 1000 + cx;
+        const prevY = (star.y / prevZ) * 1000 + cy;
+
+        ctx.beginPath();
+        ctx.strokeStyle = `rgba(200, 200, 255, ${1 - star.z/1000})`;
+        ctx.lineWidth = 2;
+        ctx.moveTo(prevX, prevY);
+        ctx.lineTo(x, y);
+        ctx.stroke();
+      });
+      requestAnimationFrame(animateWarp);
+    }
+  </script>
 </body>
 </html>
