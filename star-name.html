@@ -20,7 +20,7 @@
       margin: 0;
       padding: 0;
       background: #000;
-      background-image: var(--dark-bg);
+      /* Background will be handled by canvas */
       font-family: "Poppins", sans-serif;
       overflow: hidden;
       color: white;
@@ -159,7 +159,6 @@
       justify-content: center;
       align-items: center;
       z-index: 5;
-      /* Background removed so stars show through */
       transition: opacity 1s ease;
       padding: 10px;
       pointer-events: none; 
@@ -180,12 +179,15 @@
       stroke-linejoin: round;
       stroke-dasharray: 1000;
       stroke-dashoffset: 1000;
-      filter: drop-shadow(0 0 2px #fff) 
-              drop-shadow(0 0 5px #bd00ff) 
-              drop-shadow(0 0 10px #bd00ff);
+      
+      /* STRONG NEON GLOW FOR MOBILE */
+      filter: drop-shadow(0 0 3px #fff) 
+              drop-shadow(0 0 8px #bd00ff) 
+              drop-shadow(0 0 15px #bd00ff)
+              drop-shadow(0 0 30px #bd00ff);
     }
 
-    /* --- END BUTTONS (COSMIC STYLE) --- */
+    /* --- END BUTTONS --- */
     .end-buttons {
       position: fixed;
       bottom: 60px;
@@ -197,7 +199,7 @@
       gap: 15px;
       opacity: 0;
       pointer-events: none;
-      transition: opacity 1.5s ease;
+      transition: opacity 2s ease;
       z-index: 30;
       padding: 0 20px;
     }
@@ -216,14 +218,9 @@
       color: white;
       text-transform: uppercase;
       letter-spacing: 1px;
-      
-      /* Cosmic Gradient */
       background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
       border: 1px solid rgba(255, 255, 255, 0.3);
-      
-      /* Glowing Shadow */
       box-shadow: 0 0 15px rgba(118, 75, 162, 0.5), inset 0 0 10px rgba(255,255,255,0.1);
-      
       transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
       white-space: nowrap;
       text-align: center;
@@ -241,8 +238,14 @@
         transform: translateY(1px);
     }
 
+    /* Final Fade Overlay */
     .final-fade {
-      position: fixed; inset: 0; background: #000; opacity: 0; pointer-events: none; transition: opacity 2s ease; z-index: 25;
+      position: fixed; 
+      inset: 0; 
+      background: #000; 
+      opacity: 0; 
+      pointer-events: none; 
+      z-index: 25;
     }
     .final-fade.show { opacity: 1; }
 
@@ -275,9 +278,7 @@
       <p>
         Makasii sayang udaa menjadi seseorang yang sangat berarti dalam hidupku babyyy, makasii buat semua yang kamu lakukan buat aku sayang, aku bersyukur bangettt bisa dapetin kamuu, jangan nakal2 yaaaa sayangg mentang2 kitanya lagi ldr, taun depan aku iketin kamu yaa sayanggg harap bersabarrrr. Pokonya makasii dah buat semuanya cintakuuuuu, wuvv you sooo muchhhh babyyy!!
       </p>
-      <p class="note">
-        (nota : seharusnya ini panjang, cuman karna kamu buru2in jadi gini doang.)
-      </p>
+      <p class="note">(nota : seharusnya ini panjang, cuman karna kamu buru2in jadi gini doang.)</p>
       <p class="tap-hint">tap untuk melanjutkan ✦</p>
     </div>
   </div>
@@ -327,7 +328,7 @@
     const ctx = canvas.getContext('2d');
     let width, height;
     let stars = [];
-    let speed = 20;
+    let speed = 12;
 
     function resize() {
       width = canvas.width = window.innerWidth;
@@ -353,7 +354,7 @@
       draw() {
         let x = (this.x / this.z) * width + width / 2;
         let y = (this.y / this.z) * height + height / 2;
-        let radius = (1 - this.z / width) * 3;
+        let radius = (1 - this.z / width) * 5; 
         
         let prevZ = this.z + speed * 2;
         let prevX = (this.x / prevZ) * width + width / 2;
@@ -362,23 +363,31 @@
         ctx.beginPath();
         ctx.moveTo(prevX, prevY);
         ctx.lineTo(x, y);
-        ctx.strokeStyle = `rgba(200, 200, 255, ${1 - this.z / width})`;
+        // Cool blue/white star color
+        ctx.strokeStyle = `rgba(220, 240, 255, ${1 - this.z / width})`;
         ctx.lineWidth = radius;
+        ctx.lineCap = "round";
         ctx.stroke();
       }
     }
 
     function initStars() {
-      for (let i = 0; i < 400; i++) {
+      for (let i = 0; i < 300; i++) {
         stars.push(new Star());
       }
     }
     initStars();
 
     function animate() {
-      // Clear with slight transparency for trails, but keep it mostly transparent
-      // The CSS background handles the deep purple color
-      ctx.clearRect(0,0,width,height);
+      // Create a trail/fade effect with Deep Galactic Colors
+      // We use a radial gradient that clears the screen
+      const gradient = ctx.createRadialGradient(width / 2, height / 2, 0, width / 2, height / 2, width);
+      gradient.addColorStop(0, "rgba(20, 0, 30, 0.3)");   // Deep Purple Center
+      gradient.addColorStop(0.4, "rgba(5, 5, 40, 0.3)");  // Deep Blue Mid
+      gradient.addColorStop(1, "rgba(0, 0, 10, 0.3)");    // Almost Black Edge
+      
+      ctx.fillStyle = gradient;
+      ctx.fillRect(0, 0, width, height);
       
       stars.forEach(star => {
         star.update();
@@ -404,7 +413,7 @@
         thankWrapper.classList.remove("hidden");
         thankBtn.classList.add("show");
         const slowDownInterval = setInterval(() => {
-            if(speed > 2) speed -= 0.5;
+            if(speed > 1) speed -= 0.1;
             else clearInterval(slowDownInterval);
         }, 100);
       }, 4000);
@@ -412,8 +421,7 @@
       // Button Click
       thankBtn.addEventListener("click", () => {
         thankWrapper.classList.add("hidden");
-        // Canvas stays visible (slightly dimmed)
-        canvasEl.style.opacity = "0.4"; 
+        canvasEl.style.opacity = "0.4";
         setTimeout(() => {
           letter.classList.remove("hidden");
         }, 400);
@@ -422,8 +430,7 @@
       // Letter Click
       letter.addEventListener("click", () => {
         letter.classList.add("hidden");
-        // Canvas stays visible (maybe even brighter for the name)
-        canvasEl.style.opacity = "0.5"; 
+        canvasEl.style.opacity = "0.6"; 
 
         setTimeout(() => {
           finalCon.classList.remove("hidden");
@@ -446,7 +453,7 @@
         }, 300);
       });
 
-      // Tap to skip/show logic
+      // Tap to skip
       finalCon.addEventListener("click", () => {
          showEndButtons();
       });
@@ -456,24 +463,34 @@
         
         const finalFade = document.getElementById("final-fade");
         
-        // 1. Show black overlay
+        // 1. FADE TO BLACK (2 seconds)
+        finalFade.style.transition = "opacity 2s ease";
         finalFade.classList.remove("hidden");
+        
+        // Force reflow
+        void finalFade.offsetWidth; 
         finalFade.classList.add("show");
         
+        // Wait for 2s fade out to finish
         setTimeout(() => {
-          // 2. KEEP NAME VISIBLE (Do NOT hide finalCon)
-          // Just make buttons interactable
-          endButtons.classList.remove("hidden"); 
           
-          // 3. Fade OUT black overlay (revealing names + buttons)
-          finalFade.classList.remove("show");
-          
-          // 4. Bring stars back slightly for ambiance (optional)
-          canvasEl.style.opacity = "0.2";
+          // Prepare buttons hiddenly
+          endButtons.classList.remove("hidden");
 
-          // 5. Show buttons
-          endButtons.classList.add("visible");
-        }, 1000);
+          // STAY BLACK FOR 1.5 SECONDS (The Void - Shortened)
+          setTimeout(() => {
+            
+            // 2. FADE REVEAL (2 seconds)
+            // Reveal everything back
+            finalFade.style.transition = "opacity 2s ease";
+            finalFade.classList.remove("show"); // Opacity goes back to 0
+            
+            canvasEl.style.opacity = "0.3"; // Stars return dimmed
+            endButtons.classList.add("visible");
+
+          }, 1500); // 1.5 seconds hold
+
+        }, 2000); // 2 seconds initial fade
       }
     };
 
