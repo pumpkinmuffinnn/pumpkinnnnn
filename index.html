@@ -551,17 +551,24 @@ Aku sumpah bersyukur banget sayang dapet kamu, aku bener2 berharap kamu yang dic
   </div>
 
   <script>
-    /* --- REALISTIC SUNFLOWER ANIMATION --- */
+    /* --- REALISTIC SUNFLOWER ANIMATION WITH REALISTIC BUTTERFLIES --- */
     const canvas = document.getElementById('sunflowerCanvas');
     const ctx = canvas.getContext('2d');
     const introDiv = document.getElementById('sunflowerIntro');
+    
+    // Resize handling
     canvas.width = window.innerWidth;
     canvas.height = window.innerHeight;
+    window.addEventListener('resize', () => {
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+    });
 
     let frame = 0;
     const flowerX = canvas.width / 2;
     const stemHeight = canvas.height * 0.45;
 
+    // Helper: Draw Sunflower Petals
     function drawPetal(x, y, length, angle, color) {
         ctx.save();
         ctx.translate(x, y);
@@ -573,19 +580,102 @@ Aku sumpah bersyukur banget sayang dapet kamu, aku bener2 berharap kamu yang dic
         ctx.restore();
     }
 
+    // NEW HELPER: Draw REALISTIC Butterfly using Bezier curves and Gradients
+    function drawRealisticButterfly(centerX, centerY, radius, speed, offset, colorTop, colorBottom, size) {
+        const t = (frame * speed) + offset;
+        // Orbit logic with vertical bobbing
+        const bx = centerX + Math.cos(t) * radius; 
+        const by = centerY + Math.sin(t) * (radius * 0.5) + Math.sin(t * 3) * 10; 
+
+        // Realistic flapping math (snappier motion using pow/sin)
+        // Flap value goes between roughly 0.1 (closed) to 1.0 (open)
+        const flapState = Math.pow(Math.sin(frame * 0.15 + offset), 2) * 0.9 + 0.1; 
+
+        ctx.save();
+        ctx.translate(bx, by);
+        
+        // Tilt body slightly based on vertical movement direction
+        const verticalTilt = Math.cos(t * 3) * 0.2;
+        ctx.rotate(verticalTilt); 
+
+        // Function to draw one set of wings (fore & hind)
+        function drawWingSide(scaleX) {
+             ctx.save();
+             ctx.scale(scaleX, 1); // Flip horizontally if drawing left side
+
+             // Create gradient for wings
+             const wingGrad = ctx.createLinearGradient(0, -size/2, size*flapState, size/2);
+             wingGrad.addColorStop(0, colorTop);
+             wingGrad.addColorStop(1, colorBottom);
+             ctx.fillStyle = wingGrad;
+             // ctx.strokeStyle = colorBottom; ctx.lineWidth = 0.5; // Optional faint outline
+
+             // 1. Forewing (Top Wing) - Complex Shape
+             ctx.beginPath();
+             ctx.moveTo(size/10, -size/10); // Start near body
+             // Curve outwards and up to the tip
+             ctx.bezierCurveTo(size*flapState*0.6, -size*0.8, size*flapState*1.3, -size*0.6, size*flapState*1.1, -size*0.2);
+             // Curve back inwards to the body
+             ctx.quadraticCurveTo(size*flapState*0.5, size*0.1, size/10, 0);
+             ctx.fill();
+
+             // 2. Hindwing (Bottom Wing) - Rounder Shape
+             ctx.beginPath();
+             ctx.moveTo(size/10, size/20);
+             // Curve outwards and down
+             ctx.bezierCurveTo(size*flapState*0.9, size*0.3, size*flapState*0.7, size*0.9, size*0.2, size*0.8);
+             // Curve back up to body
+             ctx.quadraticCurveTo(size*0.1, size*0.5, size/10, size/15);
+             ctx.fill();
+
+             ctx.restore();
+        }
+
+        // Draw Right Wings
+        drawWingSide(1);
+        // Draw Left Wings (mirror)
+        drawWingSide(-1);
+
+        // Draw Realistic Body
+        ctx.fillStyle = '#2a2a2a'; // Dark charcoal body
+        ctx.beginPath();
+        // Thorax (upper body)
+        ctx.ellipse(0, -size/8, size/14, size/10, 0, 0, Math.PI*2);
+        ctx.fill();
+        // Abdomen (lower body)
+        ctx.beginPath();
+        ctx.ellipse(0, size/8, size/16, size/7, 0, 0, Math.PI*2);
+        ctx.fill();
+
+        // Antennae
+        ctx.strokeStyle = '#2a2a2a'; ctx.lineWidth = 1; ctx.lineCap = 'round';
+        ctx.beginPath(); 
+        // Right antenna curving out
+        ctx.moveTo(0, -size/4); ctx.quadraticCurveTo(size/4, -size/2, size/3, -size/1.5); ctx.stroke();
+        // Left antenna curving out
+        ctx.beginPath();
+        ctx.moveTo(0, -size/4); ctx.quadraticCurveTo(-size/4, -size/2, -size/3, -size/1.5); ctx.stroke();
+
+        ctx.restore();
+    }
+
     function animateSunflower() {
         ctx.clearRect(0, 0, canvas.width, canvas.height);
-        const currentHeight = Math.min(stemHeight, stemHeight * (frame / 80));
         
-        // Stem
+        // Calculate current height based on frame
+        const currentHeight = Math.min(stemHeight, stemHeight * (frame / 80));
+        const headY = canvas.height - currentHeight;
+
+        // --- SUNFLOWER DRAWING (UNCHANGED) ---
+        // 1. Draw Stem
         ctx.beginPath();
         ctx.moveTo(flowerX, canvas.height);
-        ctx.quadraticCurveTo(flowerX + 15, canvas.height - currentHeight / 2, flowerX, canvas.height - currentHeight);
+        ctx.quadraticCurveTo(flowerX + 15, canvas.height - currentHeight / 2, flowerX, headY);
         ctx.lineWidth = 12;
         ctx.strokeStyle = '#2d6a4f';
         ctx.stroke();
 
-        // Leaves
+        // 2. Draw Leaves
         if (frame > 40) {
             const leafSize = Math.min(1, (frame - 40) / 40);
             ctx.beginPath();
@@ -597,12 +687,9 @@ Aku sumpah bersyukur banget sayang dapet kamu, aku bener2 berharap kamu yang dic
             ctx.fill();
         }
 
-        // Bloom
+        // 3. Draw Bloom (Petals + Seeds)
         if (frame > 80) {
-            const headY = canvas.height - currentHeight;
             const bloomProgress = Math.min(1, (frame - 80) / 60);
-            
-            // Petals
             const petalCount = 20;
             for (let i = 0; i < petalCount; i++) {
                 const angle = (Math.PI * 2 / petalCount) * i;
@@ -610,7 +697,6 @@ Aku sumpah bersyukur banget sayang dapet kamu, aku bener2 berharap kamu yang dic
                 drawPetal(flowerX, headY, length, angle, '#ffb703');
                 drawPetal(flowerX, headY, length * 0.7, angle + 0.1, '#ffcd05');
             }
-            // Seeds
             const seedCount = 250 * bloomProgress;
             const goldenAngle = 137.5 * (Math.PI / 180);
             for (let i = 0; i < seedCount; i++) {
@@ -622,16 +708,40 @@ Aku sumpah bersyukur banget sayang dapet kamu, aku bener2 berharap kamu yang dic
                 ctx.fill();
             }
         }
+        // --- END SUNFLOWER DRAWING ---
+
+
+        // 4. ADDITION: Draw REALISTIC Butterflies
+        if (frame > 50) { // Delay appearance slightly
+            // BLUE Butterfly (Realistic Gradient)
+            drawRealisticButterfly(
+                flowerX, headY - 40, // Center
+                120, 0.015, 0,       // Radius, Speed, Offset
+                '#a0c4ff', '#2563eb', // Color Top (light), Color Bottom (dark)
+                25                   // Base Size
+            );
+
+            // PINK Butterfly (Realistic Gradient)
+            drawRealisticButterfly(
+                flowerX, headY - 20, // Center
+                90, 0.025, Math.PI,  // Radius, Speed, Offset (opposite side)
+                '#ffd1dc', '#c71585', // Color Top (light), Color Bottom (dark)
+                20                   // Base Size
+            );
+        }
+
         frame++;
-        if (frame < 250) requestAnimationFrame(animateSunflower);
+        // Keep animation loop running indefinitely for the butterflies
+        requestAnimationFrame(animateSunflower);
     }
     
     // Start Animation
     animateSunflower();
-    // Hide Intro
+    
+    // Hide Intro on Click
     introDiv.addEventListener('click', () => { introDiv.classList.add('sunflower-intro--hidden'); });
 
-    /* --- ORIGINAL LOGIC --- */
+    /* --- ORIGINAL PAGE LOGIC (UNCHANGED) --- */
     document.addEventListener("DOMContentLoaded", () => {
       initSmoothScrollLinks();
       initScrollButtons();
