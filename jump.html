@@ -1,0 +1,514 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Run to You ❤️</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Pacifico&family=Quicksand:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        /* --- CORE --- */
+        * { box-sizing: border-box; touch-action: manipulation; -webkit-tap-highlight-color: transparent; }
+        body, html {
+            height: 100%; width: 100%; margin: 0; padding: 0; overflow: hidden;
+            font-family: 'Quicksand', sans-serif;
+            background: #222;
+            user-select: none; -webkit-user-select: none;
+        }
+
+        /* --- GAME CONTAINER --- */
+        #game-stage {
+            position: relative; width: 100%; height: 100%;
+            overflow: hidden;
+            transition: background 1.5s ease;
+        }
+
+        /* --- THEMES --- */
+        /* Night (Default) */
+        .theme-night { background: linear-gradient(to bottom, #0f172a 0%, #312e81 100%); }
+        /* Day */
+        .theme-day { background: linear-gradient(to bottom, #38bdf8 0%, #c4b5fd 100%); }
+
+        /* --- UI OVERLAYS --- */
+        .ui-layer {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            z-index: 100; pointer-events: none;
+            display: flex; flex-direction: column; justify-content: center; align-items: center;
+        }
+        
+        .score-board {
+            position: absolute; top: 20px; right: 20px;
+            font-family: 'Pacifico', cursive; font-size: 1.5rem; color: white;
+            text-shadow: 2px 2px 0 rgba(0,0,0,0.2);
+        }
+
+        .game-over-screen, .start-screen {
+            background: rgba(0,0,0,0.6); backdrop-filter: blur(5px);
+            padding: 2rem; border-radius: 20px; text-align: center;
+            pointer-events: auto;
+            transition: opacity 0.3s;
+        }
+        .hidden { opacity: 0; pointer-events: none; }
+
+        .btn {
+            background: #ec4899; color: white; padding: 12px 30px;
+            border-radius: 99px; font-weight: bold; font-size: 1.2rem;
+            margin-top: 20px; cursor: pointer; border: 4px solid white;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+            transition: transform 0.1s;
+        }
+        .btn:active { transform: scale(0.95); }
+
+        /* --- CELESTIAL BODIES --- */
+        .celestial-body {
+            position: absolute; top: 10%; right: 10%;
+            width: 80px; height: 80px; border-radius: 50%;
+            transition: transform 1.5s ease, opacity 1.5s ease, background 1.5s ease;
+        }
+        /* Moon Style */
+        .moon {
+            background: #f1f5f9;
+            box-shadow: 0 0 20px rgba(255,255,255,0.5);
+        }
+        /* Sun Style */
+        .sun {
+            background: #fcd34d;
+            box-shadow: 0 0 40px rgba(251, 191, 36, 0.8);
+            transform: scale(1.1);
+        }
+
+        /* --- STARS & CLOUDS --- */
+        .star {
+            position: absolute; background: white; border-radius: 50%;
+            width: 3px; height: 3px; opacity: 0.8; animation: twinkle 2s infinite;
+        }
+        .cloud {
+            position: absolute; background: rgba(255,255,255,0.8); border-radius: 20px;
+            opacity: 0.9;
+        }
+        @keyframes twinkle { 0%,100%{opacity:0.3} 50%{opacity:1} }
+
+        /* --- GROUND --- */
+        .ground {
+            position: absolute; bottom: 0; left: 0; width: 100%; height: 15%;
+            background: #22c55e;
+            border-top: 6px solid #4ade80;
+            z-index: 10;
+        }
+        .ground-detail {
+            position: absolute; bottom: 0; background: rgba(0,0,0,0.1);
+            width: 100%; height: 50%;
+        }
+
+        /* --- RUNNER CONTAINER --- */
+        #runner {
+            position: absolute;
+            bottom: 15%; /* Sits on top of ground (15% height) */
+            left: 15%; /* Fixed X position */
+            width: 60px; height: 120px;
+            z-index: 20;
+        }
+
+        /* --- CHARACTER STYLING (Reused & Animated) --- */
+        .character-visual {
+            width: 100%; height: 100%; position: relative;
+            transition: opacity 0.5s ease;
+        }
+        
+        .head {
+            width: 50px; height: 50px; position: absolute; top: 0; left: 50%; transform: translateX(-50%);
+            border-radius: 50%; border: 3px solid white; overflow: hidden; z-index: 5;
+            background: white;
+        }
+        .head img { width: 100%; height: 100%; object-fit: cover; }
+
+        .torso {
+            width: 30px; height: 40px; position: absolute; top: 45px; left: 50%; transform: translateX(-50%);
+            border-radius: 8px; z-index: 4;
+        }
+
+        /* Running Animation Limbs */
+        .limb {
+            width: 10px; height: 35px; position: absolute; border-radius: 5px;
+            transform-origin: top center;
+        }
+        .arm { top: 48px; }
+        .leg { top: 80px; }
+
+        /* Him Colors */
+        .him .torso { background: #3b82f6; }
+        .him .arm { background: #bfdbfe; }
+        .him .leg { background: #1e293b; }
+
+        /* Her Colors */
+        .her .torso { background: #ec4899; }
+        .her .arm { background: #fbcfe8; }
+        .her .leg { background: #831843; }
+
+        /* RUN ANIMATIONS */
+        .running .leg.left { animation: runLegs 0.6s infinite linear; left: 18px; }
+        .running .leg.right { animation: runLegs 0.6s infinite linear reverse; right: 18px; }
+        .running .arm.left { animation: runArms 0.6s infinite linear reverse; left: 10px; }
+        .running .arm.right { animation: runArms 0.6s infinite linear; right: 10px; }
+
+        @keyframes runLegs {
+            0% { transform: rotate(30deg); }
+            50% { transform: rotate(-30deg); }
+            100% { transform: rotate(30deg); }
+        }
+        @keyframes runArms {
+            0% { transform: rotate(-40deg); }
+            50% { transform: rotate(40deg); }
+            100% { transform: rotate(-40deg); }
+        }
+
+        /* JUMP ANIMATION overrides running */
+        .jumping .leg.left { transform: rotate(-20deg); animation: none; }
+        .jumping .leg.right { transform: rotate(10deg); animation: none; }
+        .jumping .arm { transform: rotate(-140deg); animation: none; }
+
+        /* --- OBSTACLES --- */
+        .obstacle {
+            position: absolute; bottom: 15%; /* Match ground height */
+            left: 100%; /* Start off screen */
+            width: 40px; height: 40px;
+            background: #475569;
+            border-radius: 8px;
+            box-shadow: inset 0 0 10px rgba(0,0,0,0.5);
+            z-index: 15;
+        }
+        .obstacle::after {
+            content: ''; position: absolute; top: -10px; left: 10px;
+            width: 20px; height: 10px; background: #475569; border-radius: 5px 5px 0 0;
+        }
+
+    </style>
+</head>
+<body>
+
+    <!-- GAME STAGE -->
+    <div id="game-stage" class="theme-night">
+        
+        <!-- CELESTIAL BODY (Sun/Moon) -->
+        <div id="celestial" class="celestial-body moon"></div>
+        
+        <!-- BACKGROUND ELEMENTS CONTAINER -->
+        <div id="sky-objects"></div>
+
+        <div class="score-board">Score: <span id="score">0</span></div>
+
+        <!-- RUNNER -->
+        <div id="runner">
+            <!-- HIM (Blue) -->
+            <div id="char-him" class="character-visual him">
+                <div class="head"><img src="hugimages/himblue.jpg" alt="Him"></div>
+                <div class="torso"></div>
+                <div class="limb arm left"></div><div class="limb arm right"></div>
+                <div class="limb leg left"></div><div class="limb leg right"></div>
+            </div>
+            <!-- HER (Pink) -->
+            <div id="char-her" class="character-visual her" style="display: none;">
+                <div class="head"><img src="hugimages/herpink.jpg" alt="Her"></div>
+                <div class="torso"></div>
+                <div class="limb arm left"></div><div class="limb arm right"></div>
+                <div class="limb leg left"></div><div class="limb leg right"></div>
+            </div>
+        </div>
+
+        <!-- GROUND -->
+        <div class="ground"><div class="ground-detail"></div></div>
+
+        <!-- UI SCREENS -->
+        <div class="ui-layer">
+            <div id="start-screen" class="start-screen">
+                <h1 class="font-pacifico text-4xl text-white mb-2">Lari malam</h1>
+                <p class="text-white mb-4">Tap buat lompat. Hindari batu2nya yaaa sayangg.<br>Aku mulai lari pada malam...</p>
+                <button class="btn" onclick="startGame()">Mulai larinya 🏃‍♂️</button>
+            </div>
+            <div id="game-over-screen" class="game-over-screen hidden">
+                <h1 class="font-pacifico text-4xl text-pink-500 mb-2">Ouch!</h1>
+                <p class="text-white mb-4">Score: <span id="final-score">0</span></p>
+                <button class="btn" onclick="resetGame()">Coba lagi yanggg 🔄</button>
+                <br>
+                <a href="index.html" class="inline-block mt-4 text-white underline text-sm">Kembali</a>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        // --- GAME CONFIG ---
+        const config = {
+            gravity: 0.6,
+            jumpStrength: 13, // Slightly higher for mobile feel
+            baseSpeed: 5,
+            speedIncrement: 0.001,
+            spawnRate: 1500, // ms
+            dayNightCycle: 15000 // Swap every 15s
+        };
+
+        // --- STATE ---
+        let state = {
+            running: false,
+            score: 0,
+            speed: config.baseSpeed,
+            dy: 0, // Vertical velocity
+            y: 0, // Vertical position (0 is ground)
+            isJumping: false,
+            isDay: false, // Start at Night
+            lastTime: 0,
+            obstacleTimer: 0,
+            cycleTimer: 0
+        };
+
+        const runnerEl = document.getElementById('runner');
+        const himEl = document.getElementById('char-him');
+        const herEl = document.getElementById('char-her');
+        const stageEl = document.getElementById('game-stage');
+        const celestialEl = document.getElementById('celestial');
+        const scoreEl = document.getElementById('score');
+        const obstaclesContainer = document.getElementById('game-stage'); // Append obstacles here
+        
+        let obstacles = [];
+        let animationFrameId;
+
+        // --- CONTROLS ---
+        function handleInput(e) {
+            if (e.type === 'touchstart') e.preventDefault(); // Prevent scroll
+            if (!state.running) return;
+            if (!state.isJumping) {
+                state.dy = config.jumpStrength;
+                state.isJumping = true;
+                runnerEl.classList.add('jumping');
+                runnerEl.classList.remove('running');
+            }
+        }
+        document.addEventListener('touchstart', handleInput, { passive: false });
+        document.addEventListener('mousedown', handleInput);
+        document.addEventListener('keydown', (e) => { if(e.code === 'Space') handleInput(e); });
+
+        // --- GAME LOOP ---
+        function startGame() {
+            document.getElementById('start-screen').classList.add('hidden');
+            state.running = true;
+            state.score = 0;
+            state.speed = config.baseSpeed;
+            state.y = 0;
+            state.dy = 0;
+            state.obstacleTimer = 0;
+            state.cycleTimer = 0;
+            state.isDay = false; // Reset to Night
+            updateTheme();
+            
+            // Start Animation
+            runnerEl.classList.add('running');
+            state.lastTime = performance.now();
+            animationFrameId = requestAnimationFrame(update);
+        }
+
+        function update(time) {
+            if (!state.running) return;
+            
+            const dt = time - state.lastTime;
+            state.lastTime = time;
+
+            // 1. Physics (Jump)
+            if (state.isJumping) {
+                state.y += state.dy;
+                state.dy -= config.gravity * (dt / 16); // Scale gravity by delta time
+                if (state.y <= 0) {
+                    state.y = 0;
+                    state.dy = 0;
+                    state.isJumping = false;
+                    runnerEl.classList.remove('jumping');
+                    runnerEl.classList.add('running');
+                }
+                runnerEl.style.transform = `translateY(${-state.y}px)`;
+            }
+
+            // 2. Obstacles
+            state.obstacleTimer += dt;
+            if (state.obstacleTimer > config.spawnRate / (state.speed/5)) {
+                spawnObstacle();
+                state.obstacleTimer = 0;
+            }
+            
+            moveObstacles(dt);
+
+            // 3. Game Progression
+            state.score++;
+            state.speed += config.speedIncrement;
+            scoreEl.innerText = Math.floor(state.score / 10);
+
+            // 4. Day/Night Cycle
+            state.cycleTimer += dt;
+            if (state.cycleTimer > config.dayNightCycle) {
+                toggleDayNight();
+                state.cycleTimer = 0;
+            }
+
+            // 5. Collision Check
+            checkCollision();
+
+            animationFrameId = requestAnimationFrame(update);
+        }
+
+        function spawnObstacle() {
+            const obs = document.createElement('div');
+            obs.classList.add('obstacle');
+            // Random visual variation (Scale)
+            const heightVar = 0.8 + Math.random() * 0.4;
+            obs.style.transform = `scaleY(${heightVar})`;
+            
+            // Initial Pos
+            obs.style.left = '100%';
+            
+            // Object data
+            const obstacleObj = { el: obs, x: 100 }; // x is percentage for smoother logic
+            stageEl.appendChild(obs);
+            obstacles.push(obstacleObj);
+        }
+
+        function moveObstacles(dt) {
+            // Screen width factor for consistent speed
+            const pxSpeed = state.speed * (dt / 16); 
+            
+            for (let i = obstacles.length - 1; i >= 0; i--) {
+                const obs = obstacles[i];
+                // Move in pixels based on current left style
+                const currentLeft = parseFloat(obs.el.style.left) || 100;
+                
+                // Convert % to pixels for movement? No, lets use pixels from logic.
+                // Better approach for responsive:
+                // Get computed pixels, subtract, set back.
+                const rect = obs.el.getBoundingClientRect();
+                const newLeft = rect.left - pxSpeed;
+                
+                obs.el.style.left = newLeft + 'px';
+
+                // Cleanup
+                if (newLeft < -100) {
+                    obs.el.remove();
+                    obstacles.splice(i, 1);
+                }
+            }
+        }
+
+        function checkCollision() {
+            const runnerRect = runnerEl.getBoundingClientRect();
+            // Shrink hitbox slightly for fairness
+            const hitBox = {
+                left: runnerRect.left + 15,
+                right: runnerRect.right - 15,
+                top: runnerRect.top + 10,
+                bottom: runnerRect.bottom - 5
+            };
+
+            obstacles.forEach(obs => {
+                const obsRect = obs.el.getBoundingClientRect();
+                const obsHitBox = {
+                    left: obsRect.left + 5,
+                    right: obsRect.right - 5,
+                    top: obsRect.top + 5,
+                    bottom: obsRect.bottom
+                };
+
+                if (
+                    hitBox.left < obsHitBox.right &&
+                    hitBox.right > obsHitBox.left &&
+                    hitBox.bottom > obsHitBox.top
+                ) {
+                    gameOver();
+                }
+            });
+        }
+
+        function toggleDayNight() {
+            state.isDay = !state.isDay;
+            updateTheme();
+        }
+
+        function updateTheme() {
+            if (state.isDay) {
+                // Switch to Day
+                stageEl.classList.remove('theme-night');
+                stageEl.classList.add('theme-day');
+                
+                // Celestial
+                celestialEl.classList.remove('moon');
+                celestialEl.classList.add('sun');
+                
+                // Character Swap (Fade)
+                himEl.style.opacity = '0';
+                setTimeout(() => {
+                    himEl.style.display = 'none';
+                    herEl.style.display = 'block';
+                    setTimeout(() => herEl.style.opacity = '1', 50);
+                }, 500);
+                
+                createSkyObjects(false); // Clouds
+            } else {
+                // Switch to Night
+                stageEl.classList.remove('theme-day');
+                stageEl.classList.add('theme-night');
+                
+                // Celestial
+                celestialEl.classList.remove('sun');
+                celestialEl.classList.add('moon');
+                
+                // Character Swap
+                herEl.style.opacity = '0';
+                setTimeout(() => {
+                    herEl.style.display = 'none';
+                    himEl.style.display = 'block';
+                    setTimeout(() => himEl.style.opacity = '1', 50);
+                }, 500);
+
+                createSkyObjects(true); // Stars
+            }
+        }
+
+        function createSkyObjects(isNight) {
+            const container = document.getElementById('sky-objects');
+            container.innerHTML = ''; // Clear old
+            
+            const count = isNight ? 30 : 6;
+            const type = isNight ? 'star' : 'cloud';
+            
+            for(let i=0; i<count; i++) {
+                const el = document.createElement('div');
+                el.classList.add(type);
+                el.style.top = Math.random() * 60 + '%';
+                el.style.left = Math.random() * 100 + '%';
+                
+                if(!isNight) {
+                    // Cloud styling sizing
+                    const w = 50 + Math.random() * 50;
+                    el.style.width = w + 'px'; el.style.height = (w*0.4)+'px';
+                }
+                container.appendChild(el);
+            }
+        }
+
+        function gameOver() {
+            state.running = false;
+            runnerEl.classList.remove('running');
+            document.getElementById('final-score').innerText = Math.floor(state.score / 10);
+            document.getElementById('game-over-screen').classList.remove('hidden');
+        }
+
+        function resetGame() {
+            // Cleanup obstacles
+            obstacles.forEach(o => o.el.remove());
+            obstacles = [];
+            
+            document.getElementById('game-over-screen').classList.add('hidden');
+            startGame();
+        }
+
+        // Init Background
+        createSkyObjects(true);
+
+    </script>
+</body>
+</html>
