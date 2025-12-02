@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Our Future Home ❤️</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Pacifico&family=Quicksand:wght@400;600&display=swap" rel="stylesheet">
+    <style>
+        html, body {
+            height: 100%; width: 100%; margin: 0; padding: 0; overflow: hidden;
+            font-family: 'Quicksand', sans-serif;
+            background: linear-gradient(to bottom, #38bdf8 0%, #bae6fd 100%);
+        }
+
+        /* --- STAGE WRAPPER (THE FIX) --- */
+        /* This box scales perfectly while keeping everything inside aligned */
+        #stage-container {
+            position: absolute;
+            bottom: 5%; /* Anchor near bottom */
+            left: 50%;
+            transform: translateX(-50%);
+            width: 100%;
+            max-width: 1200px; /* Don't get too huge on desktop */
+            aspect-ratio: 2 / 1; /* Maintain 2:1 width/height ratio always */
+            z-index: 20;
+            pointer-events: none; /* Let clicks pass through */
+        }
+
+        /* --- THE CANVAS --- */
+        /* Fills the stage exactly */
+        canvas#sceneCanvas {
+            width: 100%;
+            height: 100%;
+            display: block;
+        }
+
+        /* --- CARS CONTAINER --- */
+        /* Positioned using % so it stays locked to the garage drawing */
+        .garage-cars-layer {
+            position: absolute;
+            /* These % align perfectly with the canvas drawing coordinates below */
+            bottom: 25.5%; 
+            right: 13.5%; 
+            width: 53%; /* Garage width relative to scene */
+            height: 25%;
+            display: flex;
+            align-items: flex-end;
+            justify-content: space-around;
+            z-index: 25; /* Above canvas, below couple */
+        }
+
+        .car-img {
+            object-fit: contain;
+            filter: drop-shadow(0 5px 8px rgba(0,0,0,0.6));
+            /* Make cars fit nicely in their slots */
+            width: 32%; 
+            transition: transform 0.3s ease;
+        }
+        /* Flip cars to face left */
+        .car-img { transform: scaleX(-1); }
+        /* Mazda needs a slight size boost */
+        .mazda { transform: scaleX(-1) scale(1.15); } 
+
+        /* --- COUPLE (Centered in Stage) --- */
+        .couple-layer {
+            position: absolute;
+            bottom: 10%;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            align-items: flex-end;
+            gap: 1%;
+            width: 15%; /* Scale relative to stage */
+            z-index: 30;
+        }
+        .head-wrapper {
+            width: 100%; padding-bottom: 100%; /* Circle aspect ratio */
+            position: relative; background: white; border-radius: 50%;
+            border: 3px solid white; overflow: hidden;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        .head-wrapper img { position: absolute; width: 100%; height: 100%; object-fit: cover; }
+        .character-body {
+            position: absolute; bottom: -60%; left: 50%; transform: translateX(-50%);
+            width: 60%; height: 80%; background: #333; z-index: -1;
+            border-radius: 20px;
+        }
+        /* Simplified CSS Couple for scaling stability */
+        .avatar-group { position: relative; width: 45%; }
+        
+        .holding-heart {
+            position: absolute; bottom: 30%; left: 50%; transform: translateX(-50%);
+            font-size: 2vw; z-index: 35;
+            filter: drop-shadow(0 0 5px rgba(236, 72, 153, 0.8));
+            animation: heartBeat 1.5s infinite;
+        }
+        @keyframes heartBeat { 0%,100%{transform: translateX(-50%) scale(1);} 50%{transform: translateX(-50%) scale(1.2);} }
+
+
+        /* --- ENVIRONMENT --- */
+        .sky-layer { position: absolute; inset: 0; overflow: hidden; pointer-events: none; }
+        .sun {
+            position: absolute; top: 5%; right: 5%; width: 15vw; height: 15vw; max-width: 150px; max-height: 150px;
+            background: radial-gradient(circle, #fff 10%, #fcd34d 40%, #eab308 100%);
+            border-radius: 50%; box-shadow: 0 0 60px rgba(251, 191, 36, 0.8);
+            animation: sunGlow 4s infinite alternate;
+        }
+        @keyframes sunGlow { to { transform: scale(1.1); box-shadow: 0 0 100px rgba(251, 191, 36, 1); } }
+
+        .cloud {
+            position: absolute; background: #fff; border-radius: 100px;
+            box-shadow: 0 8px 5px rgba(0,0,0,0.05); opacity: 0.9;
+            animation: moveClouds linear infinite;
+        }
+        @keyframes moveClouds { from { transform: translateX(-150%); } to { transform: translateX(150vw); } }
+
+        .ground-layer {
+            position: absolute; bottom: 0; left: 0; width: 100%; height: 35%;
+            background: linear-gradient(to bottom, #4ade80 0%, #15803d 100%);
+            z-index: 10;
+        }
+
+        /* --- UI --- */
+        .text-overlay {
+            position: absolute; top: 10%; width: 100%; text-align: center; z-index: 50; padding: 0 20px; pointer-events: none;
+        }
+        .text-overlay h1 { font-size: clamp(2rem, 5vw, 4rem); text-shadow: 2px 2px 4px rgba(236, 72, 153, 0.3); }
+        .text-overlay p { font-size: clamp(0.8rem, 2vw, 1.2rem); margin-top: 10px; }
+        
+        .back-btn {
+            position: fixed; top: 20px; left: 20px; background: white; padding: 8px 20px;
+            border-radius: 99px; text-decoration: none; color: #ec4899; font-weight: bold;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1); z-index: 100; font-size: 0.9rem;
+        }
+
+        /* Mobile Adjustments */
+        @media (max-width: 600px) {
+            #stage-container { width: 100%; bottom: 15%; aspect-ratio: 16/9; } /* Taller scene on mobile */
+            .garage-cars-layer { bottom: 25%; } /* Fine tune */
+        }
+    </style>
+</head>
+<body>
+
+    <a href="index.html" class="back-btn">⬅ Back</a>
+    <div class="sun"></div>
+    <div class="sky-layer" id="skyLayer"></div>
+
+    <div class="text-overlay">
+        <h1 class="font-pacifico text-white drop-shadow-md">Rumah Masa Depan Kita</h1>
+        <p class="text-white font-bold tracking-wider uppercase opacity-90 drop-shadow-sm">Kita, rumah kecil, dan mobil-mobil impian.</p>
+    </div>
+
+    <div id="stage-container">
+        <canvas id="sceneCanvas" width="1000" height="500"></canvas>
+        
+        <div class="garage-cars-layer">
+            <img src="hugimages/mazda.png" class="car-img mazda" alt="Mazda">
+            <img src="hugimages/lm500h.png" class="car-img lexus" alt="Lexus">
+            <img src="hugimages/m4.png" class="car-img bmw" alt="BMW">
+        </div>
+
+        <div class="couple-layer">
+            <div class="avatar-group">
+                <div class="head-wrapper"><img src="hugimages/himblue.jpg" alt="Him"></div>
+                <div class="character-body" style="background-color: #3b82f6;"></div>
+            </div>
+            <div class="holding-heart">❤️</div>
+            <div class="avatar-group">
+                <div class="head-wrapper"><img src="hugimages/herpink.jpg" alt="Her"></div>
+                <div class="character-body" style="background-color: #f472b6;"></div>
+            </div>
+        </div>
+    </div>
+
+    <div class="ground-layer"></div>
+
+    <script>
+        // --- CLOUDS ---
+        const sky = document.getElementById('skyLayer');
+        function createCloud() {
+            const cloud = document.createElement('div');
+            cloud.classList.add('cloud');
+            const w = 80 + Math.random() * 100;
+            cloud.style.width = w + 'px'; cloud.style.height = (w * 0.35) + 'px';
+            cloud.style.top = (Math.random() * 40) + '%';
+            cloud.style.animationDuration = (20 + Math.random() * 30) + 's';
+            // Simple CSS shapes for cloud puffs
+            const p1 = document.createElement('div'); p1.style.cssText = "position:absolute; width:50%; height:120%; background:inherit; border-radius:50%; top:-50%; left:15%;";
+            const p2 = document.createElement('div'); p2.style.cssText = "position:absolute; width:60%; height:140%; background:inherit; border-radius:50%; top:-70%; left:35%;";
+            cloud.append(p1, p2);
+            sky.appendChild(cloud);
+            setTimeout(() => cloud.remove(), 55000);
+        }
+        for(let i=0; i<5; i++) setTimeout(createCloud, i*2000);
+        setInterval(createCloud, 4000);
+
+        // --- CANVAS DRAWING (STATIC GRID 1000x500) ---
+        const canvas = document.getElementById('sceneCanvas');
+        const ctx = canvas.getContext('2d');
+
+        // We draw to a fixed coordinate system (1000x500)
+        // The CSS 'aspect-ratio' on #stage-container handles the scaling for us.
+        function drawScene() {
+            const w = 1000;
+            const h = 500;
+            ctx.clearRect(0, 0, w, h);
+
+            // Ground Reference Line: y=400 (80% down)
+            const floorY = 400; 
+            const centerX = 350; // Center point for house structure
+
+            // SHADOW
+            ctx.fillStyle = "rgba(0,0,0,0.15)";
+            ctx.beginPath(); ctx.ellipse(500, floorY + 10, 480, 25, 0, 0, Math.PI*2); ctx.fill();
+
+            // --- HOUSE (Left) ---
+            const hx = 100; const hy = floorY - 150; // y=250
+            const hw = 180; const hh = 150;
+            
+            // Wall Gradient
+            const wallG = ctx.createLinearGradient(hx, hy, hx, hy+hh);
+            wallG.addColorStop(0, '#fefce8'); wallG.addColorStop(1, '#fde047');
+            ctx.fillStyle = wallG; ctx.fillRect(hx, hy, hw, hh);
+            // Roof Gradient
+            const roofG = ctx.createLinearGradient(hx, hy-80, hx, hy);
+            roofG.addColorStop(0, '#be123c'); roofG.addColorStop(1, '#881337');
+            ctx.beginPath(); ctx.moveTo(hx-20, hy); ctx.lineTo(hx+hw/2, hy-80); ctx.lineTo(hx+hw+20, hy); ctx.closePath();
+            ctx.fillStyle = roofG; ctx.fill();
+            // Door
+            ctx.fillStyle = "#78350f"; ctx.fillRect(hx+30, hy+60, 40, 90);
+            ctx.beginPath(); ctx.arc(hx+62, hy+105, 3, 0, Math.PI*2); ctx.fillStyle="gold"; ctx.fill();
+            // Window
+            ctx.fillStyle = "#bae6fd"; ctx.fillRect(hx+90, hy+40, 50, 50);
+            ctx.lineWidth = 3; ctx.strokeStyle = "#fff"; ctx.strokeRect(hx+90, hy+40, 50, 50);
+            ctx.beginPath(); ctx.moveTo(hx+115, hy+40); ctx.lineTo(hx+115, hy+90); ctx.stroke();
+            ctx.beginPath(); ctx.moveTo(hx+90, hy+65); ctx.lineTo(hx+140, hy+65); ctx.stroke();
+
+            // --- GARAGE (Right) ---
+            // Coordinate Sync: If CSS 'right' is 13.5%, and 'width' is 53%...
+            // In pixels (1000w): Right edge = 865px, Left edge = 335px. Width = 530px.
+            const gx = 330; 
+            const gy = floorY - 120; // y=280
+            const gw = 550; // Wide triple garage
+            const gh = 120;
+
+            // Garage Body
+            ctx.fillStyle = wallG; ctx.fillRect(gx, gy, gw, gh);
+            // Garage Roof
+            ctx.beginPath(); ctx.moveTo(gx, hy); ctx.lineTo(gx+gw, gy); ctx.lineTo(gx, gy); ctx.closePath();
+            ctx.fillStyle = roofG; ctx.fill();
+            // Garage Interior (Dark)
+            // This is where the cars sit.
+            const innerG = ctx.createLinearGradient(gx, gy, gx, gy+gh);
+            innerG.addColorStop(0, '#1f2937'); innerG.addColorStop(1, '#111827');
+            ctx.fillStyle = innerG; 
+            ctx.fillRect(gx+15, gy+15, gw-30, gh-15);
+
+            // Pillars
+            ctx.fillStyle = "rgba(255,255,255,0.2)";
+            ctx.fillRect(gx + 180, gy+15, 10, gh-15);
+            ctx.fillRect(gx + 360, gy+15, 10, gh-15);
+        }
+
+        // Draw once. No resize event needed because the HTML/CSS scales the whole canvas element!
+        drawScene();
+
+    </script>
+</body>
+</html>
