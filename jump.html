@@ -177,25 +177,25 @@
         <!-- UI SCREENS -->
         <div class="ui-layer">
             <div id="start-screen" class="start-screen">
-                <h1 class="font-pacifico text-4xl text-white mb-2">Lari Malam</h1>
-                <p class="text-white mb-4">Pencet buat loncat. Hindari batunya.<br>Finish Line di Score 802!</p>
+                <h1 class="font-pacifico text-4xl text-white mb-2">Night Run</h1>
+                <p class="text-white mb-4">Tap to Jump. Avoid the rocks.<br>Finish Line at 208!</p>
                 <!-- Removed onclick, added ID for safer binding -->
-                <button id="start-btn" class="btn">Mulai lari 🏃‍♂️</button>
+                <button id="start-btn" class="btn">Start Run 🏃‍♂️</button>
             </div>
             
             <div id="game-over-screen" class="game-over-screen hidden">
                 <h1 class="font-pacifico text-4xl text-pink-500 mb-2">Ouch!</h1>
                 <p class="text-white mb-4">Score: <span id="final-score">0</span></p>
-                <button id="retry-btn" class="btn">Coba Lagi 🔄</button>
-                <br><a href="index.html" class="inline-block mt-4 text-white underline text-sm">Pulang</a>
+                <button id="retry-btn" class="btn">Try Again 🔄</button>
+                <br><a href="index.html" class="inline-block mt-4 text-white underline text-sm">Back Home</a>
             </div>
 
             <div id="win-screen" class="win-screen hidden">
-                <h1 class="font-pacifico text-5xl text-yellow-400 mb-2">WIHHH UDAA NYAMPE NIHHH! ❤️</h1>
-                <p class="text-white mb-4 text-lg">Kita sampeeee barenggg!</p>
+                <h1 class="font-pacifico text-5xl text-yellow-400 mb-2">You Made It! ❤️</h1>
+                <p class="text-white mb-4 text-lg">We reached the goal together!</p>
                 <div class="text-6xl my-4">🏁🏆🏁</div>
-                <button id="win-retry-btn" class="btn">Lari Lagi 🏃‍♂️</button>
-                <br><a href="index.html" class="inline-block mt-4 text-white underline text-sm">Pulang</a>
+                <button id="win-retry-btn" class="btn">Run Again 🏃‍♂️</button>
+                <br><a href="index.html" class="inline-block mt-4 text-white underline text-sm">Back Home</a>
             </div>
         </div>
 
@@ -209,7 +209,7 @@
             speedIncrement: 0.001,
             spawnRate: 2500, // Distance between rocks
             dayNightCycle: 15000,
-            targetScore: 802
+            targetScore: 208
         };
 
         let state = {
