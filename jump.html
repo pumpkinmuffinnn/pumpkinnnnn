@@ -56,6 +56,7 @@
             margin-top: 20px; cursor: pointer; border: 4px solid white;
             box-shadow: 0 4px 10px rgba(0,0,0,0.3);
             transition: transform 0.1s;
+            display: inline-block; /* Ensure clickable area */
         }
         .btn:active { transform: scale(0.95); }
 
@@ -206,9 +207,9 @@
             jumpStrength: 13,
             baseSpeed: 5,
             speedIncrement: 0.001,
-            spawnRate: 2500, // Increased distance between rocks
+            spawnRate: 2500, // Increased gap for better playability
             dayNightCycle: 15000,
-            targetScore: 802 // WIN CONDITION
+            targetScore: 802 
         };
 
         let state = {
@@ -235,10 +236,16 @@
         let finishLineEl = null;
         let animationFrameId;
 
-        // CONTROLS
+        // CONTROLS (FIXED)
         function handleInput(e) {
+            // FIX: If tapping a button or link, let the click happen!
+            if (e.target.closest('.btn') || e.target.closest('a')) return;
+
+            // Only prevent scroll for actual game taps (background/runner)
             if (e.type === 'touchstart') e.preventDefault();
+            
             if (!state.running) return;
+            
             if (!state.isJumping) {
                 state.dy = config.jumpStrength;
                 state.isJumping = true;
@@ -264,7 +271,6 @@
             state.isDay = false;
             state.finishLineSpawned = false;
             
-            // Remove any existing finish line
             if(finishLineEl) { finishLineEl.remove(); finishLineEl = null; }
             
             updateTheme();
@@ -293,13 +299,13 @@
 
             const currentDisplayedScore = Math.floor(state.score / 10);
 
-            // Win Condition Logic
+            // Win Condition
             if (currentDisplayedScore >= config.targetScore && !state.finishLineSpawned) {
                 spawnFinishLine();
                 state.finishLineSpawned = true;
             }
 
-            // Spawn Obstacles (Only if not finished)
+            // Spawn Obstacles
             if (!state.finishLineSpawned) {
                 state.obstacleTimer += dt;
                 if (state.obstacleTimer > config.spawnRate / (state.speed/5)) {
@@ -339,7 +345,7 @@
         function spawnFinishLine() {
             finishLineEl = document.createElement('div');
             finishLineEl.classList.add('finish-line');
-            finishLineEl.style.left = '100%'; // Start off screen
+            finishLineEl.style.left = '100%'; 
             stageEl.appendChild(finishLineEl);
         }
 
@@ -364,7 +370,6 @@
             const newLeft = rect.left - pxSpeed;
             finishLineEl.style.left = newLeft + 'px';
 
-            // Check if passed runner (Win Trigger)
             const runnerRect = runnerEl.getBoundingClientRect();
             if (rect.left < runnerRect.right) {
                 gameWin();
