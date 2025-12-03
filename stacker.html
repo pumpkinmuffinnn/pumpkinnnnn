@@ -1,0 +1,370 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Love Stacker 🏗️❤️</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Pacifico&family=Quicksand:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        * { box-sizing: border-box; touch-action: none; user-select: none; -webkit-user-select: none; }
+        body, html {
+            height: 100%; width: 100%; margin: 0; padding: 0; overflow: hidden;
+            font-family: 'Quicksand', sans-serif;
+            background: linear-gradient(to bottom, #c084fc 0%, #f472b6 100%); /* Sunset Sky */
+        }
+
+        /* --- ASSETS --- */
+        #assets { display: none; }
+
+        /* --- UI LAYER --- */
+        .ui-layer {
+            position: absolute; inset: 0; pointer-events: none; z-index: 50;
+            display: flex; flex-direction: column; align-items: center;
+        }
+
+        .back-btn {
+            position: absolute; top: 20px; left: 20px; pointer-events: auto;
+            background: white; padding: 8px 20px; border-radius: 99px;
+            color: #9333ea; font-weight: bold; text-decoration: none;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        .header {
+            position: absolute; top: 10%; width: 100%; text-align: center;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.2); color: white;
+        }
+        .score-big {
+            font-family: 'Pacifico', cursive; font-size: 4rem; line-height: 1;
+            transition: transform 0.1s;
+        }
+        .score-big.pop { transform: scale(1.5); }
+
+        /* --- SCREENS --- */
+        .screen-overlay {
+            position: absolute; inset: 0; background: rgba(255,255,255,0.3); backdrop-filter: blur(8px);
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            z-index: 100; pointer-events: auto; transition: opacity 0.3s;
+        }
+        .screen-overlay.hidden { opacity: 0; pointer-events: none; display: none; }
+
+        .btn {
+            background: #db2777; color: white; padding: 15px 40px;
+            border-radius: 99px; font-weight: bold; font-size: 1.5rem;
+            margin-top: 20px; cursor: pointer; border: 4px solid white;
+            box-shadow: 0 8px 15px rgba(219, 39, 119, 0.3);
+            transition: transform 0.1s;
+        }
+        .btn:active { transform: scale(0.95); }
+
+        /* --- CANVAS --- */
+        canvas { display: block; width: 100%; height: 100%; z-index: 10; }
+
+    </style>
+</head>
+<body>
+
+    <!-- ASSETS -->
+    <div id="assets">
+        <img id="img-him" src="hugimages/himblue.jpg" alt="Him">
+        <img id="img-her" src="hugimages/herpink.jpg" alt="Her">
+    </div>
+
+    <div class="ui-layer">
+        <a href="index.html" class="back-btn">⬅ Back</a>
+        <div class="header">
+            <p class="text-sm font-bold uppercase tracking-widest opacity-90">Floors Built</p>
+            <div id="score" class="score-big">0</div>
+        </div>
+    </div>
+
+    <!-- START SCREEN -->
+    <div id="start-screen" class="screen-overlay">
+        <h1 class="font-pacifico text-6xl text-purple-600 mb-2 drop-shadow-sm">Love Stacker</h1>
+        <p class="text-white font-bold text-lg mb-6 text-center shadow-black drop-shadow-md">
+            Build our future home!<br>Tap to drop the floor.
+        </p>
+        <button id="start-btn" class="btn">Start Building 🏗️</button>
+    </div>
+
+    <!-- GAME OVER -->
+    <div id="game-over-screen" class="screen-overlay hidden">
+        <h1 class="font-pacifico text-5xl text-pink-600 mb-2">Oh no!</h1>
+        <p class="text-gray-800 font-bold text-xl mb-4">You built <span id="final-score" class="text-purple-600">0</span> floors!</p>
+        <button id="restart-btn" class="btn">Build Again 🔄</button>
+    </div>
+
+    <canvas id="gameCanvas"></canvas>
+
+    <script>
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        
+        const scoreEl = document.getElementById('score');
+        const finalScoreEl = document.getElementById('final-score');
+        const startScreen = document.getElementById('start-screen');
+        const gameOverScreen = document.getElementById('game-over-screen');
+
+        const imgHim = document.getElementById('img-him');
+        const imgHer = document.getElementById('img-her');
+
+        // Game Constants
+        const BLOCK_HEIGHT = 40;
+        const START_WIDTH = 200;
+        const BASE_SPEED = 4;
+
+        // State
+        let gameRunning = false;
+        let score = 0;
+        let blocks = [];
+        let currentBlock = {};
+        let cameraY = 0;
+        let palette = ['#fef3c7', '#fde68a', '#fcd34d', '#fbbf24', '#f59e0b']; // House colors
+
+        // --- RESIZE ---
+        function resize() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+            if(!gameRunning) initGame(false); // Reset layout without starting
+        }
+        window.addEventListener('resize', resize);
+
+        // --- INPUT ---
+        function handleInput() {
+            if (!gameRunning) return;
+            placeBlock();
+        }
+        
+        window.addEventListener('mousedown', handleInput);
+        window.addEventListener('touchstart', (e) => {
+            if(e.target.tagName !== 'BUTTON') {
+                e.preventDefault();
+                handleInput();
+            }
+        }, {passive: false});
+        window.addEventListener('keydown', (e) => {
+            if(e.code === 'Space' || e.code === 'ArrowDown') handleInput();
+        });
+
+        // --- BUTTONS ---
+        function bindBtn(id, fn) {
+            const el = document.getElementById(id);
+            el.addEventListener('click', (e) => { e.stopPropagation(); fn(); });
+            el.addEventListener('touchstart', (e) => { e.stopPropagation(); fn(); }, {passive: false});
+        }
+        bindBtn('start-btn', startGame);
+        bindBtn('restart-btn', startGame);
+
+        // --- LOGIC ---
+        function initGame(start = true) {
+            score = 0;
+            scoreEl.innerText = 0;
+            cameraY = 0;
+            
+            const centerX = canvas.width / 2;
+            const startY = canvas.height - 100;
+
+            // Base Block (Foundation)
+            blocks = [{
+                x: centerX - START_WIDTH / 2,
+                y: startY,
+                w: START_WIDTH,
+                h: BLOCK_HEIGHT,
+                color: '#78350f' // Dark wood foundation
+            }];
+
+            // First Moving Block
+            spawnNextBlock();
+
+            if(start) {
+                gameRunning = true;
+                startScreen.classList.add('hidden');
+                gameOverScreen.classList.add('hidden');
+                draw(); // START THE LOOP
+            } else {
+                draw(); // Just draw static scene
+            }
+        }
+
+        function spawnNextBlock() {
+            const prevBlock = blocks[blocks.length - 1];
+            const yPos = prevBlock.y - BLOCK_HEIGHT;
+            
+            // Alternating direction
+            const direction = score % 2 === 0 ? 1 : -1;
+            const startX = direction === 1 ? -prevBlock.w : canvas.width;
+
+            currentBlock = {
+                x: startX,
+                y: yPos,
+                w: prevBlock.w,
+                h: BLOCK_HEIGHT,
+                color: palette[score % palette.length],
+                speed: (BASE_SPEED + (score * 0.1)) * direction,
+                direction: direction
+            };
+        }
+
+        function placeBlock() {
+            const prev = blocks[blocks.length - 1];
+            const curr = currentBlock;
+
+            // Calculate Overlap
+            let overlap = 0;
+            let bonus = false;
+
+            if (curr.x + curr.w < prev.x || curr.x > prev.x + prev.w) {
+                // Missed completely
+                gameOver();
+                return;
+            }
+
+            if (curr.x > prev.x) {
+                // Overhang right
+                overlap = (prev.x + prev.w) - curr.x;
+                curr.w = overlap;
+                // No change to x
+            } else {
+                // Overhang left
+                overlap = (curr.x + curr.w) - prev.x;
+                curr.x = prev.x; // Snap to left edge
+                curr.w = overlap;
+            }
+
+            // Perfect Drop Tolerance (3px)
+            if (Math.abs(curr.x - prev.x) < 3) {
+                curr.x = prev.x;
+                curr.w = prev.w; // Restore full width if perfect
+                bonus = true;
+                scoreEl.classList.add('pop');
+                setTimeout(() => scoreEl.classList.remove('pop'), 200);
+            }
+
+            // Add to stack
+            blocks.push(curr);
+            score++;
+            scoreEl.innerText = score;
+
+            // Camera Pan
+            if (score > 5) {
+                cameraY += BLOCK_HEIGHT;
+            }
+
+            spawnNextBlock();
+        }
+
+        function update() {
+            if (!gameRunning) return;
+
+            // Move Current Block
+            currentBlock.x += currentBlock.speed;
+
+            // Bounce off walls (or loop? Standard stacker bounces)
+            // Actually standard stacker: if you miss, you lose.
+            // So we just let it slide. If it goes off screen completely, game over?
+            // Let's implement ping-pong movement for easier gameplay.
+            if (currentBlock.x > canvas.width - 50 && currentBlock.direction === 1) currentBlock.speed *= -1;
+            if (currentBlock.x < 50 - currentBlock.w && currentBlock.direction === -1) currentBlock.speed *= -1;
+
+            // Camera Smooth Pan
+            // We want to translate the canvas context, or just subtract Y when drawing.
+            // Let's handle it in draw.
+        }
+
+        function draw() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            ctx.save();
+            // Apply Camera Translation (Smooth Lerp could go here, but simple is fine)
+            ctx.translate(0, cameraY);
+
+            // 1. Draw Ground
+            ctx.fillStyle = '#22c55e';
+            ctx.fillRect(0, canvas.height - 60, canvas.width, 200); // Fixed ground relative to start
+
+            // 2. Draw Couple (Watching)
+            const groundY = canvas.height - 60;
+            const coupleX = canvas.width / 2 - 100;
+            
+            // Him
+            ctx.save();
+            ctx.beginPath(); ctx.arc(coupleX - 20, groundY - 25, 25, 0, Math.PI*2); ctx.clip();
+            ctx.drawImage(imgHim, coupleX - 45, groundY - 50, 50, 50);
+            ctx.restore();
+            // Her
+            ctx.save();
+            ctx.beginPath(); ctx.arc(coupleX + 30, groundY - 25, 25, 0, Math.PI*2); ctx.clip();
+            ctx.drawImage(imgHer, coupleX + 5, groundY - 50, 50, 50);
+            ctx.restore();
+
+            // 3. Draw Stacked Blocks
+            blocks.forEach((b, i) => {
+                ctx.fillStyle = b.color;
+                ctx.fillRect(b.x, b.y, b.w, b.h);
+                
+                // Add Windows
+                if (i > 0) { // Skip foundation
+                    ctx.fillStyle = '#bfdbfe'; // Glass
+                    const winSize = 15;
+                    const gap = 10;
+                    const wins = Math.floor(b.w / (winSize + gap));
+                    const startX = b.x + (b.w - (wins * (winSize + gap)) + gap) / 2;
+                    
+                    for(let w=0; w<wins; w++) {
+                        ctx.fillRect(startX + w*(winSize+gap), b.y + 10, winSize, 20);
+                    }
+                }
+            });
+
+            // 4. Draw Moving Block (If playing)
+            if (gameRunning) {
+                ctx.fillStyle = currentBlock.color;
+                ctx.fillRect(currentBlock.x, currentBlock.y, currentBlock.w, currentBlock.h);
+                // Highlight current block
+                ctx.strokeStyle = 'white';
+                ctx.lineWidth = 2;
+                ctx.strokeRect(currentBlock.x, currentBlock.y, currentBlock.w, currentBlock.h);
+            }
+
+            ctx.restore();
+            
+            if (gameRunning) requestAnimationFrame(() => { update(); draw(); });
+        }
+
+        function startGame() {
+            initGame(true);
+        }
+
+        function gameOver() {
+            gameRunning = false;
+            finalScoreEl.innerText = score;
+            gameOverScreen.classList.remove('hidden');
+            
+            // Drop animation for the falling block
+            const fallingBlock = {...currentBlock};
+            let vy = 0;
+            
+            function animateFall() {
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                // Redraw scene statically
+                draw(); 
+                // Draw falling block
+                vy += 0.5;
+                fallingBlock.y += vy;
+                ctx.save();
+                ctx.translate(0, cameraY);
+                ctx.fillStyle = fallingBlock.color;
+                ctx.fillRect(fallingBlock.x, fallingBlock.y, fallingBlock.w, fallingBlock.h);
+                ctx.restore();
+                
+                if(fallingBlock.y - cameraY < canvas.height) requestAnimationFrame(animateFall);
+            }
+            animateFall();
+        }
+
+        // Init
+        resize();
+
+    </script>
+</body>
+</html>

@@ -1,0 +1,483 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Love Crossing 🐸❤️</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Pacifico&family=Quicksand:wght@400;700&display=swap" rel="stylesheet">
+
+    <style>
+        * { box-sizing: border-box; touch-action: none; user-select: none; -webkit-user-select: none; }
+        body, html {
+            height: 100%; width: 100%; margin: 0; padding: 0; overflow: hidden;
+            font-family: 'Quicksand', sans-serif;
+            background: #1e293b;
+        }
+
+        #assets { display: none; }
+
+        .ui-layer {
+            position: absolute; inset: 0; pointer-events: none; z-index: 50;
+            display: flex; flex-direction: column; justify-content: space-between;
+        }
+
+        .back-btn {
+            position: absolute; top: 20px; left: 20px; pointer-events: auto;
+            background: white; padding: 8px 20px; border-radius: 99px;
+            color: #ec4899; font-weight: bold; text-decoration: none;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        .header { margin-top: 20px; text-align: center; pointer-events: none; }
+        h1 {
+            font-family: 'Pacifico', cursive; font-size: 2rem; color: #f472b6;
+            text-shadow: 2px 2px 0 rgba(0,0,0,0.5);
+        }
+        .lives { font-size: 1.5rem; margin-top: 5px; }
+
+        .controls-area {
+            width: 100%; padding: 20px; pointer-events: auto;
+            display: flex; justify-content: center; margin-bottom: 20px;
+        }
+        
+        .d-pad {
+            display: grid;
+            grid-template-columns: 60px 60px 60px;
+            grid-template-rows: 60px 60px;
+            gap: 8px;
+        }
+        
+        .ctrl-btn {
+            width: 60px; height: 60px;
+            background: rgba(255,255,255,0.2);
+            border: 2px solid white; border-radius: 12px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 1.5rem; color: white; cursor: pointer;
+            backdrop-filter: blur(4px); transition: background 0.1s;
+        }
+        .ctrl-btn:active { background: rgba(255,255,255,0.5); transform: scale(0.95); }
+
+        @media (min-width: 768px) { .controls-area { display: none; } }
+
+        .screen-overlay {
+            position: absolute; inset: 0; background: rgba(0,0,0,0.8); backdrop-filter: blur(5px);
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            z-index: 100; pointer-events: auto; transition: opacity 0.3s;
+        }
+        .screen-overlay.hidden { opacity: 0; pointer-events: none; display: none; }
+
+        .btn {
+            background: #ec4899; color: white; padding: 15px 40px;
+            border-radius: 99px; font-weight: bold; font-size: 1.5rem;
+            margin-top: 20px; cursor: pointer; border: 4px solid white;
+            box-shadow: 0 8px 15px rgba(236, 72, 153, 0.3);
+            transition: transform 0.1s;
+        }
+        .btn:active { transform: scale(0.95); }
+
+        canvas { display: block; width: 100%; height: 100%; z-index: 10; }
+    </style>
+</head>
+
+<body>
+
+    <!-- ASSETS -->
+    <div id="assets">
+        <img id="img-him" src="hugimages/himblue.jpg">
+        <img id="img-her" src="hugimages/herpink.jpg">
+        <img id="img-mazda" src="hugimages/mazda.png">
+        <img id="img-lexus" src="hugimages/lm500h.png">
+        <img id="img-bmw" src="hugimages/m4.png">
+    </div>
+
+    <div class="ui-layer">
+        <a href="index.html" class="back-btn">⬅ Back</a>
+        <div class="header">
+            <h1 id="level-text">Level 1</h1>
+            <div class="lives" id="lives">❤️❤️❤️</div>
+        </div>
+
+        <div class="controls-area">
+            <div class="d-pad">
+                <div class="ctrl-btn up" data-dir="up">⬆️</div>
+                <div class="ctrl-btn left" data-dir="left">⬅️</div>
+                <div class="ctrl-btn down" data-dir="down">⬇️</div>
+                <div class="ctrl-btn right" data-dir="right">➡️</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- SCREENS -->
+    <div id="start-screen" class="screen-overlay">
+        <h1 class="font-pacifico text-5xl text-pink-500 mb-2">Love Crossing</h1>
+        <p class="text-gray-300 font-bold text-lg mb-6 max-w-xs text-center">
+            Cross the road & river to find Her.<br>Watch out for traffic!
+        </p>
+        <button id="start-btn" class="btn">Start Journey 🚶‍♂️</button>
+    </div>
+
+    <div id="game-over-screen" class="screen-overlay hidden">
+        <h1 class="font-pacifico text-5xl text-red-500 mb-2">Oh no!</h1>
+        <p class="text-white text-xl mb-4">You didn't make it!</p>
+        <button id="restart-btn" class="btn">Try Again 🔄</button>
+    </div>
+
+    <div id="win-screen" class="screen-overlay hidden">
+        <h1 class="font-pacifico text-6xl text-green-400 mb-2">Together! ❤️</h1>
+        <p class="text-white text-xl mb-6">You reached her safely!</p>
+        <button id="next-btn" class="btn">Next Level 🚀</button>
+    </div>
+
+    <canvas id="gameCanvas"></canvas>
+
+<script>
+/* -----------------------------
+      GAME VARIABLES
+------------------------------ */
+
+const canvas = document.getElementById('gameCanvas');
+const ctx = canvas.getContext('2d');
+
+const livesEl = document.getElementById('lives');
+const levelText = document.getElementById('level-text');
+
+const startScreen = document.getElementById('start-screen');
+const gameOverScreen = document.getElementById('game-over-screen');
+const winScreen = document.getElementById('win-screen');
+
+const imgHim = document.getElementById('img-him');
+const imgHer = document.getElementById('img-her');
+
+const cars = [
+    document.getElementById('img-mazda'),
+    document.getElementById('img-lexus'),
+    document.getElementById('img-bmw')
+];
+
+const COLS = 9;
+const ROWS = 11;
+
+let GRID_SIZE = 0;
+let gameRunning = false;
+let lives = 3;
+let level = 1;
+
+let player = { x: 4, y: ROWS - 1 };
+let lanes = [];
+
+/* -----------------------------
+      RESIZE
+------------------------------ */
+
+function resize() {
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+
+    const usableHeight = window.innerHeight * 0.8;
+    GRID_SIZE = Math.min(canvas.width / COLS, usableHeight / ROWS);
+
+    ctx.translate(
+        (canvas.width - GRID_SIZE * COLS) / 2,
+        (canvas.height - GRID_SIZE * ROWS) / 2 + 20
+    );
+}
+
+/* -----------------------------
+      LEVEL GENERATION
+------------------------------ */
+
+function initLevel() {
+    lanes = [];
+
+    // Row 0 = Goal
+    lanes.push({ type: 'goal' });
+
+    // 1-3 = Water
+    for (let i = 0; i < 3; i++) {
+        const speed = (Math.random() * 2 + 2 + (level * 0.5)) * (i % 2 === 0 ? 1 : -1);
+        lanes.push({
+            type: 'water',
+            speed: speed,
+            items: generateLaneItems(3, 2)
+        });
+    }
+
+    // Grass buffer
+    lanes.push({ type: 'grass' });
+
+    /* --------------------------------
+       NEW: ROAD → GRASS → ROAD → GRASS
+    ----------------------------------- */
+    for (let i = 0; i < 4; i++) {
+
+        if (i % 2 === 0) {
+            const speed = (Math.random() * 0.7 + 0.8) * (i % 4 === 0 ? -1 : 1); 
+
+            lanes.push({
+                type: 'road',
+                speed: speed,
+                items: generateLaneItems(2, 1.5)
+            });
+        } else {
+            lanes.push({ type: 'grass' });
+        }
+    }
+
+    // Start area
+    lanes.push({ type: 'grass' });
+    lanes.push({ type: 'start' });
+
+    player.x = 4;
+    player.y = ROWS - 1;
+}
+
+function generateLaneItems(count, width) {
+    let items = [];
+    const spacing = COLS / count;
+
+    for (let i = 0; i < count; i++) {
+        items.push({
+            x: (i * spacing) + Math.random(),
+            w: width,
+            img: cars[Math.floor(Math.random() * cars.length)]
+        });
+    }
+    return items;
+}
+
+/* -----------------------------
+      INPUT
+------------------------------ */
+
+function move(dx, dy) {
+    if (!gameRunning) return;
+
+    const nx = player.x + dx;
+    const ny = player.y + dy;
+
+    if (nx >= 0 && nx < COLS && ny >= 0 && ny < ROWS) {
+        player.x = nx;
+        player.y = ny;
+    }
+}
+
+window.addEventListener('keydown', e => {
+    if (e.key === 'ArrowUp') move(0, -1);
+    if (e.key === 'ArrowDown') move(0, 1);
+    if (e.key === 'ArrowLeft') move(-1, 0);
+    if (e.key === 'ArrowRight') move(1, 0);
+});
+
+/* -----------------------------
+      UPDATE + DRAW
+------------------------------ */
+
+function update() {
+    if (!gameRunning) return;
+
+    // Move items
+    lanes.forEach(lane => {
+        if (lane.speed) {
+            lane.items.forEach(item => {
+                item.x += lane.speed * 0.005; // SLOWER MOVEMENT
+
+                if (lane.speed > 0 && item.x > COLS) item.x = -item.w;
+                if (lane.speed < 0 && item.x < -item.w) item.x = COLS;
+            });
+        }
+    });
+
+    const currentLane = lanes[player.y];
+
+    if (player.y === 0) {
+        levelComplete();
+        return;
+    }
+
+    if (currentLane.type === 'water') {
+        let safe = false;
+        const px = player.x + 0.5;
+
+        currentLane.items.forEach(log => {
+            if (px > log.x && px < log.x + log.w) {
+                safe = true;
+                player.x += currentLane.speed * 0.005;
+            }
+        });
+
+        if (player.x < 0 || player.x >= COLS) safe = false;
+        if (!safe) death();
+    }
+
+    if (currentLane.type === 'road') {
+        const pLeft = player.x + 0.2;
+        const pRight = player.x + 0.8;
+
+        for (let car of currentLane.items) {
+            const cLeft = car.x + 0.1;
+            const cRight = car.x + car.w - 0.1;
+
+            if (pRight > cLeft && pLeft < cRight) {
+                death();
+                return;
+            }
+        }
+    }
+
+    draw();
+    requestAnimationFrame(update);
+}
+
+/* -----------------------------
+      DRAWING
+------------------------------ */
+
+function draw() {
+    ctx.save();
+    ctx.setTransform(1,0,0,1,0,0);
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+    ctx.restore();
+
+    lanes.forEach((lane, y) => {
+        const yPos = y * GRID_SIZE;
+
+        if (lane.type === 'goal' || lane.type === 'grass' || lane.type === 'start')
+            ctx.fillStyle = '#22c55e';
+        else if (lane.type === 'water')
+            ctx.fillStyle = '#3b82f6';
+        else
+            ctx.fillStyle = '#334155';
+
+        ctx.fillRect(0, yPos, COLS * GRID_SIZE, GRID_SIZE);
+
+        if (lane.items) {
+            lane.items.forEach(item => {
+                const xPos = item.x * GRID_SIZE;
+
+                if (lane.type === 'road') {
+                    ctx.save();
+                    ctx.translate(xPos, yPos);
+
+                    if (lane.speed > 0) {
+                        ctx.translate(item.w * GRID_SIZE, 0);
+                        ctx.scale(-1, 1);
+                    }
+
+                    ctx.drawImage(item.img, 0, 5, item.w * GRID_SIZE, GRID_SIZE - 10);
+                    ctx.restore();
+                }
+
+                if (lane.type === 'water') {
+                    ctx.fillStyle = '#854d0e';
+                    ctx.beginPath();
+                    ctx.roundRect(xPos + 2, yPos + 5, item.w * GRID_SIZE - 4, GRID_SIZE - 10, 10);
+                    ctx.fill();
+
+                    ctx.font = `${GRID_SIZE/2}px Arial`;
+                    ctx.textAlign = "center";
+                    ctx.fillText("❤️", xPos + (item.w * GRID_SIZE)/2, yPos + GRID_SIZE/1.5);
+                }
+            });
+        }
+    });
+
+    drawAvatar(imgHer, Math.floor(COLS/2), 0);
+    drawAvatar(imgHim, player.x, player.y);
+}
+
+function drawAvatar(img, x, y) {
+    const cx = x * GRID_SIZE + GRID_SIZE/2;
+    const cy = y * GRID_SIZE + GRID_SIZE/2;
+    const r = GRID_SIZE/2 - 4;
+
+    ctx.save();
+    ctx.beginPath();
+    ctx.arc(cx, cy, r, 0, Math.PI*2);
+    ctx.clip();
+    ctx.drawImage(img, x*GRID_SIZE+4, y*GRID_SIZE+4, GRID_SIZE-8, GRID_SIZE-8);
+    ctx.restore();
+
+    ctx.beginPath();
+    ctx.arc(cx, cy, r, 0, Math.PI*2);
+    ctx.lineWidth = 3;
+    ctx.strokeStyle = 'white';
+    ctx.stroke();
+}
+
+/* -----------------------------
+      GAME FLOW
+------------------------------ */
+
+function startGame() {
+    lives = 3;
+    level = 1;
+    livesEl.innerText = "❤️❤️❤️";
+    levelText.innerText = "Level " + level;
+
+    startScreen.classList.add("hidden");
+    gameOverScreen.classList.add("hidden");
+    winScreen.classList.add("hidden");
+
+    resize();
+    initLevel();
+
+    gameRunning = true;
+    update();
+}
+
+function levelComplete() {
+    gameRunning = false;
+    level++;
+
+    if (level > 3) {
+        winScreen.classList.remove("hidden");
+    } else {
+        levelText.innerText = "Level " + level;
+        setTimeout(() => {
+            initLevel();
+            gameRunning = true;
+            update();
+        }, 500);
+    }
+}
+
+function death() {
+    lives--;
+    livesEl.innerText = "❤️".repeat(lives);
+
+    if (lives <= 0) {
+        gameRunning = false;
+        gameOverScreen.classList.remove("hidden");
+    } else {
+        player.x = 4;
+        player.y = ROWS - 1;
+    }
+}
+
+/* -----------------------------
+      BUTTONS
+------------------------------ */
+
+function bindBtn(id, fn) {
+    const el = document.getElementById(id);
+    el.addEventListener('click', fn);
+    el.addEventListener('touchstart', fn, { passive: false });
+}
+
+bindBtn("start-btn", startGame);
+bindBtn("restart-btn", startGame);
+bindBtn("next-btn", startGame);
+
+/* -----------------------------
+      INIT
+------------------------------ */
+
+resize();
+initLevel();
+draw();
+
+</script>
+
+</body>
+</html>

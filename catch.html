@@ -1,0 +1,351 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Catch the Love ❤️</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Pacifico&family=Quicksand:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        * { box-sizing: border-box; touch-action: none; user-select: none; -webkit-user-select: none; }
+        body, html {
+            height: 100%; width: 100%; margin: 0; padding: 0; overflow: hidden;
+            font-family: 'Quicksand', sans-serif;
+            background: linear-gradient(to bottom, #60a5fa, #f472b6); /* Blue to Pink Sky */
+        }
+
+        /* --- UI ELEMENTS --- */
+        .back-btn {
+            position: absolute; top: 20px; left: 20px; z-index: 50;
+            background: white; padding: 8px 20px; border-radius: 99px;
+            color: #ec4899; font-weight: bold; text-decoration: none;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        .hud {
+            position: absolute; top: 20px; right: 20px; z-index: 50;
+            text-align: right; pointer-events: none;
+        }
+        .score-box {
+            font-family: 'Pacifico', cursive; font-size: 1.8rem; color: white;
+            text-shadow: 2px 2px 0 rgba(236, 72, 153, 0.5);
+        }
+        .lives { font-size: 1.5rem; margin-top: 5px; }
+
+        .screen-overlay {
+            position: absolute; inset: 0; z-index: 100;
+            background: rgba(255,255,255,0.2); backdrop-filter: blur(8px);
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            transition: opacity 0.3s;
+        }
+        .screen-overlay.hidden { opacity: 0; pointer-events: none; }
+
+        .btn {
+            background: #ec4899; color: white; padding: 15px 40px;
+            border-radius: 99px; font-weight: bold; font-size: 1.2rem;
+            margin-top: 20px; cursor: pointer; border: 4px solid white;
+            box-shadow: 0 8px 15px rgba(236, 72, 153, 0.3);
+            transition: transform 0.1s; pointer-events: auto;
+        }
+        .btn:active { transform: scale(0.95); }
+
+        /* --- CANVAS --- */
+        canvas { display: block; width: 100%; height: 100%; }
+
+        /* --- CHARACTER AVATAR (Used inside Canvas) --- */
+        .assets { display: none; }
+
+    </style>
+</head>
+<body>
+
+    <!-- ASSETS PRELOADER -->
+    <div class="assets">
+        <img id="img-him" src="hugimages/himblue.jpg" alt="Him">
+        <img id="img-her" src="hugimages/herpink.jpg" alt="Her">
+    </div>
+
+    <!-- UI -->
+    <a href="games.html" class="back-btn">⬅ Kembali</a>
+
+    <div class="hud">
+        <div class="score-box">Score: <span id="score">0</span> / 200</div>
+        <div class="lives" id="lives">❤️❤️❤️</div>
+    </div>
+
+    <!-- START SCREEN -->
+    <div id="start-screen" class="screen-overlay">
+        <h1 class="font-pacifico text-5xl text-pink-600 mb-2 drop-shadow-sm">Tangkep lop2nyaaa</h1>
+        <p class="text-white font-bold text-lg mb-6 bg-pink-400/50 px-4 py-1 rounded-full">
+            Goal: 200 Points! Tangkep ❤️ & 💌 barengg.
+        </p>
+        <button class="btn" id="start-btn">Mulai Main ▶️</button>
+    </div>
+
+    <!-- GAME OVER SCREEN -->
+    <div id="game-over-screen" class="screen-overlay hidden">
+        <h1 class="font-pacifico text-5xl text-pink-600 mb-2">Game Over!</h1>
+        <p class="text-gray-700 font-bold text-xl mb-4">Kita tangkep <span id="final-score" class="text-pink-500">0</span> loppp!</p>
+        <button class="btn" id="restart-btn">Coba Lagi 🔄</button>
+        <a href="index.html" class="mt-6 text-white font-bold underline">Pulang</a>
+    </div>
+
+    <!-- WIN SCREEN -->
+    <div id="win-screen" class="screen-overlay hidden">
+        <h1 class="font-pacifico text-6xl text-pink-600 mb-4 drop-shadow-white">WIHHH KITA BERJAYAAAA! ❤️</h1>
+        <p class="text-white font-bold text-2xl mb-4 shadow-black">KELEBIHAN LOPNYAAA NIHH!</p>
+        <div class="text-6xl mb-6 animate-bounce">🥰💌💐</div>
+        <button class="btn" id="win-restart-btn">Main Lagi 🔄</button>
+        <a href="index.html" class="mt-6 text-white font-bold underline">Pulang</a>
+    </div>
+
+    <canvas id="gameCanvas"></canvas>
+
+    <script>
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        const scoreEl = document.getElementById('score');
+        const livesEl = document.getElementById('lives');
+        const finalScoreEl = document.getElementById('final-score');
+        
+        // Screens
+        const startScreen = document.getElementById('start-screen');
+        const gameOverScreen = document.getElementById('game-over-screen');
+        const winScreen = document.getElementById('win-screen');
+
+        // Assets
+        const imgHim = document.getElementById('img-him');
+        const imgHer = document.getElementById('img-her');
+
+        // Game State
+        let gameRunning = false;
+        let score = 0;
+        const TARGET_SCORE = 200; 
+        let lives = 3;
+        let frameCount = 0;
+        let difficultyMultiplier = 1;
+
+        // Player (Wider now for two people)
+        const player = {
+            x: 0, 
+            y: 0, 
+            w: 120, // Increased width to cover both
+            h: 80, 
+            targetX: 0
+        };
+
+        // Items
+        let items = [];
+        const itemTypes = [
+            { type: 'heart', symbol: '❤️', score: 10, speed: 3, weight: 60 },
+            { type: 'letter', symbol: '💌', score: 20, speed: 4, weight: 30 },
+            { type: 'clock', symbol: '⏰', score: -1, speed: 5, weight: 10 }
+        ];
+
+        // Particles
+        let particles = [];
+
+        // --- RESIZE ---
+        function resize() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+            player.y = canvas.height - 120; // Position from bottom
+            player.x = canvas.width / 2;
+            player.targetX = player.x;
+        }
+        window.addEventListener('resize', resize);
+        resize();
+
+        // --- INPUT HANDLING ---
+        function handleInput(x) {
+            if (!gameRunning) return;
+            player.targetX = x;
+        }
+
+        window.addEventListener('mousemove', e => handleInput(e.clientX));
+        window.addEventListener('touchmove', e => {
+            e.preventDefault(); 
+            handleInput(e.touches[0].clientX);
+        }, { passive: false });
+        window.addEventListener('touchstart', e => {
+            if(e.target.tagName !== 'BUTTON') { 
+               handleInput(e.touches[0].clientX);
+            }
+        });
+
+        // --- GAME LOGIC ---
+        function spawnItem() {
+            const rand = Math.random() * 100;
+            let cumulative = 0;
+            let selectedType = itemTypes[0];
+            
+            for (let item of itemTypes) {
+                cumulative += item.weight;
+                if (rand <= cumulative) {
+                    selectedType = item;
+                    break;
+                }
+            }
+
+            items.push({
+                x: Math.random() * (canvas.width - 40) + 20,
+                y: -50,
+                type: selectedType.type,
+                symbol: selectedType.symbol,
+                scoreVal: selectedType.score,
+                speed: selectedType.speed * difficultyMultiplier + (Math.random()),
+                w: 40, h: 40
+            });
+        }
+
+        function createParticles(x, y, color) {
+            for(let i=0; i<8; i++) {
+                particles.push({
+                    x: x, y: y,
+                    vx: (Math.random() - 0.5) * 5,
+                    vy: (Math.random() - 0.5) * 5,
+                    life: 1.0, color: color
+                });
+            }
+        }
+
+        function update() {
+            if (!gameRunning) return;
+
+            // Player Movement
+            player.x += (player.targetX - player.x) * 0.15;
+            if (player.x < player.w/2) player.x = player.w/2;
+            if (player.x > canvas.width - player.w/2) player.x = canvas.width - player.w/2;
+
+            // Difficulty
+            frameCount++;
+            if (frameCount % 600 === 0) difficultyMultiplier += 0.1;
+
+            // Spawning
+            const spawnRate = Math.max(20, 60 - (difficultyMultiplier * 5));
+            if (frameCount % Math.floor(spawnRate) === 0) spawnItem();
+
+            // Items Update
+            for (let i = items.length - 1; i >= 0; i--) {
+                let item = items[i];
+                item.y += item.speed;
+
+                const dx = player.x - item.x;
+                const dy = player.y - item.y;
+                const dist = Math.sqrt(dx*dx + dy*dy);
+
+                // Check collision based on player width
+                if (dist < (player.w/2 + item.w/2)) {
+                    if (item.type === 'clock') {
+                        lives--;
+                        createParticles(item.x, item.y, '#ef4444');
+                    } else {
+                        score += item.scoreVal;
+                        createParticles(item.x, item.y, '#ec4899');
+                    }
+                    items.splice(i, 1);
+                    continue;
+                }
+
+                if (item.y > canvas.height) {
+                    items.splice(i, 1);
+                }
+            }
+
+            // Particles Update
+            for (let i = particles.length - 1; i >= 0; i--) {
+                let p = particles[i];
+                p.x += p.vx; p.y += p.vy; p.life -= 0.05;
+                if (p.life <= 0) particles.splice(i, 1);
+            }
+
+            // Check Game Over / Win
+            if (score >= TARGET_SCORE) gameWin();
+            else if (lives <= 0) gameOver();
+
+            scoreEl.innerText = score;
+            livesEl.innerText = '❤️'.repeat(Math.max(0, lives));
+        }
+
+        function draw() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            // Draw Player (Couple)
+            ctx.save();
+            ctx.translate(player.x, player.y);
+
+            // --- HIM (Left Side) ---
+            ctx.save();
+            ctx.translate(-25, 0); // Shift left
+            ctx.fillStyle = '#3b82f6'; // Blue Shirt
+            ctx.beginPath(); ctx.arc(0, 40, 25, 0, Math.PI, true); ctx.fill();
+            ctx.fillRect(-25, 40, 50, 40);
+            ctx.beginPath(); ctx.arc(0, 0, 35, 0, Math.PI * 2); ctx.clip();
+            ctx.drawImage(imgHim, -35, -35, 70, 70);
+            ctx.restore();
+
+            // --- HER (Right Side) ---
+            ctx.save();
+            ctx.translate(25, 0); // Shift right
+            // UPDATED COLOR to ensure visibility against pink sky
+            ctx.fillStyle = '#db2777'; // Darker Pink Shirt
+            ctx.beginPath(); ctx.arc(0, 40, 25, 0, Math.PI, true); ctx.fill();
+            ctx.fillRect(-25, 40, 50, 40);
+            ctx.beginPath(); ctx.arc(0, 0, 35, 0, Math.PI * 2); ctx.clip();
+            ctx.drawImage(imgHer, -35, -35, 70, 70);
+            ctx.restore();
+
+            // Heart in the middle
+            ctx.font = "30px Arial";
+            ctx.textAlign = "center";
+            ctx.fillText("❤️", 0, 20);
+
+            ctx.restore();
+
+            // Draw Items
+            ctx.font = "40px Arial"; 
+            ctx.textAlign = "center"; 
+            ctx.textBaseline = "middle";
+            items.forEach(item => { ctx.fillText(item.symbol, item.x, item.y); });
+
+            // Draw Particles
+            particles.forEach(p => {
+                ctx.globalAlpha = p.life; ctx.fillStyle = p.color;
+                ctx.beginPath(); ctx.arc(p.x, p.y, 5, 0, Math.PI*2); ctx.fill();
+                ctx.globalAlpha = 1.0;
+            });
+
+            if (gameRunning) requestAnimationFrame(() => { update(); draw(); });
+        }
+
+        // --- GAME FLOW ---
+        function startGame() {
+            score = 0; lives = 3; items = []; particles = [];
+            difficultyMultiplier = 1; frameCount = 0;
+            gameRunning = true;
+            
+            startScreen.classList.add('hidden');
+            gameOverScreen.classList.add('hidden');
+            winScreen.classList.add('hidden');
+            
+            draw();
+        }
+
+        function gameOver() {
+            gameRunning = false;
+            finalScoreEl.innerText = score;
+            gameOverScreen.classList.remove('hidden');
+        }
+
+        function gameWin() {
+            gameRunning = false;
+            winScreen.classList.remove('hidden');
+        }
+
+        document.getElementById('start-btn').addEventListener('click', startGame);
+        document.getElementById('restart-btn').addEventListener('click', startGame);
+        document.getElementById('win-restart-btn').addEventListener('click', startGame);
+
+    </script>
+</body>
+</html>

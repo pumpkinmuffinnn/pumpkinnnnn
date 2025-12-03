@@ -1,0 +1,378 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Love Maze 🧩❤️</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Pacifico&family=Quicksand:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        * { box-sizing: border-box; touch-action: none; user-select: none; -webkit-user-select: none; }
+        body, html {
+            height: 100%; width: 100%; margin: 0; padding: 0; overflow: hidden;
+            font-family: 'Quicksand', sans-serif;
+            background: linear-gradient(135deg, #a7f3d0 0%, #6ee7b7 100%); /* Garden Green */
+        }
+
+        /* --- ASSETS --- */
+        #assets { display: none; }
+
+        /* --- UI LAYER --- */
+        .ui-layer {
+            position: absolute; inset: 0; pointer-events: none; z-index: 50;
+            display: flex; flex-direction: column; align-items: center; justify-content: space-between;
+            padding-bottom: 20px;
+        }
+
+        .back-btn {
+            position: absolute; top: 20px; left: 20px; pointer-events: auto;
+            background: white; padding: 8px 20px; border-radius: 99px;
+            color: #059669; font-weight: bold; text-decoration: none;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        .header {
+            margin-top: 20px; text-align: center;
+        }
+        h1 {
+            font-family: 'Pacifico', cursive; font-size: 2.5rem; color: #065f46;
+            text-shadow: 2px 2px 0 rgba(255,255,255,0.4);
+        }
+        .timer {
+            background: white; padding: 5px 15px; border-radius: 15px;
+            font-weight: bold; color: #059669; display: inline-block;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        /* --- GAME WRAPPER --- */
+        .game-wrapper {
+            position: relative;
+            width: 90vw; max-width: 500px;
+            aspect-ratio: 1/1;
+            background: #ecfdf5;
+            border-radius: 15px;
+            border: 8px solid #059669; /* Hedge border */
+            box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+            overflow: hidden; pointer-events: auto;
+        }
+
+        canvas { display: block; width: 100%; height: 100%; }
+
+        /* --- CONTROLS --- */
+        .controls-area {
+            pointer-events: auto; margin-bottom: 20px;
+        }
+        .d-pad {
+            display: grid;
+            grid-template-columns: 60px 60px 60px;
+            grid-template-rows: 60px 60px;
+            gap: 5px;
+        }
+        .ctrl-btn {
+            width: 60px; height: 60px;
+            background: rgba(255,255,255,0.4);
+            border: 2px solid white; border-radius: 15px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 1.5rem; color: #065f46; cursor: pointer;
+            backdrop-filter: blur(4px);
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        .ctrl-btn:active { background: rgba(255,255,255,0.8); transform: scale(0.95); }
+        
+        .up { grid-column: 2; grid-row: 1; }
+        .left { grid-column: 1; grid-row: 2; }
+        .down { grid-column: 2; grid-row: 2; }
+        .right { grid-column: 3; grid-row: 2; }
+
+        /* --- SCREENS --- */
+        .screen-overlay {
+            position: absolute; inset: 0; background: rgba(255,255,255,0.8); backdrop-filter: blur(5px);
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            z-index: 100; pointer-events: auto; transition: opacity 0.3s;
+        }
+        .screen-overlay.hidden { opacity: 0; pointer-events: none; display: none; }
+
+        .btn {
+            background: #ec4899; color: white; padding: 15px 40px;
+            border-radius: 99px; font-weight: bold; font-size: 1.5rem;
+            margin-top: 20px; cursor: pointer; border: 4px solid white;
+            box-shadow: 0 4px 10px rgba(236, 72, 153, 0.4);
+            transition: transform 0.1s;
+        }
+        .btn:active { transform: scale(0.95); }
+
+        /* Hide controls on desktop */
+        @media (min-width: 768px) { .controls-area { display: none; } }
+
+    </style>
+</head>
+<body>
+
+    <!-- ASSETS -->
+    <div id="assets">
+        <img id="img-him" src="hugimages/himblue.jpg" alt="Him">
+        <img id="img-her" src="hugimages/herpink.jpg" alt="Her">
+    </div>
+
+    <div class="ui-layer">
+        <div style="width:100%">
+            <a href="index.html" class="back-btn">⬅ Back</a>
+            <div class="header">
+                <h1>Love Maze</h1>
+                <div class="timer">Time: <span id="time">0</span>s</div>
+            </div>
+        </div>
+
+        <div class="game-wrapper">
+            <canvas id="gameCanvas"></canvas>
+            
+            <!-- START SCREEN -->
+            <div id="start-screen" class="screen-overlay">
+                <h2 class="font-pacifico text-5xl text-pink-500 mb-2">Find Her!</h2>
+                <p class="text-gray-600 font-bold text-lg mb-6 max-w-xs text-center">
+                    Navigate the maze to find your love.<br>Don't get lost!
+                </p>
+                <button id="start-btn" class="btn">Start 🧩</button>
+            </div>
+
+            <!-- WIN SCREEN -->
+            <div id="win-screen" class="screen-overlay hidden">
+                <h2 class="font-pacifico text-5xl text-pink-500 mb-2">Found You! ❤️</h2>
+                <p class="text-gray-600 font-bold text-lg mb-4">Time: <span id="final-time">0</span>s</p>
+                <div class="text-6xl mb-4 animate-bounce">💑</div>
+                <button id="restart-btn" class="btn">Play Again 🔄</button>
+            </div>
+        </div>
+
+        <!-- MOBILE D-PAD -->
+        <div class="controls-area">
+            <div class="d-pad">
+                <div class="ctrl-btn up" data-dir="up">⬆️</div>
+                <div class="ctrl-btn left" data-dir="left">⬅️</div>
+                <div class="ctrl-btn down" data-dir="down">⬇️</div>
+                <div class="ctrl-btn right" data-dir="right">➡️</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        const timeEl = document.getElementById('time');
+        const finalTimeEl = document.getElementById('final-time');
+        
+        const startScreen = document.getElementById('start-screen');
+        const winScreen = document.getElementById('win-screen');
+
+        const imgHim = document.getElementById('img-him');
+        const imgHer = document.getElementById('img-her');
+
+        // Game Settings
+        const COLS = 15;
+        const ROWS = 15;
+        let CELL_SIZE = 0;
+        
+        // State
+        let maze = []; // 2D array: 1 = Wall, 0 = Path
+        let player = { x: 0, y: 0 };
+        let goal = { x: COLS-1, y: ROWS-1 };
+        let gameRunning = false;
+        let startTime = 0;
+        let timerInterval;
+        
+        // --- MAZE GENERATION (DFS Algorithm) ---
+        function generateMaze() {
+            // Initialize full grid as walls
+            maze = Array(ROWS).fill().map(() => Array(COLS).fill(1));
+
+            const stack = [];
+            const startX = 1; 
+            const startY = 1;
+            
+            maze[startY][startX] = 0;
+            stack.push({x: startX, y: startY});
+
+            while (stack.length > 0) {
+                const current = stack[stack.length - 1];
+                const neighbors = [];
+
+                // Check directions (Up, Down, Left, Right) distance 2
+                const dirs = [
+                    {dx: 0, dy: -2}, {dx: 0, dy: 2},
+                    {dx: -2, dy: 0}, {dx: 2, dy: 0}
+                ];
+
+                for (let d of dirs) {
+                    const nx = current.x + d.dx;
+                    const ny = current.y + d.dy;
+
+                    if (nx > 0 && nx < COLS - 1 && ny > 0 && ny < ROWS - 1 && maze[ny][nx] === 1) {
+                        neighbors.push({x: nx, y: ny, dx: d.dx, dy: d.dy});
+                    }
+                }
+
+                if (neighbors.length > 0) {
+                    const next = neighbors[Math.floor(Math.random() * neighbors.length)];
+                    // Carve path to neighbor
+                    maze[next.y][next.x] = 0;
+                    // Carve wall between
+                    maze[current.y + next.dy/2][current.x + next.dx/2] = 0;
+                    stack.push({x: next.x, y: next.y});
+                } else {
+                    stack.pop();
+                }
+            }
+            
+            // Ensure start and end are open
+            player.x = 1; player.y = 1;
+            
+            // Find a valid goal far away
+            goal.x = COLS - 2; goal.y = ROWS - 2;
+            while(maze[goal.y][goal.x] === 1) {
+                goal.x--; 
+                if(goal.x < 1) { goal.x = COLS-2; goal.y--; }
+            }
+        }
+
+        // --- RESIZE ---
+        function resize() {
+            const rect = canvas.parentElement.getBoundingClientRect();
+            canvas.width = rect.width;
+            canvas.height = rect.height;
+            CELL_SIZE = canvas.width / COLS;
+            if (!gameRunning && maze.length > 0) draw();
+        }
+        window.addEventListener('resize', resize);
+        setTimeout(resize, 100);
+
+        // --- LOGIC ---
+        function move(dx, dy) {
+            if (!gameRunning) return;
+
+            const nx = player.x + dx;
+            const ny = player.y + dy;
+
+            // Check bounds and walls
+            if (nx >= 0 && nx < COLS && ny >= 0 && ny < ROWS && maze[ny][nx] === 0) {
+                player.x = nx;
+                player.y = ny;
+                checkWin();
+                draw();
+            }
+        }
+
+        function checkWin() {
+            // Simple proximity check
+            if (player.x === goal.x && player.y === goal.y) {
+                gameOver();
+            }
+        }
+
+        // --- DRAWING ---
+        function draw() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            // Draw Maze
+            for (let y = 0; y < ROWS; y++) {
+                for (let x = 0; x < COLS; x++) {
+                    if (maze[y][x] === 1) {
+                        // Wall (Hedge)
+                        ctx.fillStyle = '#059669';
+                        ctx.fillRect(x * CELL_SIZE, y * CELL_SIZE, CELL_SIZE, CELL_SIZE);
+                        // Detail
+                        ctx.fillStyle = '#047857';
+                        ctx.fillRect(x * CELL_SIZE + 2, y * CELL_SIZE + 2, CELL_SIZE - 4, CELL_SIZE - 4);
+                    } else {
+                        // Path
+                        ctx.fillStyle = '#ecfdf5';
+                        ctx.fillRect(x * CELL_SIZE, y * CELL_SIZE, CELL_SIZE, CELL_SIZE);
+                    }
+                }
+            }
+
+            // Draw Goal (Her)
+            drawAvatar(imgHer, goal.x, goal.y, '#ec4899');
+
+            // Draw Player (Him)
+            drawAvatar(imgHim, player.x, player.y, '#3b82f6');
+        }
+
+        function drawAvatar(img, gx, gy, borderColor) {
+            const padding = 2;
+            const size = CELL_SIZE - (padding * 2);
+            const cx = gx * CELL_SIZE + padding + size/2;
+            const cy = gy * CELL_SIZE + padding + size/2;
+
+            ctx.save();
+            ctx.beginPath();
+            ctx.arc(cx, cy, size/2, 0, Math.PI*2);
+            ctx.clip();
+            ctx.drawImage(img, gx * CELL_SIZE + padding, gy * CELL_SIZE + padding, size, size);
+            ctx.restore();
+
+            ctx.beginPath();
+            ctx.arc(cx, cy, size/2, 0, Math.PI*2);
+            ctx.lineWidth = 2;
+            ctx.strokeStyle = borderColor;
+            ctx.stroke();
+        }
+
+        // --- FLOW ---
+        function startGame() {
+            generateMaze();
+            resize();
+            
+            timeEl.innerText = '0';
+            startTime = Date.now();
+            
+            if (timerInterval) clearInterval(timerInterval);
+            timerInterval = setInterval(() => {
+                const elapsed = Math.floor((Date.now() - startTime) / 1000);
+                timeEl.innerText = elapsed;
+            }, 1000);
+
+            startScreen.classList.add('hidden');
+            winScreen.classList.add('hidden');
+            gameRunning = true;
+            draw();
+        }
+
+        function gameOver() {
+            gameRunning = false;
+            clearInterval(timerInterval);
+            finalTimeEl.innerText = timeEl.innerText;
+            winScreen.classList.remove('hidden');
+        }
+
+        // --- CONTROLS BINDING ---
+        window.addEventListener('keydown', e => {
+            if (e.key === 'ArrowUp') move(0, -1);
+            if (e.key === 'ArrowDown') move(0, 1);
+            if (e.key === 'ArrowLeft') move(-1, 0);
+            if (e.key === 'ArrowRight') move(1, 0);
+        });
+
+        document.querySelectorAll('.ctrl-btn').forEach(btn => {
+            const dir = btn.dataset.dir;
+            const action = (e) => {
+                e.preventDefault();
+                if (dir === 'up') move(0, -1);
+                if (dir === 'down') move(0, 1);
+                if (dir === 'left') move(-1, 0);
+                if (dir === 'right') move(1, 0);
+            };
+            btn.addEventListener('touchstart', action, {passive: false});
+            btn.addEventListener('mousedown', action);
+        });
+
+        function bindBtn(id, fn) {
+            const el = document.getElementById(id);
+            el.addEventListener('click', fn);
+            el.addEventListener('touchstart', (e) => { e.stopPropagation(); fn(); }, {passive: false});
+        }
+        bindBtn('start-btn', startGame);
+        bindBtn('restart-btn', startGame);
+
+    </script>
+</body>
+</html>

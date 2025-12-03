@@ -1,0 +1,441 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Love Jump ☁️⬆️</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Pacifico&family=Quicksand:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        * { box-sizing: border-box; touch-action: none; user-select: none; -webkit-user-select: none; }
+        body, html {
+            height: 100%; width: 100%; margin: 0; padding: 0; overflow: hidden;
+            font-family: 'Quicksand', sans-serif;
+            background: #38bdf8; /* Base Sky Color */
+        }
+
+        /* --- ASSETS --- */
+        #assets { display: none; }
+
+        /* --- UI --- */
+        .ui-layer {
+            position: absolute; inset: 0; pointer-events: none; z-index: 50;
+            display: flex; flex-direction: column; justify-content: space-between;
+        }
+
+        .back-btn {
+            position: absolute; top: 20px; left: 20px; pointer-events: auto;
+            background: white; padding: 8px 20px; border-radius: 99px;
+            color: #0ea5e9; font-weight: bold; text-decoration: none;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        .score-board {
+            position: absolute; top: 20px; right: 20px;
+            font-family: 'Pacifico', cursive; font-size: 2rem; color: white;
+            text-shadow: 2px 2px 0 rgba(0,0,0,0.2);
+        }
+        .height-indicator {
+            font-size: 0.8rem; font-weight: bold; color: rgba(255,255,255,0.8);
+            margin-top: -5px; text-align: right;
+        }
+
+        /* --- SCREENS --- */
+        .screen-overlay {
+            position: absolute; inset: 0; background: rgba(255,255,255,0.5); backdrop-filter: blur(8px);
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            z-index: 100; pointer-events: auto; transition: opacity 0.3s;
+        }
+        .screen-overlay.hidden { opacity: 0; pointer-events: none; display: none; }
+
+        .btn {
+            background: #0ea5e9; color: white; padding: 15px 40px;
+            border-radius: 99px; font-weight: bold; font-size: 1.5rem;
+            margin-top: 20px; cursor: pointer; border: 4px solid white;
+            box-shadow: 0 8px 15px rgba(14, 165, 233, 0.3);
+            transition: transform 0.1s;
+        }
+        .btn:active { transform: scale(0.95); }
+
+        /* --- CONTROLS --- */
+        .touch-controls {
+            position: absolute; inset: 0; z-index: 20; display: flex;
+        }
+        .touch-zone { width: 50%; height: 100%; }
+
+        /* --- CANVAS --- */
+        canvas { display: block; width: 100%; height: 100%; z-index: 10; }
+
+    </style>
+</head>
+<body>
+
+    <!-- ASSETS -->
+    <div id="assets">
+        <img id="img-him" src="hugimages/himblue.jpg" alt="Him">
+        <img id="img-her" src="hugimages/herpink.jpg" alt="Her">
+    </div>
+
+    <div class="ui-layer">
+        <a href="games.html" class="back-btn">⬅ Kembali</a>
+        <div class="text-right" style="position: absolute; top: 20px; right: 20px;">
+            <div class="score-board" id="score">0m</div>
+            <div class="height-indicator">Goal: Bulan 🌙</div>
+        </div>
+    </div>
+
+    <!-- START SCREEN -->
+    <div id="start-screen" class="screen-overlay">
+        <h1 class="font-pacifico text-6xl text-sky-600 mb-2 drop-shadow-sm">Lompattt2</h1>
+        <p class="text-gray-700 font-bold text-lg mb-6 max-w-xs text-center">
+            Lompat dari awannya buat sampein ke kamuuuu! 🌙<br>
+        </p>
+        <button id="start-btn" class="btn">Lompat! ⬆️</button>
+    </div>
+
+    <!-- GAME OVER -->
+    <div id="game-over-screen" class="screen-overlay hidden">
+        <h1 class="font-pacifico text-5xl text-purple-600 mb-2">yeuuuu jatoh :v</h1>
+        <p class="text-gray-700 font-bold text-xl mb-4">Ketinggian sampe: <span id="final-score" class="text-sky-600">0</span>m</p>
+        <button id="restart-btn" class="btn">Cobag Lagi 🔄</button>
+    </div>
+
+    <!-- WIN SCREEN -->
+    <div id="win-screen" class="screen-overlay hidden">
+        <h1 class="font-pacifico text-6xl text-yellow-400 mb-2 drop-shadow-md">Ke Bulann! 🌙</h1>
+        <p class="text-white font-bold text-xl mb-4 shadow-black">KETEMUUUUU!</p>
+        <div class="text-6xl mb-6 animate-bounce">💑</div>
+        <button id="win-restart-btn" class="btn bg-pink-500 border-pink-200">Main Lagi 🔄</button>
+    </div>
+
+    <!-- TOUCH INPUTS -->
+    <div class="touch-controls">
+        <div id="left-zone" class="touch-zone"></div>
+        <div id="right-zone" class="touch-zone"></div>
+    </div>
+
+    <canvas id="gameCanvas"></canvas>
+
+    <script>
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        
+        const scoreEl = document.getElementById('score');
+        const finalScoreEl = document.getElementById('final-score');
+        const startScreen = document.getElementById('start-screen');
+        const gameOverScreen = document.getElementById('game-over-screen');
+        const winScreen = document.getElementById('win-screen');
+
+        const imgHim = document.getElementById('img-him');
+        const imgHer = document.getElementById('img-her');
+
+        // Game Constants
+        const GRAVITY = 0.4;
+        const JUMP_FORCE = -13;
+        const MOVE_SPEED = 6;
+        const PLATFORM_WIDTH = 100; // Wider clouds
+        const PLATFORM_HEIGHT = 20;
+        const PLAYER_SIZE = 50;
+        const WIN_HEIGHT = 5000; // Height to reach moon
+        const MAX_HORIZONTAL_JUMP = 280; // Max pixel reach
+
+        // State
+        let gameRunning = false;
+        let score = 0;
+        let maxScore = 0;
+        let cameraY = 0;
+        let bgGradient = 0; 
+        
+        let player = { x: 0, y: 0, vx: 0, vy: 0, width: PLAYER_SIZE, height: PLAYER_SIZE };
+        let platforms = [];
+        let input = { left: false, right: false };
+        let particles = [];
+        let stars = [];
+
+        // --- RESIZE ---
+        function resize() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        }
+        window.addEventListener('resize', resize);
+        resize();
+
+        // --- INPUT ---
+        function setInput(dir, val) {
+            if (dir === 'left') input.left = val;
+            if (dir === 'right') input.right = val;
+        }
+
+        const leftZone = document.getElementById('left-zone');
+        const rightZone = document.getElementById('right-zone');
+
+        leftZone.addEventListener('touchstart', (e) => { e.preventDefault(); setInput('left', true); });
+        leftZone.addEventListener('touchend', (e) => { e.preventDefault(); setInput('left', false); });
+        
+        rightZone.addEventListener('touchstart', (e) => { e.preventDefault(); setInput('right', true); });
+        rightZone.addEventListener('touchend', (e) => { e.preventDefault(); setInput('right', false); });
+
+        window.addEventListener('keydown', e => {
+            if (e.key === 'ArrowLeft') setInput('left', true);
+            if (e.key === 'ArrowRight') setInput('right', true);
+        });
+        window.addEventListener('keyup', e => {
+            if (e.key === 'ArrowLeft') setInput('left', false);
+            if (e.key === 'ArrowRight') setInput('right', false);
+        });
+
+        // --- GAME LOGIC ---
+        function initGame() {
+            player.x = canvas.width / 2 - PLAYER_SIZE / 2;
+            player.y = canvas.height - 150;
+            player.vx = 0;
+            player.vy = JUMP_FORCE; 
+            
+            score = 0;
+            maxScore = 0;
+            cameraY = 0;
+            bgGradient = 0;
+            particles = [];
+            
+            // Create initial platforms
+            platforms = [];
+            // Base platform
+            platforms.push({ x: 0, y: canvas.height - 50, w: canvas.width, h: 50, type: 'ground' });
+            
+            // Smart Platform Generation
+            // Generate relative to previous platform to ensure reachability
+            let currentY = canvas.height - 120; 
+            let currentX = canvas.width / 2 - PLATFORM_WIDTH / 2; // Center
+
+            while (currentY > -WIN_HEIGHT) {
+                // Vertical Gap (Keep it reachable)
+                const gap = 80 + Math.random() * 60; // 80px to 140px
+                currentY -= gap;
+                
+                // Horizontal Logic
+                // Ensure next platform is within MAX_HORIZONTAL_JUMP distance
+                const minX = Math.max(0, currentX - MAX_HORIZONTAL_JUMP);
+                const maxX = Math.min(canvas.width - PLATFORM_WIDTH, currentX + MAX_HORIZONTAL_JUMP);
+                
+                currentX = Math.random() * (maxX - minX) + minX;
+                
+                platforms.push({ x: currentX, y: currentY, w: PLATFORM_WIDTH, h: PLATFORM_HEIGHT, type: 'cloud' });
+            }
+
+            // The Moon Platform
+            platforms.push({ 
+                x: canvas.width / 2 - 60, 
+                y: -WIN_HEIGHT - 100, 
+                w: 120, h: 120, 
+                type: 'moon' 
+            });
+
+            // Stars
+            stars = Array(50).fill().map(() => ({
+                x: Math.random() * canvas.width,
+                y: Math.random() * canvas.height, 
+                size: Math.random() * 2,
+                alpha: Math.random()
+            }));
+        }
+
+        function update() {
+            if (!gameRunning) return;
+
+            // 1. Movement
+            if (input.left) player.vx = -MOVE_SPEED;
+            else if (input.right) player.vx = MOVE_SPEED;
+            else player.vx *= 0.8; 
+
+            player.x += player.vx;
+            
+            // Wrap around screen
+            if (player.x < -player.width) player.x = canvas.width;
+            if (player.x > canvas.width) player.x = -player.width;
+
+            // Physics
+            player.vy += GRAVITY;
+            player.y += player.vy;
+
+            // 2. Collision (Only when falling)
+            if (player.vy > 0) {
+                platforms.forEach(p => {
+                    if (
+                        player.x + player.width * 0.8 > p.x && // Forgive edges slightly
+                        player.x + player.width * 0.2 < p.x + p.w &&
+                        player.y + player.height > p.y &&
+                        player.y + player.height < p.y + p.h + 20 // Tolerance
+                    ) {
+                        if (p.type === 'moon') {
+                            gameWin();
+                        } else {
+                            player.vy = JUMP_FORCE;
+                            createCloudPoof(player.x + player.width/2, player.y + player.height);
+                        }
+                    }
+                });
+            }
+
+            // 3. Camera Scroll
+            const targetY = player.y - canvas.height * 0.4;
+            if (targetY < cameraY) {
+                cameraY = targetY;
+            }
+
+            // 4. Score
+            const height = Math.floor(-cameraY / 10);
+            if (height > score) score = height;
+            scoreEl.innerText = score + "m";
+
+            // Fall check (If fell below screen relative to camera)
+            if (player.y > cameraY + canvas.height + 100) {
+                gameOver();
+            }
+
+            // 5. Background
+            const progress = Math.min(1, Math.abs(cameraY) / WIN_HEIGHT);
+            bgGradient = progress;
+
+            // Particles Update
+            for(let i=particles.length-1; i>=0; i--) {
+                let p = particles[i];
+                p.x += p.vx; p.y += p.vy; p.size *= 0.9;
+                if(p.size < 0.5) particles.splice(i, 1);
+            }
+
+            requestAnimationFrame(draw);
+            requestAnimationFrame(update);
+        }
+
+        function createCloudPoof(x, y) {
+            for(let i=0; i<5; i++) {
+                particles.push({
+                    x: x, y: y,
+                    vx: (Math.random() - 0.5) * 5,
+                    vy: (Math.random()) * 2,
+                    life: 1.0,
+                    size: Math.random() * 10 + 5
+                });
+            }
+        }
+
+        function draw() {
+            // Background
+            const r = Math.floor(56 * (1-bgGradient) + 15 * bgGradient);
+            const g = Math.floor(189 * (1-bgGradient) + 23 * bgGradient);
+            const b = Math.floor(248 * (1-bgGradient) + 42 * bgGradient);
+            
+            ctx.fillStyle = `rgb(${r},${g},${b})`;
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            // Stars
+            if (bgGradient > 0.3) {
+                ctx.fillStyle = 'white';
+                stars.forEach(s => {
+                    const py = (s.y - cameraY * 0.1) % canvas.height;
+                    const drawY = py < 0 ? py + canvas.height : py;
+                    ctx.globalAlpha = s.alpha * bgGradient; 
+                    ctx.beginPath(); ctx.arc(s.x, drawY, s.size, 0, Math.PI*2); ctx.fill();
+                });
+                ctx.globalAlpha = 1;
+            }
+
+            ctx.save();
+            ctx.translate(0, -cameraY);
+
+            // Platforms
+            platforms.forEach(p => {
+                if (p.type === 'ground') {
+                    ctx.fillStyle = '#22c55e';
+                    ctx.fillRect(p.x, p.y, p.w, p.h);
+                } else if (p.type === 'moon') {
+                    ctx.beginPath();
+                    ctx.arc(p.x + p.w/2, p.y + p.h/2, 60, 0, Math.PI*2);
+                    ctx.fillStyle = '#fcd34d';
+                    ctx.shadowColor = '#fbbf24'; ctx.shadowBlur = 50;
+                    ctx.fill();
+                    ctx.shadowBlur = 0;
+                    
+                    // Draw HER
+                    ctx.save();
+                    ctx.beginPath(); ctx.arc(p.x + p.w/2, p.y - 10, 25, 0, Math.PI*2); ctx.clip();
+                    ctx.drawImage(imgHer, p.x + p.w/2 - 25, p.y - 35, 50, 50);
+                    ctx.restore();
+                    ctx.fillStyle = '#ec4899';
+                    ctx.fillRect(p.x + p.w/2 - 15, p.y + 15, 30, 30);
+
+                } else {
+                    // Cloud
+                    ctx.fillStyle = 'rgba(255,255,255,0.9)';
+                    ctx.beginPath();
+                    ctx.roundRect(p.x, p.y, p.w, p.h, 10);
+                    ctx.fill();
+                    ctx.beginPath(); ctx.arc(p.x + 10, p.y, 15, 0, Math.PI*2); ctx.fill();
+                    ctx.beginPath(); ctx.arc(p.x + p.w - 10, p.y, 15, 0, Math.PI*2); ctx.fill();
+                    ctx.beginPath(); ctx.arc(p.x + p.w/2, p.y - 5, 20, 0, Math.PI*2); ctx.fill();
+                }
+            });
+
+            // Player
+            const px = player.x;
+            const py = player.y;
+            
+            ctx.fillStyle = '#3b82f6';
+            ctx.fillRect(px + 10, py + 25, 30, 25);
+            
+            ctx.save();
+            ctx.beginPath(); ctx.arc(px + 25, py + 15, 20, 0, Math.PI*2); ctx.clip();
+            ctx.drawImage(imgHim, px + 5, py - 5, 40, 40);
+            ctx.restore();
+            
+            ctx.beginPath(); ctx.arc(px + 25, py + 15, 20, 0, Math.PI*2);
+            ctx.strokeStyle = 'white'; ctx.lineWidth = 3; ctx.stroke();
+
+            // Particles
+            particles.forEach((p) => {
+                ctx.fillStyle = 'rgba(255,255,255,0.8)';
+                ctx.beginPath(); ctx.arc(p.x, p.y, p.size, 0, Math.PI*2); ctx.fill();
+            });
+
+            ctx.restore();
+        }
+
+        // Buttons
+        function bindBtn(id, fn) {
+            const el = document.getElementById(id);
+            el.addEventListener('click', (e) => { e.stopPropagation(); fn(); });
+            el.addEventListener('touchstart', (e) => { e.stopPropagation(); fn(); }, {passive: false});
+        }
+        bindBtn('start-btn', startGame);
+        bindBtn('restart-btn', startGame);
+        bindBtn('win-restart-btn', startGame);
+
+        function startGame() {
+            startScreen.classList.add('hidden');
+            gameOverScreen.classList.add('hidden');
+            winScreen.classList.add('hidden');
+            resize();
+            initGame();
+            gameRunning = true;
+            update();
+            draw();
+        }
+
+        function gameOver() {
+            gameRunning = false;
+            finalScoreEl.innerText = score;
+            gameOverScreen.classList.remove('hidden');
+        }
+
+        function gameWin() {
+            gameRunning = false;
+            winScreen.classList.remove('hidden');
+        }
+
+        resize();
+        initGame(); 
+        draw(); 
+
+    </script>
+</body>
+</html>

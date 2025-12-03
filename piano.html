@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Love Piano 🎹</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Pacifico&family=Quicksand:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        * { box-sizing: border-box; touch-action: manipulation; user-select: none; -webkit-user-select: none; }
+        body, html {
+            height: 100%; width: 100%; margin: 0; padding: 0; overflow: hidden;
+            font-family: 'Quicksand', sans-serif;
+            background: #1f2937; /* Dark background for contrast */
+        }
+
+        /* --- GAME BOARD --- */
+        .game-container {
+            position: relative;
+            width: 100%; max-width: 500px; height: 100%;
+            margin: 0 auto;
+            background: white;
+            display: flex;
+            border-left: 2px solid #374151;
+            border-right: 2px solid #374151;
+            overflow: hidden;
+        }
+
+        .lane {
+            position: relative;
+            width: 25%; height: 100%;
+            border-right: 1px solid #e5e7eb;
+        }
+        .lane:last-child { border-right: none; }
+
+        /* --- TILES --- */
+        .tile {
+            position: absolute; width: 100%; height: 150px;
+            background: #ec4899; /* Pink Tile */
+            border-radius: 8px;
+            border: 2px solid #be185d;
+            box-shadow: inset 0 0 20px rgba(0,0,0,0.1);
+            cursor: pointer;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 2rem; color: white;
+            top: -150px; /* Start above screen */
+            z-index: 10;
+        }
+        .tile.clicked {
+            background: #86efac; /* Green on hit */
+            opacity: 0.5; transform: scale(0.9); transition: all 0.1s;
+        }
+        .tile.missed {
+            background: #ef4444 !important; /* Red on miss */
+        }
+
+        /* --- UI --- */
+        .score-overlay {
+            position: absolute; top: 40px; width: 100%; text-align: center;
+            pointer-events: none; z-index: 50;
+        }
+        .score-text {
+            font-family: 'Pacifico', cursive; font-size: 4rem; color: #ec4899;
+            text-shadow: 2px 2px 0 white;
+        }
+
+        .start-line {
+            position: absolute; bottom: 20px; width: 100%; text-align: center;
+            color: #9ca3af; font-weight: bold; font-size: 0.8rem; z-index: 5;
+            border-top: 2px dashed #d1d5db; padding-top: 5px;
+        }
+
+        .back-btn {
+            position: absolute; top: 20px; left: 20px; z-index: 100;
+            background: white; padding: 8px 20px; border-radius: 99px;
+            color: #ec4899; font-weight: bold; text-decoration: none;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        /* --- SCREENS --- */
+        .screen-overlay {
+            position: absolute; inset: 0; background: rgba(255,255,255,0.9);
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            z-index: 100; transition: opacity 0.3s;
+        }
+        .screen-overlay.hidden { opacity: 0; pointer-events: none; }
+
+        .btn {
+            background: #ec4899; color: white; padding: 15px 40px;
+            border-radius: 99px; font-weight: bold; font-size: 1.5rem;
+            margin-top: 20px; cursor: pointer; border: 4px solid white;
+            box-shadow: 0 8px 15px rgba(236, 72, 153, 0.3);
+            transition: transform 0.1s;
+        }
+        .btn:active { transform: scale(0.95); }
+
+    </style>
+</head>
+<body>
+
+    <a href="games.html" class="back-btn">⬅ Back</a>
+
+    <!-- GAME BOARD -->
+    <div class="game-container" id="game-board">
+        <div class="lane" id="lane-0"></div>
+        <div class="lane" id="lane-1"></div>
+        <div class="lane" id="lane-2"></div>
+        <div class="lane" id="lane-3"></div>
+        
+        <div class="score-overlay"><div class="score-text" id="score">0</div></div>
+        <div class="start-line">Tap tiles before they pass!</div>
+    </div>
+
+    <!-- START SCREEN -->
+    <div id="start-screen" class="screen-overlay">
+        <h1 class="font-pacifico text-6xl text-pink-600 mb-2">Love Piano</h1>
+        <p class="text-gray-600 font-bold text-lg mb-6">Don't tap the white tiles!<br>Tap the hearts ❤️</p>
+        <button onclick="startGame()" class="btn">Start Playing 🎹</button>
+    </div>
+
+    <!-- GAME OVER -->
+    <div id="game-over-screen" class="screen-overlay hidden">
+        <h1 class="font-pacifico text-5xl text-red-500 mb-2">Missed Note!</h1>
+        <p class="text-gray-700 font-bold text-xl mb-4">Score: <span id="final-score" class="text-pink-500">0</span></p>
+        <button onclick="startGame()" class="btn">Try Again 🔄</button>
+    </div>
+
+    <script>
+        const lanes = [
+            document.getElementById('lane-0'),
+            document.getElementById('lane-1'),
+            document.getElementById('lane-2'),
+            document.getElementById('lane-3')
+        ];
+        const scoreEl = document.getElementById('score');
+        const finalScoreEl = document.getElementById('final-score');
+        const startScreen = document.getElementById('start-screen');
+        const endScreen = document.getElementById('game-over-screen');
+
+        // Settings
+        let speed = 5;
+        let spawnRate = 50; // Frames
+        let tileHeight = 150;
+        
+        // State
+        let gameRunning = false;
+        let score = 0;
+        let tiles = [];
+        let frameCount = 0;
+        let animationId;
+
+        function spawnTile() {
+            const laneIndex = Math.floor(Math.random() * 4);
+            const tile = document.createElement('div');
+            tile.classList.add('tile');
+            tile.innerText = '❤️';
+            tile.style.top = -tileHeight + 'px';
+            
+            // Store data
+            tile.dataset.active = 'true';
+            
+            // Interaction
+            const hit = (e) => {
+                if (!gameRunning || tile.dataset.active === 'false') return;
+                e.stopPropagation(); // Prevent hitting background
+                tile.dataset.active = 'false';
+                tile.classList.add('clicked');
+                tile.innerText = '🎵';
+                score++;
+                scoreEl.innerText = score;
+                
+                // Speed up
+                if (score % 5 === 0) speed += 0.5;
+            };
+            
+            tile.addEventListener('touchstart', hit);
+            tile.addEventListener('mousedown', hit);
+
+            lanes[laneIndex].appendChild(tile);
+            tiles.push({ el: tile, y: -tileHeight });
+        }
+
+        function update() {
+            if (!gameRunning) return;
+
+            // Spawn
+            if (frameCount % Math.max(15, Math.floor(60 - speed * 2)) === 0) {
+                spawnTile();
+            }
+
+            // Move Tiles
+            for (let i = tiles.length - 1; i >= 0; i--) {
+                let t = tiles[i];
+                t.y += speed;
+                t.el.style.top = t.y + 'px';
+
+                // Missed check
+                if (t.y > window.innerHeight) {
+                    if (t.el.dataset.active === 'true') {
+                        gameOver();
+                        return;
+                    }
+                    // Remove if off screen
+                    t.el.remove();
+                    tiles.splice(i, 1);
+                }
+            }
+
+            frameCount++;
+            animationId = requestAnimationFrame(update);
+        }
+
+        function startGame() {
+            // Reset
+            score = 0;
+            speed = 5;
+            frameCount = 0;
+            scoreEl.innerText = 0;
+            
+            // Clear board
+            tiles.forEach(t => t.el.remove());
+            tiles = [];
+
+            startScreen.classList.add('hidden');
+            endScreen.classList.add('hidden');
+            
+            gameRunning = true;
+            update();
+        }
+
+        function gameOver() {
+            gameRunning = false;
+            cancelAnimationFrame(animationId);
+            finalScoreEl.innerText = score;
+            endScreen.classList.remove('hidden');
+        }
+
+        // Clicking wrong area (Game Over)
+        document.getElementById('game-board').addEventListener('mousedown', (e) => {
+            if(gameRunning && e.target.classList.contains('lane')) gameOver();
+        });
+        document.getElementById('game-board').addEventListener('touchstart', (e) => {
+            if(gameRunning && e.target.classList.contains('lane')) gameOver();
+        });
+
+    </script>
+</body>
+</html>

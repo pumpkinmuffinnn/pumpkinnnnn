@@ -1,0 +1,380 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Love Drive 🚗💨</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Pacifico&family=Quicksand:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        /* --- CORE --- */
+        * { box-sizing: border-box; touch-action: none; user-select: none; -webkit-user-select: none; }
+        body, html {
+            height: 100%; width: 100%; margin: 0; padding: 0; overflow: hidden;
+            font-family: 'Quicksand', sans-serif;
+            background: linear-gradient(to bottom, #60a5fa 0%, #c084fc 100%); /* Dreamy Sky */
+        }
+
+        /* --- UI OVERLAYS --- */
+        .ui-layer {
+            position: absolute; inset: 0; pointer-events: none; z-index: 50;
+            display: flex; flex-direction: column; align-items: center;
+        }
+
+        .back-btn {
+            position: absolute; top: 20px; left: 20px; pointer-events: auto;
+            background: white; padding: 8px 20px; border-radius: 99px;
+            color: #ec4899; font-weight: bold; text-decoration: none;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        .hud-panel {
+            position: absolute; top: 20px; right: 20px;
+            background: rgba(255,255,255,0.2); backdrop-filter: blur(5px);
+            padding: 10px 20px; border-radius: 15px; border: 2px solid rgba(255,255,255,0.5);
+            text-align: right; color: white;
+        }
+        .score-text { font-family: 'Pacifico', cursive; font-size: 1.5rem; text-shadow: 1px 1px 0 rgba(0,0,0,0.2); }
+        
+        /* Fuel Bar */
+        .fuel-container {
+            width: 150px; height: 10px; background: rgba(0,0,0,0.3);
+            border-radius: 5px; margin-top: 5px; overflow: hidden; border: 1px solid white;
+        }
+        .fuel-fill {
+            height: 100%; width: 100%; background: #facc15;
+            transition: width 0.2s linear, background 0.3s;
+        }
+        .fuel-fill.low { background: #ef4444; animation: pulse 0.5s infinite; }
+        @keyframes pulse { 0%{opacity:1;} 50%{opacity:0.5;} 100%{opacity:1;} }
+
+        /* Screens */
+        .screen-overlay {
+            position: absolute; inset: 0; background: rgba(0,0,0,0.6); backdrop-filter: blur(5px);
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            z-index: 100; pointer-events: auto; transition: opacity 0.3s;
+        }
+        .screen-overlay.hidden { opacity: 0; pointer-events: none; }
+
+        .btn {
+            background: #ec4899; color: white; padding: 15px 40px;
+            border-radius: 99px; font-weight: bold; font-size: 1.2rem;
+            margin-top: 20px; cursor: pointer; border: 4px solid white;
+            box-shadow: 0 8px 15px rgba(236, 72, 153, 0.3);
+            transition: transform 0.1s;
+        }
+        .btn:active { transform: scale(0.95); }
+
+        /* --- TOUCH ZONES --- */
+        .touch-zone {
+            position: absolute; top: 0; height: 100%; width: 50%; z-index: 10;
+        }
+        #left-zone { left: 0; }
+        #right-zone { right: 0; }
+
+        /* --- ASSETS --- */
+        #assets { display: none; }
+
+        /* --- PARTICLES --- */
+        .particle {
+            position: absolute; font-size: 20px; pointer-events: none; z-index: 40;
+            animation: floatUp 1s ease-out forwards;
+        }
+        @keyframes floatUp { to { transform: translateY(-50px); opacity: 0; } }
+
+    </style>
+</head>
+<body>
+
+    <!-- ASSETS -->
+    <div id="assets">
+        <img id="mazda-img" src="hugimages/mazda3.png" alt="Mazda">
+    </div>
+
+    <a href="index.html" class="back-btn">⬅ Back</a>
+
+    <!-- HUD -->
+    <div class="ui-layer">
+        <div class="hud-panel">
+            <div class="score-text">Score: <span id="score">0</span></div>
+            <div class="fuel-container"><div id="fuel-bar" class="fuel-fill"></div></div>
+            <div class="text-xs font-bold mt-1 text-yellow-200">FUEL</div>
+        </div>
+    </div>
+
+    <!-- SCREENS -->
+    <div id="start-screen" class="screen-overlay">
+        <h1 class="font-pacifico text-5xl text-pink-500 mb-2 drop-shadow-md">Love Drive</h1>
+        <p class="text-white text-lg mb-6 max-w-xs text-center">
+            Drive our Mazda! Collect ❤️ & ⛽.<br>Tap Left/Right to steer.
+        </p>
+        <button id="start-btn" class="btn">Start Engine 🚗</button>
+    </div>
+
+    <div id="game-over-screen" class="screen-overlay hidden">
+        <h1 class="font-pacifico text-5xl text-red-500 mb-2">Out of Gas!</h1>
+        <p class="text-white text-xl mb-4">Score: <span id="final-score">0</span></p>
+        <button id="restart-btn" class="btn">Drive Again 🔄</button>
+        <a href="index.html" class="mt-6 text-white font-bold underline">Back Home</a>
+    </div>
+
+    <!-- TOUCH CONTROLS -->
+    <div id="left-zone" class="touch-zone"></div>
+    <div id="right-zone" class="touch-zone"></div>
+
+    <canvas id="gameCanvas"></canvas>
+
+    <script>
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        const fuelBar = document.getElementById('fuel-bar');
+        const scoreEl = document.getElementById('score');
+        const mazdaImg = document.getElementById('mazda-img');
+
+        // Game State
+        let gameRunning = false;
+        let score = 0;
+        let fuel = 100;
+        let speed = 5;
+        let lane = 1; // 0: Left, 1: Center, 2: Right
+        let roadOffset = 0;
+        let lastTime = 0;
+        
+        // Configuration
+        const LANE_COUNT = 3;
+        const FUEL_DRAIN = 0.08;
+        
+        // Objects
+        let objects = [];
+        // Types: 'heart', 'fuel', 'rock', 'pothole'
+        const itemTypes = [
+            { type: 'heart', symbol: '❤️', score: 50, fuel: 0, damage: 0, weight: 40 },
+            { type: 'fuel', symbol: '⛽', score: 10, fuel: 20, damage: 0, weight: 15 },
+            { type: 'rock', symbol: '🪨', score: 0, fuel: 0, damage: 20, weight: 25 },
+            { type: 'pothole', symbol: '🕳️', score: 0, fuel: 0, damage: 15, weight: 20 }
+        ];
+
+        // --- RESIZE ---
+        let laneWidth;
+        function resize() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+            laneWidth = Math.min(canvas.width / 3, 120); // Max lane width 120px
+        }
+        window.addEventListener('resize', resize);
+        resize();
+
+        // --- CONTROLS ---
+        function moveLeft() { if(lane > 0 && gameRunning) lane--; }
+        function moveRight() { if(lane < LANE_COUNT - 1 && gameRunning) lane++; }
+
+        document.getElementById('left-zone').addEventListener('touchstart', (e) => { e.preventDefault(); moveLeft(); });
+        document.getElementById('right-zone').addEventListener('touchstart', (e) => { e.preventDefault(); moveRight(); });
+        
+        // Keyboard
+        window.addEventListener('keydown', (e) => {
+            if (e.key === 'ArrowLeft') moveLeft();
+            if (e.key === 'ArrowRight') moveRight();
+        });
+
+        // --- GAME LOGIC ---
+        function spawnObject() {
+            const r = Math.random() * 100;
+            let currentWeight = 0;
+            let type = itemTypes[0];
+            
+            for (let t of itemTypes) {
+                currentWeight += t.weight;
+                if (r <= currentWeight) { type = t; break; }
+            }
+
+            // Pick a random lane (0, 1, 2)
+            const objLane = Math.floor(Math.random() * LANE_COUNT);
+            
+            objects.push({
+                lane: objLane,
+                y: -100, // Start above screen
+                type: type
+            });
+        }
+
+        function createParticles(x, y, text) {
+            const p = document.createElement('div');
+            p.className = 'particle';
+            p.innerText = text;
+            p.style.left = x + 'px';
+            p.style.top = y + 'px';
+            document.body.appendChild(p);
+            setTimeout(() => p.remove(), 1000);
+        }
+
+        function update(time) {
+            if (!gameRunning) return;
+            const dt = time - lastTime;
+            lastTime = time;
+
+            // 1. Move Road
+            roadOffset += speed;
+            if (roadOffset > 100) roadOffset = 0; // Loop texture
+
+            // 2. Fuel Logic
+            fuel -= FUEL_DRAIN;
+            fuel = Math.min(fuel, 100);
+            if (fuel <= 0) gameOver();
+
+            // Update UI
+            fuelBar.style.width = Math.max(0, fuel) + '%';
+            fuelBar.classList.toggle('low', fuel < 20);
+            scoreEl.innerText = score;
+
+            // 3. Spawning
+            if (Math.random() < 0.02) spawnObject();
+
+            // 4. Move Objects & Collision
+            const playerY = canvas.height - 150;
+            
+            for (let i = objects.length - 1; i >= 0; i--) {
+                let obj = objects[i];
+                obj.y += speed;
+
+                // Hit detection (Simple lane check + Y overlap)
+                // Hitbox Y range: playerY to playerY + 80
+                if (obj.lane === lane && obj.y > playerY && obj.y < playerY + 80) {
+                    // Collision!
+                    if (obj.type.type === 'rock' || obj.type.type === 'pothole') {
+                        fuel -= obj.type.damage;
+                        createParticles(canvas.width/2 + (lane-1)*laneWidth, playerY, '💥');
+                        // Shake effect could go here
+                    } else {
+                        score += obj.type.score;
+                        fuel += obj.type.fuel;
+                        createParticles(canvas.width/2 + (lane-1)*laneWidth, playerY, obj.type.score ? '+'+obj.type.score : '+⛽');
+                    }
+                    
+                    objects.splice(i, 1); // Remove object
+                    continue;
+                }
+
+                // Cleanup
+                if (obj.y > canvas.height) objects.splice(i, 1);
+            }
+
+            // Increase speed slowly
+            speed += 0.001;
+
+            requestAnimationFrame(update);
+        }
+
+        function draw() {
+            if (!gameRunning) return;
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            const centerX = canvas.width / 2;
+            const roadWidth = laneWidth * 3;
+            const roadLeft = centerX - (roadWidth / 2);
+
+            // --- DRAW ROAD ---
+            ctx.fillStyle = '#374151'; // Dark Asphalt
+            ctx.fillRect(roadLeft, 0, roadWidth, canvas.height);
+            
+            // Lane Markers
+            ctx.strokeStyle = 'rgba(255, 255, 255, 0.5)';
+            ctx.lineWidth = 4;
+            ctx.setLineDash([40, 40]);
+            ctx.lineDashOffset = -roadOffset; // Moving effect
+
+            // Left Line
+            ctx.beginPath();
+            ctx.moveTo(roadLeft + laneWidth, 0);
+            ctx.lineTo(roadLeft + laneWidth, canvas.height);
+            ctx.stroke();
+
+            // Right Line
+            ctx.beginPath();
+            ctx.moveTo(roadLeft + laneWidth * 2, 0);
+            ctx.lineTo(roadLeft + laneWidth * 2, canvas.height);
+            ctx.stroke();
+
+            // Grass Edges
+            ctx.fillStyle = '#16a34a'; // Green
+            ctx.fillRect(0, 0, roadLeft, canvas.height); // Left grass
+            ctx.fillRect(roadLeft + roadWidth, 0, canvas.width - (roadLeft + roadWidth), canvas.height); // Right grass
+
+            // --- DRAW OBJECTS ---
+            ctx.font = "40px Arial";
+            ctx.textAlign = "center";
+            ctx.textBaseline = "middle";
+            
+            objects.forEach(obj => {
+                const x = roadLeft + (obj.lane * laneWidth) + (laneWidth / 2);
+                ctx.fillText(obj.type.symbol, x, obj.y);
+            });
+
+            // --- DRAW PLAYER (Mazda) ---
+            // Calculate X based on current lane
+            // Smooth transition for X would be nice, but simple snap for now
+            const playerX = roadLeft + (lane * laneWidth) + (laneWidth / 2);
+            const playerY = canvas.height - 150;
+
+            ctx.save();
+            ctx.translate(playerX, playerY);
+            
+            // Car Shadow
+            ctx.fillStyle = 'rgba(0,0,0,0.5)';
+            ctx.beginPath(); ctx.ellipse(0, 70, 40, 10, 0, 0, Math.PI*2); ctx.fill();
+
+            // Use the Image
+            // Image needs to be drawn centered. Assuming image is side view, we might want to rotate it or just use it as is?
+            // Actually the image you have is side profile. For a vertical runner, usually you want top-down or rear view.
+            // But let's use what we have. We can rotate it -90deg to point up!
+            
+            ctx.rotate(-Math.PI / 2); // Point UP
+            ctx.drawImage(mazdaImg, -50, -35, 100, 70); // Adjust sizing
+            
+            ctx.restore();
+
+            requestAnimationFrame(draw);
+        }
+
+        // --- FLOW ---
+        function startGame() {
+            document.getElementById('start-screen').classList.add('hidden');
+            document.getElementById('game-over-screen').classList.add('hidden');
+            
+            score = 0;
+            fuel = 100;
+            speed = 5;
+            objects = [];
+            lane = 1; // Center
+            gameRunning = true;
+            lastTime = performance.now();
+            
+            requestAnimationFrame(update);
+            requestAnimationFrame(draw);
+        }
+
+        function gameOver() {
+            gameRunning = false;
+            document.getElementById('final-score').innerText = score;
+            document.getElementById('game-over-screen').classList.remove('hidden');
+        }
+
+        // --- BINDING ---
+        // Fix for unclickable buttons on mobile
+        function bindBtn(id, fn) {
+            const el = document.getElementById(id);
+            el.addEventListener('click', (e) => {
+                e.stopPropagation();
+                fn();
+            });
+            el.addEventListener('touchstart', (e) => {
+                e.stopPropagation();
+                fn();
+            }, {passive: false});
+        }
+        bindBtn('start-btn', startGame);
+        bindBtn('restart-btn', startGame);
+
+    </script>
+</body>
+</html>

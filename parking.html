@@ -1,0 +1,463 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Mazda Parking Master 🅿️</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Pacifico&family=Quicksand:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        * { box-sizing: border-box; touch-action: none; user-select: none; -webkit-user-select: none; }
+        body, html {
+            height: 100%; width: 100%; margin: 0; padding: 0; overflow: hidden;
+            font-family: 'Quicksand', sans-serif;
+            background: #334155; /* Asphalt Grey */
+        }
+
+        /* --- ASSETS (Hidden) --- */
+        #assets { display: none; }
+
+        /* --- UI --- */
+        .ui-layer {
+            position: absolute; inset: 0; pointer-events: none; z-index: 50;
+            display: flex; flex-direction: column; justify-content: space-between;
+        }
+
+        .back-btn {
+            position: absolute; top: 20px; left: 20px; pointer-events: auto;
+            background: white; padding: 8px 20px; border-radius: 99px;
+            color: #db2777; font-weight: bold; text-decoration: none;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        .status-bar {
+            margin-top: 20px; align-self: center;
+            background: rgba(0,0,0,0.5); color: white;
+            padding: 8px 20px; border-radius: 20px;
+            font-weight: bold; border: 2px solid rgba(255,255,255,0.2);
+        }
+
+        /* --- SCREENS --- */
+        .screen-overlay {
+            position: absolute; inset: 0; background: rgba(0,0,0,0.8); backdrop-filter: blur(5px);
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            z-index: 100; pointer-events: auto; transition: opacity 0.3s;
+        }
+        .screen-overlay.hidden { opacity: 0; pointer-events: none; display: none; }
+
+        .btn {
+            background: #ef4444; color: white; padding: 15px 40px;
+            border-radius: 99px; font-weight: bold; font-size: 1.5rem;
+            margin-top: 20px; cursor: pointer; border: 4px solid white;
+            box-shadow: 0 0 20px rgba(239, 68, 68, 0.4);
+            transition: transform 0.1s;
+        }
+        .btn:active { transform: scale(0.95); }
+
+        /* --- MOBILE CONTROLS --- */
+        .controls-area {
+            width: 100%; padding: 20px; pointer-events: auto;
+            display: flex; justify-content: space-between; align-items: flex-end;
+            margin-bottom: 10px;
+        }
+        
+        /* Steering (Left side) */
+        .steering-group { display: flex; gap: 10px; }
+        .arrow-btn {
+            width: 70px; height: 70px; background: rgba(255,255,255,0.2);
+            border: 2px solid white; border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 2rem; color: white; cursor: pointer;
+        }
+        .arrow-btn:active { background: rgba(255,255,255,0.5); }
+
+        /* Pedals (Right side) */
+        .pedal-group { display: flex; gap: 15px; }
+        .pedal {
+            width: 60px; height: 100px; border-radius: 10px;
+            border: 2px solid white; display: flex; align-items: center; justify-content: center;
+            font-weight: bold; color: white; cursor: pointer;
+        }
+        .brake { background: rgba(239, 68, 68, 0.4); height: 80px; margin-top: 20px; } /* Brake smaller */
+        .gas { background: rgba(34, 197, 94, 0.4); }
+        
+        .pedal:active { transform: scale(0.95); opacity: 1; }
+        .brake:active { background: rgba(239, 68, 68, 0.8); }
+        .gas:active { background: rgba(34, 197, 94, 0.8); }
+
+        @media (min-width: 1024px) { .controls-area { display: none; } } /* Hide on desktop */
+
+        /* --- CANVAS --- */
+        canvas { display: block; width: 100%; height: 100%; z-index: 10; }
+
+        /* --- PARTICLES --- */
+        .particle {
+            position: absolute; pointer-events: none; z-index: 40; font-size: 20px;
+            animation: pop 0.5s ease-out forwards;
+        }
+        @keyframes pop { 0%{transform:scale(0);} 50%{transform:scale(1.2);} 100%{transform:scale(0); opacity:0;} }
+
+    </style>
+</head>
+<body>
+
+    <!-- ASSETS -->
+    <div id="assets">
+        <img id="img-mazda" src="hugimages/mazda.png" alt="Mazda">
+        <img id="img-lexus" src="hugimages/lm500h.png" alt="Lexus">
+        <img id="img-bmw" src="hugimages/m4.png" alt="BMW">
+    </div>
+
+    <div class="ui-layer">
+        <a href="index.html" class="back-btn">⬅ Back</a>
+        <div class="status-bar" id="status">Park carefully! 🅿️</div>
+
+        <!-- Mobile Controls -->
+        <div class="controls-area">
+            <div class="steering-group">
+                <div class="arrow-btn" id="btn-left">⬅️</div>
+                <div class="arrow-btn" id="btn-right">➡️</div>
+            </div>
+            <div class="pedal-group">
+                <div class="pedal brake" id="btn-brake">🛑</div>
+                <div class="pedal gas" id="btn-gas">GO</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- SCREENS -->
+    <div id="start-screen" class="screen-overlay">
+        <h1 class="font-pacifico text-5xl text-white mb-2 drop-shadow-lg">Parking Master</h1>
+        <p class="text-gray-300 font-bold text-lg mb-6 text-center max-w-md">
+            Use Arrow Keys or Buttons.<br>Park the Mazda between the Lexus and BMW.<br>Don't crash!
+        </p>
+        <button id="start-btn" class="btn">Start Engine 🔑</button>
+    </div>
+
+    <div id="win-screen" class="screen-overlay hidden">
+        <h1 class="font-pacifico text-6xl text-green-400 mb-2">Perfect Park!</h1>
+        <p class="text-white text-xl mb-6">Like a glove! 😎</p>
+        <div class="text-6xl mb-6 animate-bounce">🅿️✨</div>
+        <button id="win-btn" class="btn bg-green-500 border-green-200 shadow-green-900">Park Again 🔄</button>
+    </div>
+
+    <div id="fail-screen" class="screen-overlay hidden">
+        <h1 class="font-pacifico text-6xl text-red-500 mb-2">CRASH!</h1>
+        <p class="text-white text-xl mb-6">You scratched the paint! 😱</p>
+        <div class="text-6xl mb-6">💥</div>
+        <button id="fail-btn" class="btn">Retry 🔄</button>
+    </div>
+
+    <canvas id="gameCanvas"></canvas>
+
+    <script>
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        const statusEl = document.getElementById('status');
+        
+        // Screens
+        const startScreen = document.getElementById('start-screen');
+        const winScreen = document.getElementById('win-screen');
+        const failScreen = document.getElementById('fail-screen');
+
+        // Assets
+        const imgMazda = document.getElementById('img-mazda');
+        const imgLexus = document.getElementById('img-lexus');
+        const imgBmw = document.getElementById('img-bmw');
+
+        // --- GAME CONSTANTS ---
+        const CAR_W = 60;
+        const CAR_H = 100; // Top-down aspect ratio approx
+        const ACCEL = 0.2;
+        const FRICTION = 0.96;
+        const TURN_SPEED = 0.06;
+        const BRAKE_FORCE = 0.4;
+
+        // --- STATE ---
+        let gameRunning = false;
+        let keys = { Up: false, Down: false, Left: false, Right: false };
+        
+        // Player
+        let player = {
+            x: 100, y: 400, 
+            speed: 0, angle: 0, // Radians (0 = Up)
+            width: CAR_W, height: CAR_H
+        };
+
+        // Level Objects
+        let obstacles = [];
+        let parkingSpot = {};
+
+        // --- RESIZE ---
+        function resize() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+            resetLevel();
+        }
+        window.addEventListener('resize', resize);
+
+        function resetLevel() {
+            const cx = canvas.width / 2;
+            const cy = canvas.height / 2;
+
+            // Setup Parking Lot
+            // Row of spots at the top
+            const spotY = 100;
+            const spotW = 100;
+            const spotH = 160;
+            const gap = 20;
+
+            // 1. Lexus (Left Obstacle)
+            const lexusX = cx - spotW - gap;
+            // 2. Empty Spot (Target)
+            const targetX = cx;
+            // 3. BMW (Right Obstacle)
+            const bmwX = cx + spotW + gap;
+
+            obstacles = [
+                { x: lexusX, y: spotY, w: CAR_W + 10, h: CAR_H + 10, img: imgLexus, type: 'car' },
+                { x: bmwX, y: spotY, w: CAR_W, h: CAR_H, img: imgBmw, type: 'car' },
+                // Walls/Curbs
+                { x: cx, y: 20, w: canvas.width, h: 40, type: 'wall' }, // Top Wall
+                { x: -10, y: cy, w: 20, h: canvas.height, type: 'wall' }, // Left Wall
+                { x: canvas.width + 10, y: cy, w: 20, h: canvas.height, type: 'wall' }, // Right Wall
+                { x: cx, y: canvas.height - 10, w: canvas.width, h: 20, type: 'wall' } // Bottom Wall
+            ];
+
+            parkingSpot = {
+                x: targetX,
+                y: spotY,
+                w: spotW - 10, // Slightly smaller target than the painted lines
+                h: spotH - 10,
+                rotation: 0 // Upright
+            };
+
+            // Reset Player
+            player.x = cx;
+            player.y = canvas.height - 150;
+            player.angle = 0; // Facing Up
+            player.speed = 0;
+        }
+
+        // --- INPUT HANDLING ---
+        window.addEventListener('keydown', e => {
+            if (e.key === 'ArrowUp') keys.Up = true;
+            if (e.key === 'ArrowDown') keys.Down = true;
+            if (e.key === 'ArrowLeft') keys.Left = true;
+            if (e.key === 'ArrowRight') keys.Right = true;
+        });
+        window.addEventListener('keyup', e => {
+            if (e.key === 'ArrowUp') keys.Up = false;
+            if (e.key === 'ArrowDown') keys.Down = false;
+            if (e.key === 'ArrowLeft') keys.Left = false;
+            if (e.key === 'ArrowRight') keys.Right = false;
+        });
+
+        // Mobile Buttons
+        function bindTouch(id, key) {
+            const el = document.getElementById(id);
+            el.addEventListener('touchstart', (e) => { e.preventDefault(); keys[key] = true; });
+            el.addEventListener('touchend', (e) => { e.preventDefault(); keys[key] = false; });
+            el.addEventListener('mousedown', () => keys[key] = true);
+            el.addEventListener('mouseup', () => keys[key] = false);
+        }
+        bindTouch('btn-left', 'Left');
+        bindTouch('btn-right', 'Right');
+        bindTouch('btn-gas', 'Up');
+        bindTouch('btn-brake', 'Down');
+
+        // --- PHYSICS & UPDATE ---
+        function update() {
+            if (!gameRunning) return;
+
+            // 1. Acceleration
+            if (keys.Up) player.speed -= ACCEL; // Go forward (Up is negative Y)
+            if (keys.Down) player.speed += ACCEL; // Reverse
+
+            // 2. Friction
+            player.speed *= FRICTION;
+
+            // 3. Steering (Only turns if moving)
+            if (Math.abs(player.speed) > 0.1) {
+                const turn = player.speed > 0 ? -TURN_SPEED : TURN_SPEED; // Invert turn when reversing? Standard car physics: steering wheel direction logic remains, but effect on angle depends on velocity vector?
+                // Simplified:
+                // If going Forward (speed < 0), Left key rotates Left (-angle)
+                // If going Back (speed > 0), Left key rotates Right (+angle) visually to simulate car backing up
+                
+                const dir = player.speed < 0 ? 1 : -1;
+                if (keys.Left) player.angle -= TURN_SPEED * dir;
+                if (keys.Right) player.angle += TURN_SPEED * dir;
+            }
+
+            // 4. Velocity Vector
+            player.x += Math.sin(player.angle) * player.speed;
+            player.y -= Math.cos(player.angle) * player.speed; // Y is inverted in Canvas
+
+            // 5. Collision Detection (Circle approximation for simplicity)
+            // Player Center
+            const cx = player.x;
+            const cy = player.y;
+            const r = player.height / 2.5; // Hitbox radius
+
+            for (let obs of obstacles) {
+                // Rectangle vs Circle
+                let testX = cx;
+                let testY = cy;
+                
+                // Find closest point on rect
+                if (cx < obs.x - obs.w/2) testX = obs.x - obs.w/2;
+                else if (cx > obs.x + obs.w/2) testX = obs.x + obs.w/2;
+                
+                if (cy < obs.y - obs.h/2) testY = obs.y - obs.h/2;
+                else if (cy > obs.y + obs.h/2) testY = obs.y + obs.h/2;
+
+                const distX = cx - testX;
+                const distY = cy - testY;
+                const distance = Math.sqrt((distX*distX) + (distY*distY));
+
+                if (distance <= r) {
+                    // Crash!
+                    // Ignore if speed is practically zero (touching)
+                    if (Math.abs(player.speed) > 0.5) {
+                        failGame();
+                        return;
+                    }
+                }
+            }
+
+            // 6. Win Condition (Parking Spot)
+            // Must be slow, inside the box, and roughly aligned angle
+            const distToSpot = Math.sqrt(Math.pow(cx - parkingSpot.x, 2) + Math.pow(cy - parkingSpot.y, 2));
+            const angleDiff = Math.abs(player.angle % (Math.PI * 2)); // Normalize roughly
+            
+            // Check if close enough
+            if (distToSpot < 20 && Math.abs(player.speed) < 0.1) {
+                // Check alignment (Upright approx 0 or 2PI)
+                if (angleDiff < 0.3 || angleDiff > (Math.PI*2 - 0.3)) {
+                    winGame();
+                }
+            }
+            
+            if (distToSpot < 50) statusEl.innerText = "Almost there... straighten up!";
+            else statusEl.innerText = "Find the empty spot!";
+
+            requestAnimationFrame(draw);
+            requestAnimationFrame(update);
+        }
+
+        // --- RENDER ---
+        function draw() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            // 1. Draw Ground (Asphalt)
+            ctx.fillStyle = '#334155';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            // 2. Draw Parking Lines
+            ctx.strokeStyle = 'white';
+            ctx.lineWidth = 4;
+            ctx.beginPath();
+            // Draw 3 spots
+            const spots = [
+                {x: parkingSpot.x - 120, y: parkingSpot.y}, // Left
+                {x: parkingSpot.x, y: parkingSpot.y},       // Target
+                {x: parkingSpot.x + 120, y: parkingSpot.y}  // Right
+            ];
+            
+            spots.forEach(s => {
+                const x = s.x;
+                const y = s.y;
+                const w = 100; 
+                const h = 160;
+                // Left Line
+                ctx.moveTo(x - w/2, y - h/2); ctx.lineTo(x - w/2, y + h/2);
+                // Right Line
+                ctx.moveTo(x + w/2, y - h/2); ctx.lineTo(x + w/2, y + h/2);
+                // Top arc (curb)
+                ctx.moveTo(x - w/2, y - h/2); ctx.lineTo(x + w/2, y - h/2);
+            });
+            ctx.stroke();
+
+            // Highlight Target Spot
+            ctx.fillStyle = 'rgba(34, 197, 94, 0.2)';
+            ctx.fillRect(parkingSpot.x - 50, parkingSpot.y - 80, 100, 160);
+            ctx.fillStyle = 'rgba(34, 197, 94, 0.8)';
+            ctx.font = "30px Arial"; ctx.textAlign = "center";
+            ctx.fillText("P", parkingSpot.x, parkingSpot.y);
+
+            // 3. Draw Obstacles (Cars)
+            obstacles.forEach(obs => {
+                if (obs.type === 'car') {
+                    ctx.save();
+                    ctx.translate(obs.x, obs.y);
+                    // Rotate 180 to face out, or 0 to face in. Parked cars usually face out?
+                    // Let's assume they are parked facing the camera (down).
+                    // Since images are side view, we rotate -90 to point UP, or 90 to point DOWN.
+                    // Let's make them point DOWN (facing player).
+                    ctx.rotate(Math.PI / 2); 
+                    ctx.drawImage(obs.img, -obs.h/2, -obs.w/2, obs.h, obs.w);
+                    ctx.restore();
+                } else if (obs.type === 'wall') {
+                    // Draw Wall/Curb
+                    ctx.fillStyle = '#9ca3af';
+                    ctx.fillRect(obs.x - obs.w/2, obs.y - obs.h/2, obs.w, obs.h);
+                }
+            });
+
+            // 4. Draw Player (Mazda)
+            ctx.save();
+            ctx.translate(player.x, player.y);
+            ctx.rotate(player.angle);
+            
+            // Car Shadow
+            ctx.fillStyle = 'rgba(0,0,0,0.5)';
+            ctx.fillRect(-player.width/2 + 5, -player.height/2 + 5, player.width, player.height);
+
+            // Car Image (Side view rotated to top-down approx)
+            // Rotate -90deg to align 'forward' (Up) with image logic
+            ctx.rotate(-Math.PI / 2); 
+            // Draw
+            ctx.drawImage(imgMazda, -player.height/2, -player.width/2, player.height, player.width);
+            
+            ctx.restore();
+        }
+
+        // --- GAME FLOW ---
+        function startGame() {
+            startScreen.classList.add('hidden');
+            winScreen.classList.add('hidden');
+            failScreen.classList.add('hidden');
+            
+            resize();
+            gameRunning = true;
+            update();
+            draw();
+        }
+
+        function failGame() {
+            gameRunning = false;
+            failScreen.classList.remove('hidden');
+        }
+
+        function winGame() {
+            gameRunning = false;
+            winScreen.classList.remove('hidden');
+        }
+
+        // Button Bindings
+        function bind(id, fn) {
+            const el = document.getElementById(id);
+            el.addEventListener('click', fn);
+            el.addEventListener('touchstart', (e) => { e.preventDefault(); fn(); }, {passive: false});
+        }
+        bind('start-btn', startGame);
+        bind('fail-btn', startGame);
+        bind('win-btn', startGame);
+
+        // Init
+        resize();
+        draw(); // Static draw
+
+    </script>
+</body>
+</html>

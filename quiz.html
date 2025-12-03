@@ -1,0 +1,358 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Quiz of Us ❤️</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Pacifico&family=Quicksand:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        * { box-sizing: border-box; touch-action: manipulation; }
+        body, html {
+            height: 100%; width: 100%; margin: 0; padding: 0;
+            font-family: 'Quicksand', sans-serif;
+            background: linear-gradient(to bottom, #38bdf8 0%, #c084fc 100%);
+            overflow: hidden;
+        }
+
+        /* --- BACKGROUND --- */
+        .cloud {
+            position: absolute; background: rgba(255,255,255,0.4); border-radius: 100px;
+            animation: float 25s linear infinite; z-index: 0;
+        }
+        @keyframes float { from { transform: translateX(-100vw); } to { transform: translateX(100vw); } }
+
+        /* --- UI CONTAINER --- */
+        .container {
+            position: relative; z-index: 10;
+            height: 100%; width: 100%;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            padding: 20px;
+        }
+
+        .back-btn {
+            position: absolute; top: 20px; left: 20px; z-index: 50;
+            background: white; padding: 8px 20px; border-radius: 99px;
+            color: #db2777; font-weight: bold; text-decoration: none;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        /* --- QUIZ CARD --- */
+        .quiz-card {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            width: 100%; max-width: 500px;
+            padding: 2rem;
+            border-radius: 24px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+            text-align: center;
+            transform: scale(1);
+            transition: transform 0.3s ease, opacity 0.3s ease;
+        }
+        .quiz-card.hide { transform: scale(0.9); opacity: 0; pointer-events: none; position: absolute; }
+
+        /* --- TYPOGRAPHY --- */
+        h1 { font-family: 'Pacifico', cursive; color: #db2777; font-size: 2.5rem; margin-bottom: 1rem; }
+        h2 { font-size: 1.5rem; font-weight: 700; color: #374151; margin-bottom: 1.5rem; line-height: 1.3; }
+        
+        /* --- OPTIONS --- */
+        .options-grid {
+            display: grid; gap: 12px; width: 100%;
+        }
+        .option-btn {
+            background: white; border: 2px solid #e5e7eb;
+            color: #4b5563; font-weight: 600; font-size: 1.1rem;
+            padding: 14px; border-radius: 16px;
+            cursor: pointer; transition: all 0.2s;
+            position: relative; overflow: hidden;
+        }
+        .option-btn:hover { border-color: #db2777; color: #db2777; background: #fdf2f8; }
+        .option-btn:active { transform: scale(0.98); }
+
+        /* Feedback States */
+        .option-btn.correct { background: #86efac; border-color: #22c55e; color: #14532d; }
+        .option-btn.wrong { background: #fca5a5; border-color: #ef4444; color: #7f1d1d; }
+
+        /* --- PROGRESS BAR --- */
+        .progress-container {
+            width: 100%; height: 8px; background: #e5e7eb;
+            border-radius: 99px; margin-bottom: 2rem; overflow: hidden;
+        }
+        .progress-fill {
+            height: 100%; background: #db2777; width: 0%;
+            transition: width 0.5s ease; border-radius: 99px;
+        }
+
+        /* --- ANIMATIONS --- */
+        .confetti {
+            position: absolute; width: 10px; height: 10px; background: #f00;
+            animation: fall 3s linear forwards; z-index: 50;
+        }
+        @keyframes fall { to { transform: translateY(100vh) rotate(720deg); opacity: 0; } }
+
+    </style>
+</head>
+<body>
+
+    <a href="index.html" class="back-btn">⬅ Back</a>
+
+    <!-- BACKGROUND CLOUDS -->
+    <div id="sky"></div>
+
+    <div class="container">
+        
+        <!-- START SCREEN -->
+        <div id="start-screen" class="quiz-card">
+            <h1>Quiz of Us ❤️</h1>
+            <p class="text-gray-600 mb-6 font-semibold text-lg">Seberapa baik kamu kenal aku? (Atau kita?)</p>
+            <div class="bg-pink-100 p-4 rounded-xl mb-6">
+                <span class="text-4xl">🤔💭</span>
+            </div>
+            <button onclick="startQuiz()" class="w-full bg-pink-500 text-white font-bold py-3 px-6 rounded-full shadow-lg hover:bg-pink-600 transition-transform active:scale-95 text-xl">
+                Mulai Quiz! ▶️
+            </button>
+        </div>
+
+        <!-- QUESTION SCREEN -->
+        <div id="question-screen" class="quiz-card hide">
+            <div class="progress-container">
+                <div id="progress" class="progress-fill"></div>
+            </div>
+            <h2 id="question-text">Loading...</h2>
+            <div id="options" class="options-grid">
+                <!-- Options injected by JS -->
+            </div>
+        </div>
+
+        <!-- RESULT SCREEN -->
+        <div id="result-screen" class="quiz-card hide">
+            <h1>Selesai! 🎉</h1>
+            <div class="text-6xl mb-4" id="result-emoji">🏆</div>
+            <p class="text-gray-600 font-bold text-xl mb-2">Score Kamu:</p>
+            <p class="text-5xl font-bold text-pink-600 mb-6"><span id="score">0</span> / <span id="total">0</span></p>
+            <p id="feedback-text" class="text-gray-500 mb-8 italic">Not bad!</p>
+            
+            <div class="flex flex-col gap-3">
+                <button onclick="restartQuiz()" class="bg-gray-100 text-gray-700 font-bold py-3 rounded-xl hover:bg-gray-200">
+                    Coba Lagi 🔄
+                </button>
+                <a href="index.html" class="bg-pink-500 text-white font-bold py-3 rounded-xl shadow-md hover:bg-pink-600 block">
+                    Balik ke Rumah 🏠
+                </a>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        // --- CONFIGURATION: EDIT QUESTIONS HERE ---
+        const questions = [
+            {
+                q: "Princess: Apa mobil impian aku? 🚗",
+                options: ["Porsche", "BMW", "Audi", "Mercedes"],
+                correct: 1 // Index 1 is Mazda 3
+            },
+            {
+                q: "Dainel: Apa mobil impian aku? 🚗",
+                options: ["BMW", "Mazda 3 Hatchback", "Lexus IS300", "Porsche 911 Turbo S"],
+                correct: 3 // Index 1 is Mazda 3
+            },
+            {
+                q: "Princess: Apa warna kesukaan aku? 🎨",
+                options: ["Biru (Blue)", "Merah (Red)", "Hitam (Black)", "Pink"],
+                correct: 3 // Index 0 is Blue (Based on your character)
+            },
+            {
+                q: "Dainel: Apa warna kesukaan aku? 🎨",
+                options: ["Biru (Blue)", "Merah (Red)", "Hitam (Black)", "Pink"],
+                correct: 0 // Index 0 is Blue (Based on your character)
+            },
+            {
+                q: "Princess: Apa makanan favorit aku? 🍔",
+                options: ["Nasi Goreng", "Dimsum", "Sate", "Mie"],
+                correct: 1 // Cheeky answer
+            },
+            {
+                q: "Dainel: Apa makanan favorit aku? 🍔",
+                options: ["Mie Oleng", "Mie Goreng", "Mie", "Apapun yang kamu masak"],
+                correct: 3 // Cheeky answer
+            },
+            {
+                q: "Siapa yang lebih sabar? 😌",
+                options: ["Dainel", "Princess", "Kita berdua sama aja", "No comment :v"],
+                correct: 3 // You can change this to 0 if it's you!
+            },
+            {
+                q: "Kapan anniversary kita",
+                options: ["26/07/2025", "02/08/2025", "02/07/2025", "26/02/2025"],
+                correct: 1 // Example answer
+            },
+            {
+                q: "Kapan pertama kali kita ketemu",
+                options: ["26/02/2025", "02/08/2025", "26/07/2025", "02/07/2025"],
+                correct: 0 // Cheeky answer
+            },
+            {
+                q: "Princess: Apa bunga favorit aku selain sunflower",
+                options: ["Lily", "Mawar", "Tulip", "Anggrek"],
+                correct: 0 // Example answer
+            },
+            {
+                q: "Princess: Aku lebih suka pake hijab...",
+                options: ["Pashmina", "Bergo", "Segi empat", "No hijab"],
+                correct: 3 // Example answer
+            },
+            {
+                q: "Princess: Warna berapa lipstick aku",
+                options: ["02", "12", "08", "15"],
+                correct: 0 // Example answer
+            },
+        ];
+
+        // --- GAME STATE ---
+        let currentQuestion = 0;
+        let score = 0;
+        const screens = {
+            start: document.getElementById('start-screen'),
+            question: document.getElementById('question-screen'),
+            result: document.getElementById('result-screen')
+        };
+        const els = {
+            question: document.getElementById('question-text'),
+            options: document.getElementById('options'),
+            progress: document.getElementById('progress'),
+            score: document.getElementById('score'),
+            total: document.getElementById('total'),
+            feedback: document.getElementById('feedback-text'),
+            emoji: document.getElementById('result-emoji')
+        };
+
+        // --- BACKGROUND CLOUDS ---
+        function initClouds() {
+            const sky = document.getElementById('sky');
+            for(let i=0; i<5; i++) {
+                const c = document.createElement('div');
+                c.className = 'cloud';
+                const s = 50 + Math.random() * 100;
+                c.style.width = s + 'px'; c.style.height = (s*0.6) + 'px';
+                c.style.top = Math.random() * 80 + '%';
+                c.style.left = Math.random() * 100 + '%';
+                c.style.animationDuration = (20 + Math.random() * 40) + 's';
+                sky.appendChild(c);
+            }
+        }
+        initClouds();
+
+        // --- LOGIC ---
+        function switchScreen(show) {
+            Object.values(screens).forEach(s => s.classList.add('hide'));
+            screens[show].classList.remove('hide');
+        }
+
+        function startQuiz() {
+            currentQuestion = 0;
+            score = 0;
+            switchScreen('question');
+            loadQuestion();
+        }
+
+        function loadQuestion() {
+            if (currentQuestion >= questions.length) {
+                showResult();
+                return;
+            }
+
+            const data = questions[currentQuestion];
+            els.question.innerText = data.q;
+            els.options.innerHTML = '';
+            
+            // Update Progress
+            const pct = ((currentQuestion) / questions.length) * 100;
+            els.progress.style.width = pct + '%';
+
+            data.options.forEach((opt, index) => {
+                const btn = document.createElement('button');
+                btn.className = 'option-btn';
+                btn.innerText = opt;
+                btn.onclick = () => handleAnswer(index, btn);
+                els.options.appendChild(btn);
+            });
+        }
+
+        function handleAnswer(selectedIndex, btnElement) {
+            // Disable all buttons
+            const buttons = els.options.querySelectorAll('button');
+            buttons.forEach(b => b.disabled = true);
+
+            const correctIndex = questions[currentQuestion].correct;
+
+            if (selectedIndex === correctIndex) {
+                btnElement.classList.add('correct');
+                score++;
+                spawnConfetti();
+            } else {
+                btnElement.classList.add('wrong');
+                // Highlight the correct one
+                buttons[correctIndex].classList.add('correct');
+            }
+
+            // Wait then next
+            setTimeout(() => {
+                currentQuestion++;
+                loadQuestion();
+            }, 1200);
+        }
+
+        function showResult() {
+            switchScreen('result');
+            els.score.innerText = score;
+            els.total.innerText = questions.length;
+            els.progress.style.width = '100%';
+
+            // Feedback Logic
+            const percentage = score / questions.length;
+            if (percentage === 1) {
+                els.feedback.innerText = "Wow! Kamu tau segalanya tentang aku! I love you! ❤️";
+                els.emoji.innerText = "🥰🥇";
+                spawnMassiveConfetti();
+            } else if (percentage >= 0.7) {
+                els.feedback.innerText = "Hebat! Hampir sempurna!";
+                els.emoji.innerText = "😘✨";
+            } else {
+                els.feedback.innerText = "Wkwkwk gapapa, ayo belajar kenal lagi :p";
+                els.emoji.innerText = "🤪💖";
+            }
+        }
+
+        function restartQuiz() {
+            startQuiz();
+        }
+
+        // --- EFFECTS ---
+        function spawnConfetti() {
+            for(let i=0; i<20; i++) {
+                const c = document.createElement('div');
+                c.className = 'confetti';
+                c.style.left = 50 + '%';
+                c.style.top = 50 + '%';
+                c.style.backgroundColor = ['#ec4899', '#3b82f6', '#fbbf24', '#22c55e'][Math.floor(Math.random()*4)];
+                c.style.transform = `translate(${Math.random()*200 - 100}px, ${Math.random()*200 - 100}px)`;
+                c.style.transition = 'all 1s ease-out';
+                document.body.appendChild(c);
+                
+                // Animate out
+                setTimeout(() => {
+                    c.style.opacity = '0';
+                    c.style.transform += ` translateY(100px)`;
+                }, 10);
+                setTimeout(() => c.remove(), 1000);
+            }
+        }
+
+        function spawnMassiveConfetti() {
+            setInterval(() => spawnConfetti(), 300);
+        }
+
+    </script>
+</body>
+</html>

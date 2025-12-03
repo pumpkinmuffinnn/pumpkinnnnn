@@ -1,0 +1,371 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Love Snake 🐍❤️</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Pacifico&family=Quicksand:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        * { box-sizing: border-box; touch-action: none; user-select: none; -webkit-user-select: none; }
+        body, html {
+            height: 100%; width: 100%; margin: 0; padding: 0; overflow: hidden;
+            font-family: 'Quicksand', sans-serif;
+            background: linear-gradient(135deg, #a78bfa 0%, #f472b6 100%); /* Purple to Pink */
+        }
+
+        /* --- ASSETS (Hidden) --- */
+        #assets { display: none; }
+
+        /* --- UI LAYER --- */
+        .ui-layer {
+            position: absolute; inset: 0; z-index: 10;
+            display: flex; flex-direction: column; align-items: center;
+            pointer-events: none;
+        }
+
+        .back-btn {
+            position: absolute; top: 20px; left: 20px; pointer-events: auto;
+            background: white; padding: 8px 20px; border-radius: 99px;
+            color: #db2777; font-weight: bold; text-decoration: none;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        .score-board {
+            margin-top: 20px;
+            font-family: 'Pacifico', cursive; font-size: 2.5rem; color: white;
+            text-shadow: 2px 2px 0 rgba(219, 39, 119, 0.4);
+        }
+
+        /* --- GAME BOARD --- */
+        .game-wrapper {
+            position: relative;
+            margin-top: 10px;
+            width: 90vw;
+            max-width: 500px;
+            aspect-ratio: 1/1; /* Square grid */
+            background: rgba(255, 255, 255, 0.2);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            border: 4px solid rgba(255,255,255,0.5);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            overflow: hidden;
+            pointer-events: auto;
+        }
+
+        canvas { width: 100%; height: 100%; display: block; }
+
+        /* --- SCREENS --- */
+        .screen-overlay {
+            position: absolute; inset: 0; background: rgba(0,0,0,0.6);
+            backdrop-filter: blur(5px); z-index: 50;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            transition: opacity 0.3s; pointer-events: auto;
+        }
+        .screen-overlay.hidden { opacity: 0; pointer-events: none; }
+
+        .btn {
+            background: #ec4899; color: white; padding: 12px 30px;
+            border-radius: 99px; font-weight: bold; font-size: 1.2rem;
+            margin-top: 15px; cursor: pointer; border: 4px solid white;
+            box-shadow: 0 4px 10px rgba(236, 72, 153, 0.4);
+            transition: transform 0.1s;
+        }
+        .btn:active { transform: scale(0.95); }
+
+        /* --- MOBILE CONTROLS (D-PAD) --- */
+        .controls-area {
+            position: absolute; bottom: 20px; width: 100%;
+            display: flex; justify-content: center; align-items: center;
+            pointer-events: auto; z-index: 20;
+        }
+        
+        .d-pad {
+            display: grid;
+            grid-template-columns: 60px 60px 60px;
+            grid-template-rows: 60px 60px;
+            gap: 10px;
+        }
+        
+        .ctrl-btn {
+            width: 60px; height: 60px;
+            background: rgba(255,255,255,0.3);
+            border-radius: 50%;
+            border: 2px solid white;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 1.5rem; color: white;
+            cursor: pointer;
+            backdrop-filter: blur(4px);
+            transition: background 0.1s;
+        }
+        .ctrl-btn:active { background: rgba(255,255,255,0.6); }
+        
+        /* Grid positioning for D-Pad */
+        .up { grid-column: 2; grid-row: 1; }
+        .left { grid-column: 1; grid-row: 2; }
+        .down { grid-column: 2; grid-row: 2; }
+        .right { grid-column: 3; grid-row: 2; }
+
+        /* Hide controls on large screens if desired, but good fallback */
+        @media (min-width: 768px) {
+            .controls-area { display: none; }
+        }
+
+    </style>
+</head>
+<body>
+
+    <!-- ASSETS -->
+    <div id="assets">
+        <img id="img-head" src="hugimages/himblue.jpg" alt="Him">
+        <img id="img-body" src="hugimages/herpink.jpg" alt="Her">
+    </div>
+
+    <div class="ui-layer">
+        <a href="index.html" class="back-btn">⬅ Back</a>
+        
+        <div class="score-board">Score: <span id="score">0</span></div>
+
+        <div class="game-wrapper">
+            <canvas id="gameCanvas"></canvas>
+            
+            <!-- START SCREEN -->
+            <div id="start-screen" class="screen-overlay">
+                <h1 class="font-pacifico text-5xl text-pink-400 mb-2 drop-shadow-md">Love Snake</h1>
+                <p class="text-white text-lg mb-6 max-w-xs text-center">
+                    Collect hearts to make our love chain longer! ❤️
+                </p>
+                <button id="start-btn" class="btn">Play ▶️</button>
+            </div>
+
+            <!-- GAME OVER -->
+            <div id="game-over-screen" class="screen-overlay hidden">
+                <h1 class="font-pacifico text-5xl text-red-400 mb-2">Bonk!</h1>
+                <p class="text-white text-xl mb-4">Score: <span id="final-score">0</span></p>
+                <button id="restart-btn" class="btn">Try Again 🔄</button>
+            </div>
+        </div>
+
+        <!-- MOBILE CONTROLS -->
+        <div class="controls-area">
+            <div class="d-pad">
+                <div class="ctrl-btn up" data-dir="up">⬆️</div>
+                <div class="ctrl-btn left" data-dir="left">⬅️</div>
+                <div class="ctrl-btn down" data-dir="down">⬇️</div>
+                <div class="ctrl-btn right" data-dir="right">➡️</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        const scoreEl = document.getElementById('score');
+        const finalScoreEl = document.getElementById('final-score');
+        
+        const startScreen = document.getElementById('start-screen');
+        const gameOverScreen = document.getElementById('game-over-screen');
+
+        const imgHead = document.getElementById('img-head');
+        const imgBody = document.getElementById('img-body');
+
+        // Game Settings
+        const GRID_SIZE = 20; // 20x20 grid
+        let TILE_SIZE = 20; 
+        let GAME_SPEED = 150; // ms per frame
+
+        // State
+        let snake = [];
+        let food = {};
+        let direction = 'right'; // current moving direction
+        let nextDirection = 'right'; // buffered direction
+        let score = 0;
+        let gameLoopId;
+        let isPlaying = false;
+
+        // --- RESIZE ---
+        function resize() {
+            // Make canvas match its CSS size (square)
+            const rect = canvas.parentElement.getBoundingClientRect();
+            canvas.width = rect.width;
+            canvas.height = rect.height;
+            TILE_SIZE = canvas.width / GRID_SIZE;
+            draw(); // Redraw if resizing paused
+        }
+        window.addEventListener('resize', resize);
+        
+        // Initial setup wait for layout
+        setTimeout(resize, 100);
+
+        // --- GAME LOGIC ---
+        function initGame() {
+            snake = [
+                {x: 10, y: 10}, // Head
+                {x: 9, y: 10},  // Body 1
+                {x: 8, y: 10}   // Body 2
+            ];
+            direction = 'right';
+            nextDirection = 'right';
+            score = 0;
+            scoreEl.innerText = score;
+            spawnFood();
+            
+            if (gameLoopId) clearInterval(gameLoopId);
+            gameLoopId = setInterval(update, GAME_SPEED);
+            isPlaying = true;
+            
+            startScreen.classList.add('hidden');
+            gameOverScreen.classList.add('hidden');
+        }
+
+        function spawnFood() {
+            // Random position not on snake
+            let valid = false;
+            while (!valid) {
+                food = {
+                    x: Math.floor(Math.random() * GRID_SIZE),
+                    y: Math.floor(Math.random() * GRID_SIZE)
+                };
+                // Check collision with snake
+                valid = !snake.some(segment => segment.x === food.x && segment.y === food.y);
+            }
+        }
+
+        function update() {
+            direction = nextDirection;
+
+            // Move Head
+            const head = { ...snake[0] };
+            if (direction === 'right') head.x++;
+            else if (direction === 'left') head.x--;
+            else if (direction === 'up') head.y--;
+            else if (direction === 'down') head.y++;
+
+            // Check Collisions (Walls)
+            if (head.x < 0 || head.x >= GRID_SIZE || head.y < 0 || head.y >= GRID_SIZE) {
+                gameOver();
+                return;
+            }
+
+            // Check Collisions (Self)
+            // Start from index 0 because if we hit tail it's a hit, but usually tail moves away.
+            // However, classic snake check collision against body excluding tail if no food eaten.
+            // Simple check:
+            if (snake.some(s => s.x === head.x && s.y === head.y)) {
+                gameOver();
+                return;
+            }
+
+            // Move Snake
+            snake.unshift(head); // Add new head
+
+            // Check Food
+            if (head.x === food.x && head.y === food.y) {
+                score++;
+                scoreEl.innerText = score;
+                spawnFood();
+                // Don't pop tail -> snake grows
+            } else {
+                snake.pop(); // Remove tail -> snake moves
+            }
+
+            draw();
+        }
+
+        function draw() {
+            // Clear
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            // 1. Draw Food (Heart)
+            const fx = food.x * TILE_SIZE + TILE_SIZE/2;
+            const fy = food.y * TILE_SIZE + TILE_SIZE/2;
+            
+            ctx.font = `${TILE_SIZE * 0.8}px Arial`;
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            // Pulsing effect
+            const scale = 1 + Math.sin(Date.now() / 200) * 0.1;
+            
+            ctx.save();
+            ctx.translate(fx, fy);
+            ctx.scale(scale, scale);
+            ctx.fillText("❤️", 0, 0);
+            ctx.restore();
+
+            // 2. Draw Snake (Alternating Characters)
+            snake.forEach((segment, index) => {
+                const sx = segment.x * TILE_SIZE;
+                const sy = segment.y * TILE_SIZE;
+                
+                ctx.save();
+                // Circular clipping for avatar images
+                ctx.beginPath();
+                ctx.arc(sx + TILE_SIZE/2, sy + TILE_SIZE/2, TILE_SIZE/2 - 1, 0, Math.PI * 2);
+                ctx.clip();
+
+                // Alternate Logic: Even index = Him, Odd index = Her
+                if (index % 2 === 0) {
+                    // HIM
+                    ctx.drawImage(imgHead, sx, sy, TILE_SIZE, TILE_SIZE);
+                    // Add border only if it is the absolute head (index 0)
+                    if (index === 0) {
+                        ctx.lineWidth = 2;
+                        ctx.strokeStyle = '#3b82f6';
+                        ctx.stroke();
+                    }
+                } else {
+                    // HER
+                    ctx.drawImage(imgBody, sx, sy, TILE_SIZE, TILE_SIZE);
+                }
+                ctx.restore();
+            });
+        }
+
+        function gameOver() {
+            clearInterval(gameLoopId);
+            isPlaying = false;
+            finalScoreEl.innerText = score;
+            gameOverScreen.classList.remove('hidden');
+        }
+
+        // --- CONTROLS ---
+        function changeDirection(newDir) {
+            if (!isPlaying) return;
+            // Prevent 180 turn
+            if (newDir === 'left' && direction === 'right') return;
+            if (newDir === 'right' && direction === 'left') return;
+            if (newDir === 'up' && direction === 'down') return;
+            if (newDir === 'down' && direction === 'up') return;
+            
+            nextDirection = newDir;
+        }
+
+        // Keyboard
+        window.addEventListener('keydown', e => {
+            if (e.key === 'ArrowUp') changeDirection('up');
+            if (e.key === 'ArrowDown') changeDirection('down');
+            if (e.key === 'ArrowLeft') changeDirection('left');
+            if (e.key === 'ArrowRight') changeDirection('right');
+        });
+
+        // Touch Buttons
+        document.querySelectorAll('.ctrl-btn').forEach(btn => {
+            btn.addEventListener('touchstart', (e) => {
+                e.preventDefault(); // Stop scrolling
+                changeDirection(btn.dataset.dir);
+            }, {passive: false});
+            
+            // Mouse click support for desktop testing
+            btn.addEventListener('mousedown', (e) => {
+                e.preventDefault();
+                changeDirection(btn.dataset.dir);
+            });
+        });
+
+        // Bind Start Buttons
+        document.getElementById('start-btn').addEventListener('click', initGame);
+        document.getElementById('restart-btn').addEventListener('click', initGame);
+
+    </script>
+</body>
+</html>

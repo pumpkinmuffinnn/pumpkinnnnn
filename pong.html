@@ -1,0 +1,371 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Love Pong 🏓❤️</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Pacifico&family=Quicksand:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        * { box-sizing: border-box; touch-action: none; user-select: none; -webkit-user-select: none; }
+        body, html {
+            height: 100%; width: 100%; margin: 0; padding: 0; overflow: hidden;
+            font-family: 'Quicksand', sans-serif;
+            background: linear-gradient(135deg, #fbcfe8 0%, #a5f3fc 100%); /* Soft Pink/Blue */
+        }
+
+        /* --- ASSETS --- */
+        #assets { display: none; }
+
+        /* --- UI --- */
+        .ui-layer {
+            position: absolute; inset: 0; pointer-events: none; z-index: 50;
+            display: flex; flex-direction: column; align-items: center;
+        }
+
+        .back-btn {
+            position: absolute; top: 20px; left: 20px; pointer-events: auto;
+            background: white; padding: 8px 20px; border-radius: 99px;
+            color: #ec4899; font-weight: bold; text-decoration: none;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        .score-board {
+            margin-top: 20px;
+            font-family: 'Pacifico', cursive; font-size: 3rem; color: #db2777;
+            text-shadow: 2px 2px 0 white;
+        }
+        .subtitle { font-weight: bold; color: #888; font-size: 0.9rem; background: rgba(255,255,255,0.6); padding: 4px 12px; border-radius: 20px; }
+
+        /* --- SCREENS --- */
+        .screen-overlay {
+            position: absolute; inset: 0; background: rgba(255,255,255,0.4); backdrop-filter: blur(8px);
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            z-index: 100; pointer-events: auto; transition: opacity 0.3s;
+        }
+        .screen-overlay.hidden { opacity: 0; pointer-events: none; display: none; }
+
+        .btn {
+            background: #ec4899; color: white; padding: 15px 40px;
+            border-radius: 99px; font-weight: bold; font-size: 1.5rem;
+            margin-top: 20px; cursor: pointer; border: 4px solid white;
+            box-shadow: 0 8px 15px rgba(236, 72, 153, 0.3);
+            transition: transform 0.1s;
+        }
+        .btn:active { transform: scale(0.95); }
+
+        /* --- CANVAS --- */
+        canvas { display: block; width: 100%; height: 100%; z-index: 10; cursor: none; }
+
+        /* --- DECORATION --- */
+        .mid-line {
+            position: absolute; top: 0; bottom: 0; left: 50%; width: 4px;
+            background: repeating-linear-gradient(to bottom, rgba(255,255,255,0.5) 0, rgba(255,255,255,0.5) 20px, transparent 20px, transparent 40px);
+            transform: translateX(-50%); z-index: 5;
+        }
+
+    </style>
+</head>
+<body>
+
+    <!-- ASSETS -->
+    <div id="assets">
+        <img id="img-him" src="hugimages/himblue.jpg" alt="Him">
+        <img id="img-her" src="hugimages/herpink.jpg" alt="Her">
+    </div>
+
+    <div class="ui-layer">
+        <a href="index.html" class="back-btn">⬅ Back</a>
+        <div class="score-board" id="score">0</div>
+        <div class="subtitle">Keep the Love Going! ❤️</div>
+    </div>
+
+    <div class="mid-line"></div>
+
+    <!-- START SCREEN -->
+    <div id="start-screen" class="screen-overlay">
+        <h1 class="font-pacifico text-6xl text-pink-600 mb-2 drop-shadow-sm">Love Pong</h1>
+        <p class="text-gray-700 font-bold text-lg mb-6 max-w-xs text-center">
+            You are Left (Him). She is Right (Her).<br>Drag to move. Don't drop the heart!
+        </p>
+        <button id="start-btn" class="btn">Start Rally 🏓</button>
+    </div>
+
+    <!-- GAME OVER -->
+    <div id="game-over-screen" class="screen-overlay hidden">
+        <h1 class="font-pacifico text-5xl text-purple-600 mb-2">Dropped! 💔</h1>
+        <p class="text-gray-700 font-bold text-xl mb-4">Rally Count: <span id="final-score" class="text-pink-500">0</span></p>
+        <button id="restart-btn" class="btn">Try Again 🔄</button>
+    </div>
+
+    <canvas id="gameCanvas"></canvas>
+
+    <script>
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        
+        const scoreEl = document.getElementById('score');
+        const finalScoreEl = document.getElementById('final-score');
+        const startScreen = document.getElementById('start-screen');
+        const gameOverScreen = document.getElementById('game-over-screen');
+
+        const imgHim = document.getElementById('img-him');
+        const imgHer = document.getElementById('img-her');
+
+        // Game Settings
+        const PADDLE_WIDTH = 20;
+        const PADDLE_HEIGHT = 100;
+        const BALL_SIZE = 30; // Heart size
+        let BALL_SPEED_BASE = 5;
+        let ballSpeed = BALL_SPEED_BASE;
+
+        // State
+        let gameRunning = false;
+        let score = 0;
+        
+        let ball = { x: 0, y: 0, dx: 0, dy: 0, rotation: 0 };
+        
+        // Paddles
+        let leftPaddle = { x: 30, y: 0, score: 0, img: imgHim, color: '#3b82f6' };
+        let rightPaddle = { x: 0, y: 0, score: 0, img: imgHer, color: '#ec4899' }; // X calculated on resize
+
+        // Particles
+        let particles = [];
+
+        // --- RESIZE ---
+        function resize() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+            
+            // Reset Positions
+            leftPaddle.y = canvas.height / 2 - PADDLE_HEIGHT / 2;
+            rightPaddle.x = canvas.width - 30 - PADDLE_WIDTH;
+            rightPaddle.y = canvas.height / 2 - PADDLE_HEIGHT / 2;
+            
+            if(!gameRunning) resetBall();
+        }
+        window.addEventListener('resize', resize);
+        
+        // --- INPUT ---
+        function movePaddle(y) {
+            // Center paddle on pointer
+            leftPaddle.y = y - PADDLE_HEIGHT / 2;
+            
+            // Constrain
+            if (leftPaddle.y < 0) leftPaddle.y = 0;
+            if (leftPaddle.y + PADDLE_HEIGHT > canvas.height) leftPaddle.y = canvas.height - PADDLE_HEIGHT;
+        }
+
+        // Mouse
+        window.addEventListener('mousemove', e => {
+            if(gameRunning) movePaddle(e.clientY);
+        });
+        
+        // Touch
+        window.addEventListener('touchmove', e => {
+            e.preventDefault();
+            if(gameRunning) movePaddle(e.touches[0].clientY);
+        }, { passive: false });
+
+        // --- GAME LOGIC ---
+        function resetBall() {
+            ball.x = canvas.width / 2;
+            ball.y = canvas.height / 2;
+            
+            // Random direction
+            const dirX = Math.random() > 0.5 ? 1 : -1;
+            const dirY = (Math.random() * 2 - 1); // Random angle
+            
+            ball.dx = dirX * ballSpeed;
+            ball.dy = dirY * ballSpeed;
+        }
+
+        function spawnParticles(x, y, color) {
+            for(let i=0; i<10; i++) {
+                particles.push({
+                    x: x, y: y,
+                    vx: (Math.random() - 0.5) * 10,
+                    vy: (Math.random() - 0.5) * 10,
+                    life: 1.0, color: color
+                });
+            }
+        }
+
+        function update() {
+            if (!gameRunning) return;
+
+            // Move Ball
+            ball.x += ball.dx;
+            ball.y += ball.dy;
+            ball.rotation += 0.1;
+
+            // Bounce Top/Bottom
+            if (ball.y < 0 || ball.y + BALL_SIZE > canvas.height) {
+                ball.dy *= -1;
+                // Keep inside
+                if (ball.y < 0) ball.y = 0;
+                else ball.y = canvas.height - BALL_SIZE;
+            }
+
+            // --- AI (Right Paddle - Her) ---
+            // She moves towards the ball
+            const targetY = ball.y - PADDLE_HEIGHT / 2;
+            const aiSpeed = ballSpeed * 0.85; // Slightly slower than ball so she isn't invincible
+            
+            // Smooth movement
+            if (rightPaddle.y < targetY) rightPaddle.y += aiSpeed;
+            if (rightPaddle.y > targetY) rightPaddle.y -= aiSpeed;
+
+            // Constrain AI
+            if (rightPaddle.y < 0) rightPaddle.y = 0;
+            if (rightPaddle.y + PADDLE_HEIGHT > canvas.height) rightPaddle.y = canvas.height - PADDLE_HEIGHT;
+
+
+            // --- COLLISIONS ---
+            
+            // Check Left Paddle (Player)
+            if (
+                ball.x < leftPaddle.x + PADDLE_WIDTH &&
+                ball.x + BALL_SIZE > leftPaddle.x &&
+                ball.y + BALL_SIZE > leftPaddle.y &&
+                ball.y < leftPaddle.y + PADDLE_HEIGHT
+            ) {
+                ball.dx = Math.abs(ball.dx); // Bounce Right
+                increaseSpeed();
+                spawnParticles(ball.x, ball.y, '#3b82f6');
+            }
+
+            // Check Right Paddle (AI)
+            if (
+                ball.x + BALL_SIZE > rightPaddle.x &&
+                ball.x < rightPaddle.x + PADDLE_WIDTH &&
+                ball.y + BALL_SIZE > rightPaddle.y &&
+                ball.y < rightPaddle.y + PADDLE_HEIGHT
+            ) {
+                ball.dx = -Math.abs(ball.dx); // Bounce Left
+                increaseSpeed();
+                score++; // Score increases on rally return
+                scoreEl.innerText = score;
+                spawnParticles(ball.x + BALL_SIZE, ball.y, '#ec4899');
+            }
+
+            // --- GAME OVER CHECK ---
+            if (ball.x < 0 || ball.x > canvas.width) {
+                gameOver();
+            }
+
+            // Particles Update
+            for (let i = particles.length - 1; i >= 0; i--) {
+                particles[i].x += particles[i].vx;
+                particles[i].y += particles[i].vy;
+                particles[i].life -= 0.05;
+                if (particles[i].life <= 0) particles.splice(i, 1);
+            }
+
+            requestAnimationFrame(draw);
+            requestAnimationFrame(update);
+        }
+
+        function increaseSpeed() {
+            if (Math.abs(ball.dx) < 15) {
+                ball.dx *= 1.05;
+                ball.dy *= 1.05;
+            }
+        }
+
+        function draw() {
+            if (!gameRunning) return;
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            // Draw Paddles
+            drawPaddle(leftPaddle);
+            drawPaddle(rightPaddle);
+
+            // Draw Ball (Heart)
+            ctx.save();
+            ctx.translate(ball.x + BALL_SIZE/2, ball.y + BALL_SIZE/2);
+            ctx.rotate(ball.rotation * 0.2); // Gentle spin
+            ctx.font = `${BALL_SIZE}px Arial`;
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText("❤️", 0, 0);
+            ctx.restore();
+
+            // Draw Particles
+            particles.forEach(p => {
+                ctx.globalAlpha = p.life;
+                ctx.fillStyle = p.color;
+                ctx.beginPath(); ctx.arc(p.x, p.y, 4, 0, Math.PI*2); ctx.fill();
+                ctx.globalAlpha = 1.0;
+            });
+        }
+
+        function drawPaddle(p) {
+            // Shadow
+            ctx.shadowColor = p.color;
+            ctx.shadowBlur = 15;
+            
+            // Stick
+            ctx.fillStyle = 'white';
+            ctx.fillRect(p.x, p.y, PADDLE_WIDTH, PADDLE_HEIGHT);
+            
+            ctx.shadowBlur = 0; // Reset
+
+            // Avatar on top of paddle (Center of stick)
+            const avatarSize = 50;
+            const centerX = p.x + PADDLE_WIDTH/2;
+            const centerY = p.y + PADDLE_HEIGHT/2;
+
+            ctx.save();
+            ctx.beginPath();
+            ctx.arc(centerX, centerY, avatarSize/2, 0, Math.PI*2);
+            ctx.clip();
+            ctx.drawImage(p.img, centerX - avatarSize/2, centerY - avatarSize/2, avatarSize, avatarSize);
+            ctx.restore();
+
+            // Avatar Border
+            ctx.beginPath();
+            ctx.arc(centerX, centerY, avatarSize/2, 0, Math.PI*2);
+            ctx.lineWidth = 3;
+            ctx.strokeStyle = p.color;
+            ctx.stroke();
+        }
+
+        // --- FLOW ---
+        function startGame() {
+            startScreen.classList.add('hidden');
+            gameOverScreen.classList.add('hidden');
+            
+            score = 0;
+            scoreEl.innerText = score;
+            ballSpeed = BALL_SPEED_BASE;
+            particles = [];
+            
+            resize(); // Ensure positions correct
+            gameRunning = true;
+            resetBall();
+            update();
+            draw();
+        }
+
+        function gameOver() {
+            gameRunning = false;
+            finalScoreEl.innerText = score;
+            gameOverScreen.classList.remove('hidden');
+        }
+
+        // --- BUTTON BINDING ---
+        function bindBtn(id, fn) {
+            const el = document.getElementById(id);
+            el.addEventListener('click', (e) => { e.stopPropagation(); fn(); });
+            el.addEventListener('touchstart', (e) => { e.stopPropagation(); fn(); }, {passive: false});
+        }
+        bindBtn('start-btn', startGame);
+        bindBtn('restart-btn', startGame);
+
+        // Initial Layout
+        resize();
+
+    </script>
+</body>
+</html>

@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Open When... 💌</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Pacifico&family=Quicksand:wght@400;600;700&family=Dancing+Script:wght@600&display=swap" rel="stylesheet">
+    <style>
+        * { box-sizing: border-box; touch-action: manipulation; }
+        body, html {
+            min-height: 100%; width: 100%; margin: 0; padding: 0;
+            font-family: 'Quicksand', sans-serif;
+            background: linear-gradient(135deg, #fbcfe8 0%, #e879f9 100%); /* Pink/Purple */
+            overflow-x: hidden;
+        }
+
+        /* --- UI --- */
+        .back-btn {
+            position: fixed; top: 20px; left: 20px; z-index: 50;
+            background: white; padding: 10px 24px; border-radius: 99px;
+            color: #db2777; font-weight: bold; text-decoration: none;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1); transition: transform 0.2s;
+        }
+        .back-btn:hover { transform: scale(1.05); }
+
+        .header {
+            text-align: center; padding: 80px 20px 40px; color: white;
+        }
+        h1 {
+            font-family: 'Pacifico', cursive; font-size: clamp(3rem, 8vw, 5rem);
+            text-shadow: 2px 2px 0 rgba(190, 24, 93, 0.3); margin-bottom: 10px;
+        }
+        .subtitle {
+            font-size: 1.1rem; font-weight: bold; opacity: 0.95;
+            background: rgba(255,255,255,0.2); padding: 8px 24px; border-radius: 20px;
+            display: inline-block; backdrop-filter: blur(5px);
+        }
+
+        /* --- ENVELOPE GRID --- */
+        .envelope-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); /* Responsive */
+            gap: 30px;
+            max-width: 1000px; margin: 0 auto; padding: 0 20px 100px;
+        }
+
+        /* --- ENVELOPE STYLE --- */
+        .envelope-wrapper {
+            perspective: 1000px;
+            cursor: pointer;
+            transition: transform 0.3s;
+        }
+        .envelope-wrapper:hover { transform: translateY(-5px); }
+
+        .envelope {
+            position: relative; width: 100%; aspect-ratio: 1.4/1;
+            background: #fce7f3; /* Light Pink */
+            border-radius: 0 0 10px 10px;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.15);
+            display: flex; align-items: center; justify-content: center;
+            overflow: visible;
+        }
+
+        /* Flap (Closed) */
+        .flap {
+            position: absolute; top: 0; left: 0; width: 100%; height: 50%;
+            background: #fbcfe8; /* Slightly Darker Pink */
+            clip-path: polygon(0 0, 50% 100%, 100% 0);
+            transform-origin: top;
+            transition: transform 0.6s ease-in-out, z-index 0.6s;
+            z-index: 10; /* Start on top */
+            border-top: 4px solid #f472b6; /* Highlight */
+        }
+        
+        /* Pocket */
+        .pocket {
+            position: absolute; bottom: 0; left: 0; width: 100%; height: 100%;
+            background: linear-gradient(to bottom right, #fdf2f8, #fbcfe8);
+            clip-path: polygon(0 0, 50% 40%, 100% 0, 100% 100%, 0 100%);
+            z-index: 5;
+            border-radius: 0 0 10px 10px;
+        }
+
+        /* Label */
+        .label {
+            position: absolute; bottom: 20px; width: 80%;
+            background: white; padding: 8px 5px;
+            text-align: center; font-size: 0.85rem; font-weight: bold;
+            color: #831843; border-radius: 5px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            z-index: 20; transform: rotate(-2deg);
+        }
+
+        /* Letter inside (Hidden initially) */
+        .letter-preview {
+            position: absolute; bottom: 0; width: 80%; height: 80%;
+            background: white; border-radius: 5px;
+            transition: transform 0.6s ease-in-out;
+            z-index: 1; /* Inside */
+            box-shadow: 0 -2px 5px rgba(0,0,0,0.1);
+        }
+
+        /* OPEN ANIMATION STATES */
+        .envelope-wrapper.open .flap {
+            transform: rotateX(180deg); /* Flip open */
+            z-index: 0; /* Move behind */
+        }
+        .envelope-wrapper.open .letter-preview {
+            transform: translateY(-60px); /* Slide up */
+            z-index: 6; /* Move in front of pocket but behind open flap logic? Actually just slide up visual */
+        }
+
+        /* --- MODAL (READING VIEW) --- */
+        .modal-overlay {
+            position: fixed; inset: 0; z-index: 100;
+            background: rgba(0,0,0,0.6); backdrop-filter: blur(5px);
+            display: flex; justify-content: center; align-items: center;
+            opacity: 0; pointer-events: none; transition: opacity 0.4s;
+            padding: 20px;
+        }
+        .modal-overlay.active { opacity: 1; pointer-events: auto; }
+
+        .paper {
+            background: #fffbf0; /* Paper color */
+            width: 100%; max-width: 600px;
+            min-height: 60vh; max-height: 90vh;
+            padding: 40px 30px;
+            border-radius: 5px;
+            box-shadow: 0 0 30px rgba(255,255,255,0.2), inset 0 0 50px rgba(0,0,0,0.05);
+            position: relative;
+            transform: translateY(50px) scale(0.9);
+            transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            overflow-y: auto;
+            /* Notebook Lines */
+            background-image: linear-gradient(#e5e7eb 1px, transparent 1px);
+            background-size: 100% 2rem;
+            line-height: 2rem;
+        }
+        .modal-overlay.active .paper { transform: translateY(0) scale(1); }
+
+        .paper h2 {
+            font-family: 'Dancing Script', cursive; font-size: 2.5rem; color: #db2777;
+            margin-bottom: 1rem; text-align: center; line-height: 1.2;
+        }
+        .paper p {
+            font-size: 1.1rem; color: #374151; white-space: pre-wrap;
+        }
+        
+        .close-modal {
+            position: absolute; top: 15px; right: 20px;
+            font-size: 2rem; color: #9ca3af; cursor: pointer;
+            line-height: 1; transition: color 0.2s;
+        }
+        .close-modal:hover { color: #db2777; }
+
+        /* Floating Hearts BG */
+        .heart-bg {
+            position: fixed; color: rgba(255,255,255,0.3); font-size: 2rem;
+            animation: floatBg 15s linear infinite; z-index: -1;
+        }
+        @keyframes floatBg { from { transform: translateY(110vh) rotate(0deg); } to { transform: translateY(-10vh) rotate(360deg); } }
+
+    </style>
+</head>
+<body>
+
+    <a href="index.html" class="back-btn">🏠 Home</a>
+
+    <div class="header">
+        <h1>Open When...</h1>
+        <div class="subtitle">Read these whenever you need to feel me close. ❤</div>
+    </div>
+
+    <!-- GRID OF LETTERS -->
+    <div class="envelope-grid" id="grid">
+        <!-- Envelopes injected by JS -->
+    </div>
+
+    <!-- READING MODAL -->
+    <div class="modal-overlay" id="modal">
+        <div class="paper">
+            <div class="close-modal" onclick="closeLetter()">×</div>
+            <h2 id="letter-title">Open when...</h2>
+            <p id="letter-body">...</p>
+            <div class="mt-8 text-center text-gray-400 text-sm font-bold uppercase tracking-widest">
+                Forever yours, Me
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // --- YOUR LETTERS DATA ---
+        // EDIT THIS LIST WITH YOUR OWN MESSAGES!
+        const letters = [
+            {
+                id: 1,
+                label: "Open Now",
+                title: "Just for You",
+                content: "Hai sayangku,\n\nAku bikin halaman ini supaya kamu tau kalo aku selalu ada buat kamu, di setiap situasi, di setiap perasaan.\n\nSimpan link ini ya. Kapanpun kamu butuh, aku ada di sini lewat kata-kata ini. I love you so much! ❤"
+            },
+            {
+                id: 2,
+                label: "When you miss me",
+                title: "Kangen ya? 🥺",
+                content: "Aku juga kangen banget sama kamu sekarang. Rasanya pengen banget ada di sebelah kamu, peluk kamu, dan dengerin cerita kamu.\n\nInget ya, jarak itu cuma angka. Hati kita selalu deket. Coba tutup mata kamu, bayangin aku lagi peluk kamu erat-erat. Ngerasa kan? Aku sayang banget sama kamu."
+            },
+            {
+                id: 3,
+                label: "When you're sad",
+                title: "It's Okay to Cry",
+                content: "Sayang, gapapa kalau lagi sedih. Keluarin aja semuanya. Kamu gak harus selalu kuat kok.\n\nAku di sini buat dengerin kamu, buat dukung kamu. Badai pasti berlalu, dan pelangi bakal muncul (biasanya sih aku pelanginya :p).\n\nSenyum dong sedikit? I love your smile."
+            },
+            {
+                id: 4,
+                label: "When you're happy",
+                title: "YAYYY! 🎉",
+                content: "Ikut seneng banget liat kamu bahagia! Senyum kamu itu nular tau ga?\n\nSemoga hari ini jadi salah satu hari terbaik kamu. Jangan lupa ceritain ke aku ya kenapa kamu seneng hari ini, aku pengen denger semuanya!"
+            },
+            {
+                id: 5,
+                label: "When you can't sleep",
+                title: "Insomnia?",
+                content: "Gak bisa tidur ya? Mikirin aku pasti :p\n\nCoba tarik napas pelan-pelan... rileks... Jangan main hp terus (kecuali baca ini hehe).\n\nBayangin kita lagi duduk berdua di pantai pas sunset, tenang banget. Good night princess, mimpi indah ya. Aku jagain kamu dari sini. 🌙"
+            },
+            {
+                id: 6,
+                label: "When you doubt us",
+                title: "Hey, look at me",
+                content: "Hubungan ga selalu mulus, aku tau. Tapi satu hal yang pasti: Aku milih KAMU.\n\nKita bisa lewatin apa aja asal bareng-bareng. Jangan pernah ragu sama perasaan aku ya. Kamu itu rumah buat aku. Aku ga kemana-mana. ❤"
+            },
+            {
+                id: 7,
+                label: "When you need a laugh",
+                title: "Joke Time 🤣",
+                content: "Kenapa zombie kalau nyerang bareng-bareng?\n\nKarena kalau sendiri namanya ZOMBLO.\n\n(Maaf garing, yang penting kamu senyum dikit kan? hehehe love you!)"
+            },
+            {
+                id: 8,
+                label: "When it's our anniversary",
+                title: "Happy Anniversary! 🥂",
+                content: "Waktu cepet banget berlalu ya? Rasanya baru kemarin kita mulai.\n\nMakasih udah jadi partner terbaik aku. Makasih udah sabar sama aku. Aku bersyukur banget punya kamu. Here's to many more years together! 🥂"
+            }
+        ];
+
+        const grid = document.getElementById('grid');
+        const modal = document.getElementById('modal');
+        const letterTitle = document.getElementById('letter-title');
+        const letterBody = document.getElementById('letter-body');
+
+        // Generate Envelopes
+        letters.forEach(data => {
+            const wrapper = document.createElement('div');
+            wrapper.className = 'envelope-wrapper';
+            wrapper.onclick = () => openEnvelope(wrapper, data);
+
+            wrapper.innerHTML = `
+                <div class="envelope">
+                    <div class="letter-preview"></div>
+                    <div class="flap"></div>
+                    <div class="pocket"></div>
+                    <div class="label">${data.label}</div>
+                </div>
+            `;
+            grid.appendChild(wrapper);
+        });
+
+        function openEnvelope(el, data) {
+            // Visual Animation
+            el.classList.add('open');
+
+            // Delay showing content so animation plays
+            setTimeout(() => {
+                letterTitle.innerText = data.title;
+                letterBody.innerText = data.content;
+                modal.classList.add('active');
+            }, 600);
+        }
+
+        function closeLetter() {
+            modal.classList.remove('active');
+            
+            // Close all envelopes
+            document.querySelectorAll('.envelope-wrapper').forEach(el => {
+                el.classList.remove('open');
+            });
+        }
+
+        // Background Particles
+        function createHeart() {
+            const h = document.createElement('div');
+            h.className = 'heart-bg';
+            h.innerText = ['❤', '💖', '💌', '✨'][Math.floor(Math.random()*4)];
+            h.style.left = Math.random() * 100 + 'vw';
+            h.style.fontSize = (Math.random() * 2 + 1) + 'rem';
+            h.style.animationDuration = (Math.random() * 10 + 10) + 's';
+            document.body.appendChild(h);
+            setTimeout(() => h.remove(), 25000);
+        }
+        setInterval(createHeart, 1000);
+
+    </script>
+</body>
+</html>

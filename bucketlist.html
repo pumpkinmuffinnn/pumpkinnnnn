@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Our Bucket List 📝❤</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Pacifico&family=Quicksand:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        * { box-sizing: border-box; touch-action: manipulation; }
+        body, html {
+            height: 100%; width: 100%; margin: 0; padding: 0;
+            font-family: 'Quicksand', sans-serif;
+            background: linear-gradient(to bottom right, #f9a8d4 0%, #c084fc 100%); /* Pink to Purple */
+        }
+
+        /* --- UI ELEMENTS --- */
+        .back-btn {
+            position: absolute; top: 20px; left: 20px; z-index: 50;
+            background: white; padding: 10px 24px; border-radius: 99px;
+            color: #db2777; font-weight: bold; text-decoration: none;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1); transition: transform 0.2s;
+        }
+        .back-btn:hover { transform: scale(1.05); }
+
+        .container {
+            max-width: 600px; margin: 0 auto; height: 100%;
+            display: flex; flex-direction: column;
+            padding: 80px 20px 20px; /* Top padding for header */
+        }
+
+        /* --- HEADER & PROGRESS --- */
+        .header { text-align: center; margin-bottom: 20px; color: white; }
+        h1 {
+            font-family: 'Pacifico', cursive; font-size: 3rem;
+            text-shadow: 2px 2px 0 rgba(190, 24, 93, 0.3);
+        }
+        
+        .progress-wrapper {
+            background: rgba(255,255,255,0.3); height: 20px; border-radius: 10px;
+            margin-top: 10px; overflow: hidden; border: 2px solid rgba(255,255,255,0.5);
+            position: relative;
+        }
+        .progress-bar {
+            height: 100%; background: linear-gradient(90deg, #f472b6, #db2777);
+            width: 0%; transition: width 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+            border-radius: 8px;
+        }
+        .progress-text {
+            position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+            font-size: 0.75rem; font-weight: bold; color: #fff; text-shadow: 0 1px 2px rgba(0,0,0,0.3);
+        }
+
+        /* --- LIST ITEMS --- */
+        .list-container {
+            flex-grow: 1; overflow-y: auto; padding-bottom: 80px; /* Space for input */
+            -ms-overflow-style: none; scrollbar-width: none; /* Hide scrollbar */
+        }
+        .list-container::-webkit-scrollbar { display: none; }
+
+        .bucket-item {
+            background: rgba(255, 255, 255, 0.9);
+            margin-bottom: 12px; padding: 15px 20px;
+            border-radius: 15px;
+            display: flex; align-items: center; justify-content: space-between;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+            transition: all 0.3s ease; cursor: pointer;
+            border-left: 5px solid #ec4899;
+        }
+        
+        .bucket-item:hover { transform: translateX(5px); }
+
+        /* Completed State */
+        .bucket-item.done {
+            background: rgba(255, 255, 255, 0.5);
+            border-left-color: #22c55e;
+        }
+        .bucket-item.done .item-text {
+            text-decoration: line-through; color: #6b7280;
+        }
+        .bucket-item.done .check-icon {
+            background: #22c55e; border-color: #22c55e; color: white;
+        }
+
+        .item-text {
+            font-weight: 600; color: #374151; font-size: 1.1rem; flex-grow: 1;
+        }
+        
+        .check-box {
+            width: 28px; height: 28px; border-radius: 50%;
+            border: 2px solid #e5e7eb; margin-left: 15px;
+            display: flex; align-items: center; justify-content: center;
+            transition: all 0.2s; font-size: 1rem; color: transparent;
+        }
+
+        /* --- ADD INPUT --- */
+        .add-section {
+            position: fixed; bottom: 0; left: 0; width: 100%;
+            padding: 20px; background: rgba(255,255,255,0.9);
+            backdrop-filter: blur(10px);
+            box-shadow: 0 -5px 20px rgba(0,0,0,0.1);
+            display: flex; justify-content: center;
+            z-index: 40;
+        }
+        .input-group {
+            display: flex; width: 100%; max-width: 600px; gap: 10px;
+        }
+        input {
+            flex-grow: 1; padding: 12px 20px; border-radius: 99px;
+            border: 2px solid #f472b6; outline: none; font-weight: 600;
+        }
+        input:focus { border-color: #db2777; }
+        
+        .add-btn {
+            background: #db2777; color: white; width: 50px; height: 50px;
+            border-radius: 50%; font-size: 1.5rem; font-weight: bold;
+            display: flex; align-items: center; justify-content: center;
+            box-shadow: 0 4px 10px rgba(219, 39, 119, 0.3);
+            transition: transform 0.1s;
+        }
+        .add-btn:active { transform: scale(0.9); }
+
+        /* --- CONFETTI --- */
+        .confetti {
+            position: fixed; width: 10px; height: 10px; z-index: 100; pointer-events: none;
+            animation: fall 2.5s linear forwards;
+        }
+        @keyframes fall {
+            0% { transform: translateY(-10vh) rotate(0deg); opacity: 1; }
+            100% { transform: translateY(100vh) rotate(720deg); opacity: 0; }
+        }
+
+    </style>
+</head>
+<body>
+
+    <a href="index.html" class="back-btn">🏠 Home</a>
+
+    <div class="container">
+        <div class="header">
+            <h1>Bucket List</h1>
+            <div class="progress-wrapper">
+                <div class="progress-bar" id="progress"></div>
+                <div class="progress-text" id="progress-text">0% Completed</div>
+            </div>
+        </div>
+
+        <div class="list-container" id="list">
+            <!-- Items will be injected here -->
+        </div>
+    </div>
+
+    <div class="add-section">
+        <div class="input-group">
+            <input type="text" id="new-item" placeholder="Add a new dream... ✨" onkeypress="handleEnter(event)">
+            <button class="add-btn" onclick="addItem()">+</button>
+        </div>
+    </div>
+
+    <script>
+        // --- DEFAULT DATA ---
+        const defaultItems = [
+            { id: 1, text: "Get Married 💍", done: false },
+            { id: 2, text: "Own a Soul Red Mazda 3 🚗", done: false },
+            { id: 3, text: "Go to Japan together 🇯🇵", done: false },
+            { id: 4, text: "Build our Dream Home 🏡", done: false },
+            { id: 5, text: "Watch a Sunset at the Beach 🌅", done: false },
+            { id: 6, text: "Have a Picnic Date 🧺", done: false },
+            { id: 7, text: "Cook a fancy dinner together 🍝", done: false },
+            { id: 8, text: "Go Stargazing 🌌", done: false }
+        ];
+
+        // Load from LocalStorage OR use defaults
+        let bucketList = JSON.parse(localStorage.getItem('ourBucketList')) || defaultItems;
+
+        const listEl = document.getElementById('list');
+        const progressEl = document.getElementById('progress');
+        const progressTextEl = document.getElementById('progress-text');
+        const inputEl = document.getElementById('new-item');
+
+        // --- RENDER ---
+        function render() {
+            listEl.innerHTML = '';
+            
+            let completedCount = 0;
+
+            bucketList.forEach((item, index) => {
+                if(item.done) completedCount++;
+
+                const div = document.createElement('div');
+                div.className = bucket-item ${item.done ? 'done' : ''};
+                div.onclick = () => toggleItem(index);
+
+                div.innerHTML = `
+                    <span class="item-text">${item.text}</span>
+                    <div class="check-box check-icon">✓</div>
+                `;
+                
+                // Add delete button for custom items (optional, keeps UI clean without it)
+                // For now, long press to delete could be added, but let's keep it positive.
+
+                listEl.appendChild(div);
+            });
+
+            // Update Progress
+            const percent = Math.round((completedCount / bucketList.length) * 100);
+            progressEl.style.width = percent + '%';
+            progressTextEl.innerText = percent + '% Dreams Come True';
+        }
+
+        // --- LOGIC ---
+        function toggleItem(index) {
+            bucketList[index].done = !bucketList[index].done;
+            saveData();
+            render();
+
+            if (bucketList[index].done) {
+                spawnConfetti();
+            }
+        }
+
+        function addItem() {
+            const text = inputEl.value.trim();
+            if (!text) return;
+
+            bucketList.push({
+                id: Date.now(),
+                text: text,
+                done: false
+            });
+            
+            inputEl.value = '';
+            saveData();
+            render();
+            
+            // Scroll to bottom
+            setTimeout(() => {
+                listEl.scrollTop = listEl.scrollHeight;
+            }, 100);
+        }
+
+        function handleEnter(e) {
+            if (e.key === 'Enter') addItem();
+        }
+
+        function saveData() {
+            localStorage.setItem('ourBucketList', JSON.stringify(bucketList));
+        }
+
+        // --- EFFECTS ---
+        function spawnConfetti() {
+            for(let i=0; i<30; i++) {
+                const c = document.createElement('div');
+                c.className = 'confetti';
+                c.style.left = Math.random() * 100 + 'vw';
+                c.style.backgroundColor = ['#ec4899', '#3b82f6', '#fbbf24', '#22c55e', '#ffffff'][Math.floor(Math.random()*5)];
+                c.style.animationDuration = (Math.random() * 2 + 1) + 's';
+                document.body.appendChild(c);
+                setTimeout(() => c.remove(), 3000);
+            }
+        }
+
+        // Init
+        render();
+
+    </script>
+</body>
+</html>
