@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Obrolan Kita 💬</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Pacifico&family=Quicksand:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        * { box-sizing: border-box; touch-action: manipulation; }
+        body, html {
+            height: 100%; width: 100%; margin: 0; padding: 0;
+            font-family: 'Quicksand', sans-serif;
+            background: #fdf2f8;
+            overflow: hidden; /* Chat container handles scroll */
+        }
+
+        /* --- LOGIN SCREEN --- */
+        #login-screen {
+            position: fixed; inset: 0; z-index: 50;
+            background: linear-gradient(135deg, #fbcfe8 0%, #c4b5fd 100%);
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            padding: 20px;
+        }
+        .login-card {
+            background: white; padding: 30px; border-radius: 25px;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.1);
+            text-align: center; width: 90%; max-width: 400px;
+        }
+        .login-card h1 {
+            font-family: 'Pacifico', cursive; font-size: 2.5rem; color: #db2777;
+            margin-bottom: 10px;
+        }
+        .name-input {
+            width: 100%; padding: 12px; border: 2px solid #fbcfe8;
+            border-radius: 12px; outline: none; margin-bottom: 15px;
+            text-align: center; font-weight: bold; font-size: 1.1rem;
+        }
+        .name-input:focus { border-color: #db2777; }
+        .btn-login {
+            background: #db2777; color: white; width: 100%; padding: 12px;
+            border-radius: 99px; font-weight: bold; cursor: pointer;
+            font-size: 1.1rem; transition: transform 0.1s;
+        }
+        .btn-login:active { transform: scale(0.98); }
+
+        /* --- CHAT SCREEN --- */
+        #chat-screen {
+            display: flex; flex-direction: column; height: 100%;
+            background-image: url("data:image/svg+xml,%3Csvg width='20' height='20' viewBox='0 0 20 20' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='%23fbcfe8' fill-opacity='0.4' fill-rule='evenodd'%3E%3Ccircle cx='3' cy='3' r='3'/%3E%3Ccircle cx='13' cy='13' r='3'/%3E%3C/g%3E%3C/svg%3E");
+        }
+
+        /* Header */
+        .chat-header {
+            background: white; padding: 15px 20px;
+            display: flex; align-items: center; justify-content: space-between;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05); z-index: 10;
+        }
+        .chat-title { font-family: 'Pacifico', cursive; font-size: 1.5rem; color: #db2777; }
+        .back-btn { font-weight: bold; color: #db2777; text-decoration: none; font-size: 0.9rem; }
+        .logout-btn { font-size: 0.8rem; color: #9ca3af; cursor: pointer; text-decoration: underline; }
+
+        /* Messages Area */
+        #messages-container {
+            flex-grow: 1; overflow-y: auto; padding: 20px;
+            display: flex; flex-direction: column; gap: 10px;
+            scroll-behavior: smooth;
+        }
+        
+        /* Message Bubbles */
+        .msg-wrapper {
+            display: flex; flex-direction: column; max-width: 85%; /* Wider for mobile */
+            animation: popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+        .msg-bubble {
+            padding: 10px 15px; border-radius: 18px;
+            font-size: 0.95rem; line-height: 1.4; position: relative;
+            word-wrap: break-word;
+        }
+        .msg-meta {
+            font-size: 0.65rem; color: #9ca3af; margin-top: 4px;
+            display: flex; gap: 5px;
+        }
+
+        /* My Message (Right) */
+        .my-msg { align-self: flex-end; align-items: flex-end; }
+        .my-msg .msg-bubble {
+            background: #db2777; color: white;
+            border-bottom-right-radius: 4px;
+        }
+        .my-msg .msg-meta { justify-content: flex-end; }
+
+        /* Partner Message (Left) */
+        .other-msg { align-self: flex-start; align-items: flex-start; }
+        .other-msg .msg-bubble {
+            background: white; color: #374151;
+            border-bottom-left-radius: 4px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+        }
+        .other-msg .sender-name {
+            font-size: 0.7rem; font-weight: bold; color: #db2777;
+            margin-bottom: 2px; margin-left: 2px;
+        }
+
+        /* Input Area */
+        .input-area {
+            background: white; padding: 10px; /* Slightly smaller padding for mobile */
+            display: flex; gap: 10px; align-items: center;
+            border-top: 1px solid #f3f4f6;
+            padding-bottom: max(10px, env(safe-area-inset-bottom)); /* Safe area for iPhone X+ */
+        }
+        .chat-input {
+            flex-grow: 1; padding: 12px; border-radius: 25px;
+            background: #f3f4f6; border: none; outline: none;
+            font-family: inherit; font-size: 1rem; /* Prevent zoom on iOS */
+        }
+        .send-btn {
+            background: #db2777; color: white; width: 45px; height: 45px;
+            border-radius: 50%; display: flex; align-items: center; justify-content: center;
+            font-size: 1.2rem; cursor: pointer; border: none;
+            transition: transform 0.1s; flex-shrink: 0;
+        }
+        .send-btn:active { transform: scale(0.9); }
+
+        @keyframes popIn { from { opacity: 0; transform: translateY(10px) scale(0.9); } to { opacity: 1; transform: translateY(0) scale(1); } }
+        .hidden { display: none !important; }
+
+    </style>
+</head>
+<body>
+
+    <!-- LOGIN SCREEN -->
+    <div id="login-screen">
+        <div class="login-card">
+            <h1>Siapa ini?</h1>
+            <p class="text-gray-500 mb-6 text-sm">Masukin nama kamu babeeee, serah mau apa ajaaa</p>
+            <input type="text" id="username-input" class="name-input" placeholder="Nama Kamu">
+            <input type="password" id="secret-code-input" class="name-input" placeholder="Kode Rahasia">
+            <button class="btn-login" onclick="login()">Masuk Chat 💬</button>
+        </div>
+    </div>
+
+    <!-- CHAT SCREEN -->
+    <div id="chat-screen" class="hidden">
+        <div class="chat-header">
+            <a href="index.html" class="back-btn">🏠 Home</a>
+            <div class="chat-title">Obrolan Kita</div>
+            <div class="logout-btn" onclick="logout()">Ganti Nama</div>
+        </div>
+
+        <div id="messages-container">
+            <!-- Messages injected here -->
+            <div class="text-center text-xs text-gray-400 my-4">Encrypted pake Cinta 🔒❤️</div>
+        </div>
+
+        <div class="input-area">
+            <input type="text" id="msg-input" class="chat-input" placeholder="Ketik pesan..." onkeypress="handleEnter(event)">
+            <button class="send-btn" onclick="sendMessage()">➤</button>
+        </div>
+    </div>
+
+    <!-- FIREBASE MODULE -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+        import { getFirestore, collection, addDoc, query, orderBy, limit, onSnapshot, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+        // Your Configuration
+        const firebaseConfig = {
+          apiKey: "AIzaSyBr-t2wA_RyinYD1VH8v8egbK8j7PoD5L0",
+          authDomain: "pumpkinmuffin-42e59.firebaseapp.com",
+          projectId: "pumpkinmuffin-42e59",
+          storageBucket: "pumpkinmuffin-42e59.firebasestorage.app",
+          messagingSenderId: "263457826624",
+          appId: "1:263457826624:web:eecfb112115cf94c5dfca5"
+        };
+
+        // Initialize
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+        const messagesRef = collection(db, "messages");
+
+        // State
+        let currentName = localStorage.getItem('chat_username');
+        let currentUserID = localStorage.getItem('chat_userid');
+        
+        const loginScreen = document.getElementById('login-screen');
+        const chatScreen = document.getElementById('chat-screen');
+        const msgContainer = document.getElementById('messages-container');
+        const msgInput = document.getElementById('msg-input');
+        const usernameInput = document.getElementById('username-input');
+        const secretCodeInput = document.getElementById('secret-code-input');
+
+        // --- LOGIN LOGIC ---
+        const SECRET_CODE = "020825"; 
+
+        window.login = function() {
+            const name = usernameInput.value.trim();
+            const code = secretCodeInput.value.trim();
+
+            if (!name) return alert("Isi namanya dulu dong!");
+            if (code !== SECRET_CODE) return alert("Kode rahasia salah! 🚫");
+            
+            currentName = name;
+            localStorage.setItem('chat_username', name);
+            
+            // Generate UID if none exists
+            if (!currentUserID) {
+                currentUserID = 'user_' + Date.now() + '_' + Math.floor(Math.random() * 1000);
+                localStorage.setItem('chat_userid', currentUserID);
+            }
+            
+            showChat();
+        }
+
+        window.logout = function() {
+            if(confirm("Yakin mau ganti nama?")) {
+                localStorage.removeItem('chat_username');
+                // NOTE: We DO NOT remove 'chat_userid' here. 
+                // This keeps the identity consistent even if the name changes.
+                location.reload();
+            }
+        }
+
+        function showChat() {
+            loginScreen.classList.add('hidden');
+            chatScreen.classList.remove('hidden');
+            initChat();
+            
+            // Focus input on desktop, maybe avoid on mobile to prevent keyboard popup covering view initially
+            if (window.innerWidth > 768) msgInput.focus();
+        }
+
+        // Auto-login if name saved
+        if (currentName) {
+            // If legacy user has name but no ID, give them one
+            if (!currentUserID) {
+                currentUserID = 'user_' + Date.now();
+                localStorage.setItem('chat_userid', currentUserID);
+            }
+            showChat();
+        }
+
+        // --- CHAT LOGIC ---
+        function initChat() {
+            const q = query(messagesRef, orderBy("createdAt", "asc"), limit(50));
+            
+            onSnapshot(q, (snapshot) => {
+                msgContainer.innerHTML = '<div class="text-center text-xs text-gray-400 my-4">Encrypted with Love 🔒❤️</div>';
+                
+                snapshot.forEach((doc) => {
+                    const data = doc.data();
+                    renderMessage(data);
+                });
+                
+                scrollToBottom();
+            });
+        }
+
+        function renderMessage(data) {
+            // CHECK ID FIRST, FALLBACK TO NAME (For old messages)
+            let isMe = false;
+            if (data.userID && currentUserID) {
+                isMe = (data.userID === currentUserID);
+            } else {
+                // Fallback for legacy messages created before this update
+                isMe = (data.user === currentName);
+            }
+
+            const wrapper = document.createElement('div');
+            wrapper.className = `msg-wrapper ${isMe ? 'my-msg' : 'other-msg'}`;
+            
+            // Format Time
+            let timeStr = "...";
+            if (data.createdAt) {
+                const date = data.createdAt.toDate();
+                timeStr = date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+            }
+
+            let content = '';
+            
+            if (!isMe) {
+                content += `<div class="sender-name">${data.user}</div>`;
+            }
+            
+            content += `
+                <div class="msg-bubble">${escapeHtml(data.text)}</div>
+                <div class="msg-meta">
+                    <span>${timeStr}</span>
+                </div>
+            `;
+            
+            wrapper.innerHTML = content;
+            msgContainer.appendChild(wrapper);
+        }
+
+        window.sendMessage = async function() {
+            const text = msgInput.value.trim();
+            if (!text) return;
+
+            try {
+                await addDoc(messagesRef, {
+                    text: text,
+                    user: currentName,
+                    userID: currentUserID, // Save ID with message
+                    createdAt: serverTimestamp()
+                });
+                msgInput.value = '';
+                scrollToBottom();
+                msgInput.focus(); // Keep focus for rapid typing
+            } catch (e) {
+                console.error("Error sending:", e);
+                alert("Gagal kirim pesan. Cek internet.");
+            }
+        }
+
+        window.handleEnter = function(e) {
+            if (e.key === 'Enter') sendMessage();
+        }
+
+        function scrollToBottom() {
+            setTimeout(() => {
+                msgContainer.scrollTop = msgContainer.scrollHeight;
+            }, 100); // Small delay to ensure rendering is done
+        }
+
+        function escapeHtml(text) {
+            if (!text) return "";
+            return text
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;")
+                .replace(/"/g, "&quot;")
+                .replace(/'/g, "&#039;");
+        }
+
+    </script>
+</body>
+</html>

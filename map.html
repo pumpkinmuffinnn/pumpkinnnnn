@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Peta Cinta 🌏</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Pacifico&family=Quicksand:wght@400;600;700&display=swap" rel="stylesheet">
+    
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
+
+    <style>
+        * { box-sizing: border-box; touch-action: manipulation; }
+        body, html {
+            height: 100%; width: 100%; margin: 0; padding: 0;
+            font-family: 'Quicksand', sans-serif;
+            background: #fdf2f8;
+        }
+
+        /* --- UI LAYOUT --- */
+        .ui-layer {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            z-index: 1000; pointer-events: none;
+        }
+
+        .back-btn {
+            position: absolute; top: 20px; left: 20px;
+            pointer-events: auto; background: white; padding: 10px 24px; border-radius: 99px;
+            color: #db2777; font-weight: bold; text-decoration: none; display: inline-block;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1); transition: transform 0.2s;
+        }
+        .back-btn:active { transform: scale(0.95); }
+
+        .info-card {
+            pointer-events: auto;
+            position: absolute; 
+            /* FIXED POSITIONING: Moved down to avoid being cut off */
+            top: 90px; 
+            left: 50%; 
+            transform: translateX(-50%);
+            background: rgba(255, 255, 255, 0.95); 
+            backdrop-filter: blur(10px);
+            padding: 15px 25px; 
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(219, 39, 119, 0.2);
+            text-align: center; 
+            width: 90%; 
+            max-width: 350px;
+            border: 1px solid rgba(255,255,255,0.5);
+            z-index: 1001;
+        }
+
+        .distance-label {
+            font-size: 0.75rem; color: #9ca3af; font-weight: 700; 
+            text-transform: uppercase; letter-spacing: 1px; margin-bottom: 2px;
+        }
+        
+        .distance-value {
+            font-size: 2rem; font-weight: 700; color: #be185d;
+            font-family: 'Pacifico', cursive; line-height: 1.2;
+        }
+
+        .sub-text { font-size: 0.85rem; color: #6b7280; margin-top: 5px; font-weight: 600; }
+
+        /* Map Container */
+        #map { height: 100%; width: 100%; z-index: 1; }
+
+        /* Custom Marker Styles */
+        .custom-icon {
+            border: 3px solid white; border-radius: 50%;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.4);
+            transition: transform 0.3s;
+        }
+        
+        /* Pulse Ring Animation */
+        .pulse-ring {
+            border: 3px solid #ec4899; border-radius: 50%;
+            height: 100%; width: 100%; position: absolute; left: 0; top: 0;
+            animation: pulsate 2s ease-out infinite; opacity: 0;
+        }
+        @keyframes pulsate {
+            0% { transform: scale(1); opacity: 0.8; }
+            100% { transform: scale(2.2); opacity: 0; }
+        }
+
+        /* Plane Icon Style */
+        .plane-marker {
+            transition: all 0.1s linear; /* Smooth movement */
+            z-index: 500;
+        }
+        .plane-icon {
+            font-size: 28px; 
+            filter: drop-shadow(0 4px 4px rgba(0,0,0,0.3));
+            display: block;
+        }
+
+    </style>
+</head>
+<body>
+
+    <div class="ui-layer">
+        <a href="index.html" class="back-btn">🏠 Home</a>
+        
+        <div class="info-card">
+            <div class="distance-label">Jarak Kita Saat Ini</div>
+            <div class="distance-value" id="dist-display">Calculating...</div>
+            <div class="sub-text">Sejauh apapun, hati kita tetep deket kok ❤️</div>
+        </div>
+    </div>
+
+    <div id="map"></div>
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+
+    <script>
+        // --- 1. PRECISE COORDINATES ---
+        // Jerudong, Brunei
+        const locHim = [4.9426, 114.8348]; 
+        // Cikarang, Indonesia (Wibawa Mukti area approx)
+        const locHer = [-6.2857, 107.1704]; 
+
+        // --- 2. MAP SETUP ---
+        const map = L.map('map', { 
+            zoomControl: false, // Hide zoom buttons for cleaner mobile look
+            attributionControl: false 
+        }).setView(locHim, 5);
+
+        L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
+            maxZoom: 19
+        }).addTo(map);
+
+        // --- 3. ICONS ---
+        const iconSize = [60, 60];
+        
+        const iconHim = L.divIcon({
+            className: 'custom-pin-him',
+            html: `<div class="relative w-full h-full">
+                     <div class="pulse-ring" style="border-color:#3b82f6;"></div>
+                     <img src="hugimages/himblue.jpg" class="custom-icon w-full h-full object-cover rounded-full" style="border-color:#3b82f6;">
+                   </div>`,
+            iconSize: iconSize,
+            iconAnchor: [30, 30]
+        });
+
+        const iconHer = L.divIcon({
+            className: 'custom-pin-her',
+            html: `<div class="relative w-full h-full">
+                     <div class="pulse-ring" style="border-color:#ec4899;"></div>
+                     <img src="hugimages/herpink.jpg" class="custom-icon w-full h-full object-cover rounded-full" style="border-color:#ec4899;">
+                   </div>`,
+            iconSize: iconSize,
+            iconAnchor: [30, 30]
+        });
+
+        // Markers
+        L.marker(locHim, {icon: iconHim}).addTo(map).bindPopup("<b>Aku (Jerudong)</b>");
+        L.marker(locHer, {icon: iconHer}).addTo(map).bindPopup("<b>Kamu (Cikarang)</b>");
+
+        // --- 4. CONNECTING LINE ---
+        const polyline = L.polyline([locHim, locHer], {
+            color: '#db2777', weight: 3, opacity: 0.6, dashArray: '8, 12', lineCap: 'round'
+        }).addTo(map);
+
+        // Fit map view to show both points
+        map.fitBounds(polyline.getBounds(), { padding: [50, 50] });
+
+        // --- 5. DISTANCE CALCULATION ---
+        function getDistance(lat1, lon1, lat2, lon2) {
+            const R = 6371; // Radius of earth in km
+            const dLat = deg2rad(lat2 - lat1);
+            const dLon = deg2rad(lon2 - lon1);
+            const a = 
+                Math.sin(dLat/2) * Math.sin(dLat/2) +
+                Math.cos(deg2rad(lat1)) * Math.cos(deg2rad(lat2)) * Math.sin(dLon/2) * Math.sin(dLon/2);
+            const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+            return Math.round(R * c);
+        }
+
+        function deg2rad(deg) { return deg * (Math.PI/180); }
+
+        // Display Distance
+        const dist = getDistance(locHim[0], locHim[1], locHer[0], locHer[1]);
+        document.getElementById('dist-display').innerText = dist.toLocaleString() + " km";
+
+        // --- 6. ANIMATED PLANE ---
+        const planeDivIcon = L.divIcon({
+            className: 'plane-marker',
+            html: '<div class="plane-icon">✈️</div>', // Emoji plane
+            iconSize: [30, 30],
+            iconAnchor: [15, 15]
+        });
+
+        const plane = L.marker(locHim, {icon: planeDivIcon, zIndexOffset: 1000}).addTo(map);
+
+        // Animation Vars
+        let progress = 0;
+        const speed = 0.002; // Speed of plane
+
+        // Calculate Angle for Rotation
+        function getBearing(startLat, startLng, destLat, destLng) {
+            startLat = deg2rad(startLat); startLng = deg2rad(startLng);
+            destLat = deg2rad(destLat); destLng = deg2rad(destLng);
+
+            const y = Math.sin(destLng - startLng) * Math.cos(destLat);
+            const x = Math.cos(startLat) * Math.sin(destLat) -
+                      Math.sin(startLat) * Math.cos(destLat) * Math.cos(destLng - startLng);
+            let brng = Math.atan2(y, x);
+            brng = brng * (180 / Math.PI);
+            return (brng + 360) % 360;
+        }
+
+        const angle = getBearing(locHim[0], locHim[1], locHer[0], locHer[1]);
+
+        function animate() {
+            progress += speed;
+            if (progress >= 1) progress = 0; // Loop
+
+            const lat = locHim[0] + (locHer[0] - locHim[0]) * progress;
+            const lng = locHim[1] + (locHer[1] - locHim[1]) * progress;
+
+            plane.setLatLng([lat, lng]);
+
+            // Apply rotation to the inner div
+            const iconEl = document.querySelector('.plane-icon');
+            if(iconEl) {
+                // Emoji planes usually point North-East (45deg) or East (90deg) by default depending on font.
+                // Assuming default is 45deg NE, we subtract 45 to normalize.
+                iconEl.style.transform = `rotate(${angle - 45}deg)`;
+            }
+
+            requestAnimationFrame(animate);
+        }
+
+        // Start animation
+        animate();
+
+    </script>
+</body>
+</html>

@@ -9,7 +9,7 @@
     rel="stylesheet"
   />
   <style>
-    /* --- ORIGINAL STYLES --- */
+    /* --- THEME VARIABLES --- */
     :root {
       --bg: #ffe3f3;
       --bg-alt: #ffe0f7;
@@ -92,7 +92,6 @@
       color: var(--accent-strong);
       transform: translateY(-1px);
     }
-    .nav-pill { border: 1px solid rgba(255, 150, 200, 0.7); padding-inline: 12px; }
     .music-toggle {
       border-radius: var(--radius-pill);
       border: 1px solid rgba(255, 150, 200, 0.9);
@@ -142,8 +141,6 @@
       border: 1px solid rgba(255, 150, 200, 0.8);
       color: var(--accent-strong);
     }
-    
-    /* NEW GAME BUTTON STYLE */
     .game-btn {
         background: linear-gradient(135deg, #60a5fa, #3b82f6);
         color: white;
@@ -151,6 +148,52 @@
         display: inline-flex; align-items: center; gap: 6px; text-decoration: none;
     }
     .game-btn:hover { transform: translateY(-2px); box-shadow: 0 15px 30px rgba(59, 130, 246, 0.5); }
+
+    /* --- DUAL CLOCKS STYLES --- */
+    .clock-wrapper {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 15px;
+      margin-top: 35px;
+      background: rgba(255, 255, 255, 0.4);
+      backdrop-filter: blur(12px);
+      padding: 15px 25px;
+      border-radius: 20px;
+      border: 1px solid rgba(255, 255, 255, 0.6);
+      box-shadow: 0 8px 32px rgba(255, 107, 160, 0.15);
+      max-width: 400px;
+      margin-left: auto;
+      margin-right: auto;
+    }
+    .clock-card {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      text-align: left;
+    }
+    .clock-icon { font-size: 1.5rem; }
+    .clock-time {
+      font-family: 'Poppins', sans-serif; font-weight: 700;
+      font-size: 1.4rem; color: var(--text-main); line-height: 1;
+    }
+    .clock-label {
+      font-size: 0.75rem; text-transform: uppercase;
+      letter-spacing: 1px; color: var(--text-soft); margin-top: 2px;
+    }
+    .clock-divider {
+      display: flex; align-items: center; justify-content: center;
+      padding: 0 10px; color: var(--accent-strong); font-size: 1.2rem;
+    }
+    .heart-beat { display: inline-block; animation: planeFloat 3s ease-in-out infinite; }
+    @keyframes planeFloat {
+      0%, 100% { transform: translateY(0) rotate(0deg); }
+      50% { transform: translateY(-4px) rotate(5deg); }
+    }
+    @media (max-width: 480px) {
+      .clock-wrapper { flex-direction: column; gap: 10px; padding: 20px; }
+      .clock-divider { transform: rotate(90deg); }
+    }
 
     /* Sections */
     .section { padding: 56px 18px; position: relative; }
@@ -200,14 +243,13 @@
     }
     .reason-card:hover { transform: translateY(-4px); background: #fff; }
 
-    /* Gallery - NOW WITH FLOAT */
+    /* Gallery */
     .gallery-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 18px; }
     .gallery-item {
       background: #fffdfd; border-radius: 18px; padding: 10px 10px 14px;
       border: 1px solid rgba(255, 150, 200, 0.9);
       box-shadow: 0 18px 40px rgba(255, 107, 160, 0.45);
       cursor: pointer; border: none;
-      /* Animation added */
       animation: float 6s ease-in-out infinite;
     }
     .gallery-item:nth-child(even) { animation-delay: 3s; }
@@ -238,7 +280,7 @@
     .letter-signoff { margin-top: 16px; font-family: "Dancing Script", cursive; font-size: 1.3rem; }
     .letter-body.typing { border-right: 1px solid rgba(74, 35, 66, 0.8); }
 
-    /* Counter - UPGRADED TO GRID */
+    /* Counter */
     .counter-card {
       background: var(--bg); border-radius: var(--radius-lg);
       border: 1px solid rgba(255, 150, 200, 0.9); box-shadow: var(--shadow-soft);
@@ -256,7 +298,7 @@
     .footer-heart { color: var(--accent-strong); }
     .back-to-top { display: inline-block; margin-top: 6px; font-size: 0.8rem; border-bottom: 1px dotted rgba(255, 107, 160, 0.9); }
 
-    /* --- REALISTIC SUNFLOWER OVERLAY --- */
+    /* Sunflower Intro */
     .sunflower-intro {
       position: fixed; inset: 0; z-index: 9999;
       display: flex; flex-direction: column; align-items: center; justify-content: center;
@@ -292,7 +334,6 @@
       background: none; border: none; cursor: pointer;
     }
     
-    /* Responsive */
     @media (max-width: 880px) {
       .site-header-inner { flex-direction: column; }
       .counter-grid { grid-template-columns: repeat(2, 1fr); }
@@ -301,7 +342,6 @@
 </head>
 <body>
 
-  <!-- 🌻 REALISTIC CANVAS SUNFLOWER INTRO -->
   <div class="sunflower-intro" id="sunflowerIntro">
     <canvas id="sunflowerCanvas"></canvas>
     <div class="sunflower-text-container">
@@ -316,9 +356,7 @@
         for you<span>♡</span>
       </a>
       <nav class="main-nav">
-        <a href="games.html">games</a>
-        <a href="memory-garden.html">dunia kita</a>
-        <a href="landscape.html">rumah kita</a>
+        <a href="menu.html">MENU</a>
       </nav>
       <button class="music-toggle" id="musicToggle">
         ▷ music
@@ -338,16 +376,35 @@
         <p class="hero-subtitle">
           Aku bikin ini sebagai tanda terima kasih aku kepada kamu karna masih bertahan sama aku selama inii. Scroll sampe abis yaaa sayanggg ♡
         </p>
+        
         <div class="hero-actions">
           <button class="primary-btn" id="scrollStory">mulai cerita kita</button>
-          
-          <!-- UPGRADE 1: VIRTUAL HUG BUTTON -->
-          <a href="game.html" class="game-btn">
-             Ayo Pelukan! 🏃‍♂️
-          </a>
-          
+          <a href="game.html" class="game-btn">Ayo Pelukan! 🏃‍♂️</a>
           <button class="ghost-btn" id="scrollGallery">lihat foto-foto</button>
         </div>
+
+        <div class="clock-wrapper reveal-on-scroll">
+          <div class="clock-card">
+            <span class="clock-icon">🇧🇳</span>
+            <div class="clock-info">
+              <div class="clock-time" id="clock-me">00:00</div>
+              <div class="clock-label">Waktu Aku</div>
+            </div>
+          </div>
+          
+          <div class="clock-divider">
+            <span class="heart-beat">✈️</span>
+          </div>
+
+          <div class="clock-card">
+            <span class="clock-icon">🇮🇩</span>
+            <div class="clock-info">
+              <div class="clock-time" id="clock-her">00:00</div>
+              <div class="clock-label">Waktu Kamu</div>
+            </div>
+          </div>
+        </div>
+        
       </div>
     </section>
 
@@ -367,7 +424,6 @@
           </div>
 
           <ol class="timeline">
-            <!-- ORIGINAL TEXT PRESERVED -->
             <li class="timeline-item reveal-on-scroll">
               <div class="timeline-bullet"></div>
               <div class="timeline-card">
@@ -378,7 +434,6 @@
                 </p>
               </div>
             </li>
-
             <li class="timeline-item reveal-on-scroll">
               <div class="timeline-bullet"></div>
               <div class="timeline-card">
@@ -389,7 +444,6 @@
                 </p>
               </div>
             </li>
-
             <li class="timeline-item reveal-on-scroll">
               <div class="timeline-bullet"></div>
               <div class="timeline-card">
@@ -400,7 +454,6 @@
                 </p>
               </div>
             </li>
-
             <li class="timeline-item reveal-on-scroll">
               <div class="timeline-bullet"></div>
               <div class="timeline-card">
@@ -459,7 +512,6 @@
           <p class="section-subtitle">sekilas lihat beberapa versi favoritku tentang kita.</p>
         </header>
         
-        <!-- UPGRADE 3: FLOATING GALLERY -->
         <div class="gallery-grid">
           <button class="gallery-item js-lightbox-trigger reveal-on-scroll" data-caption="makasii babah buat foto pertama kita">
             <img src="images/6.jpg" alt="Foto pertama kita" />
@@ -503,8 +555,7 @@ Setiap momen sama kamu itu walaupun kita cuman sebentar doang ya, seminggu doang
 Aku sayang kamu bukan karena kamu baik atau lucu atau cantik doang (ngokk boong sii, emang karna itu :v) tapi kek, kamu udaa jadi rumah buat aku. Tempat aku bisa dirasa didengar, dihargai, diperhatiin, dan diterima apa adanya.
 
 Aku sumpah bersyukur banget sayang dapet kamu, aku bener2 berharap kamu yang dicatet dalam lauhul mahfuz aku, makasii banyakkkk sudah mau menerima akuu, menemanin aku, dan masuk kedalam hidup aku, aku sayang bangettt sama kamuu, semoga hubungan kita berjalan dengan lancar ampe dunia akhirat yaa sayanggg, tolong jangan berubah setitik pun, tolong tungguin aku, aku bener2 serius sama kamu, meskipun kalo sama aku bakalan lama halalinnya, tapi doain aja yaaa sayangg, aku mohon ke kamu untuk sabar aja yaaa sayangg, tungguin ajaa akuuuu, tapi kalo bener2 udaa ilfeel kamu tinggal bilang aja yaaaa sayangg ke aku, dan aku minta maaf keatas semua kesalahan yang aku buat ke kamu, kalo ada aku bikin kamu sakit hati, kasar, semuanya deh pokonya aku minta maaf banget sayang, pokonyaaa wuvv youuuuu so muchhhh babyyy, aku harap kamu selalu tau ituu. ♡">
-            <!-- Text content inside data-text for typing effect, repeated here for fallback -->
-          </p>
+            </p>
           <p class="letter-signoff">love,<br /><span>cowo nakal kamu</span></p>
         </div>
       </div>
@@ -517,7 +568,6 @@ Aku sumpah bersyukur banget sayang dapet kamu, aku bener2 berharap kamu yang dic
           <p class="section-subtitle">Tanggal dimana semuanya bermula (02/08/2025).</p>
         </header>
 
-        <!-- UPGRADE 4: LIVE COUNTER -->
         <div class="counter-card reveal-on-scroll">
           <p class="counter-label" style="margin-bottom: 10px;">sudah bersama selama:</p>
           <div class="counter-grid">
@@ -541,7 +591,6 @@ Aku sumpah bersyukur banget sayang dapet kamu, aku bener2 berharap kamu yang dic
     <source src="audio/audio.mp3" type="audio/mpeg" />
   </audio>
 
-  <!-- Lightbox -->
   <div class="lightbox" id="lightbox" aria-hidden="true">
     <div class="lightbox-backdrop"></div>
     <div class="lightbox-content">
@@ -751,6 +800,7 @@ Aku sumpah bersyukur banget sayang dapet kamu, aku bener2 berharap kamu yang dic
       initLiveCounter();
       initMusicToggle();
       initLightbox();
+      initDualClocks(); // Dual clocks
     });
 
     function initSmoothScrollLinks() {
@@ -829,6 +879,36 @@ Aku sumpah bersyukur banget sayang dapet kamu, aku bener2 berharap kamu yang dic
       }
       setInterval(update, 1000);
       update();
+    }
+
+    function initDualClocks() {
+      const elMe = document.getElementById('clock-me');
+      const elHer = document.getElementById('clock-her');
+
+      if (!elMe || !elHer) return;
+
+      const updateClocks = () => {
+        const now = new Date();
+        const options = { hour: '2-digit', minute: '2-digit', hour12: false };
+
+        // 1. YOUR TIME (Brunei)
+        const timeMe = now.toLocaleTimeString('en-GB', { 
+          ...options, 
+          timeZone: 'Asia/Brunei' 
+        });
+
+        // 2. HER TIME (Indonesia - Jakarta/WIB)
+        const timeHer = now.toLocaleTimeString('en-GB', { 
+          ...options, 
+          timeZone: 'Asia/Jakarta' 
+        });
+
+        elMe.textContent = timeMe;
+        elHer.textContent = timeHer;
+      };
+
+      setInterval(updateClocks, 1000);
+      updateClocks();
     }
 
     function initMusicToggle() {

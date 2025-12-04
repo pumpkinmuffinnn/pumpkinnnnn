@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>How are you? ❤️</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Pacifico&family=Quicksand:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Quicksand', sans-serif;
+            background: #fdf2f8;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            overflow-x: hidden;
+        }
+
+        .back-btn {
+            position: absolute; top: 20px; left: 20px;
+            background: white; padding: 10px 24px; border-radius: 99px;
+            color: #db2777; font-weight: bold; text-decoration: none;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+        }
+
+        .title {
+            font-family: 'Pacifico', cursive; font-size: 2.5rem; color: #db2777;
+            margin-bottom: 30px; text-align: center;
+            line-height: 1.2; /* Better line height for mobile */
+        }
+
+        /* --- MOOD GRID --- */
+        .mood-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr); /* 2 Columns is perfect for mobile thumbs */
+            gap: 15px; /* Slightly smaller gap for mobile */
+            max-width: 400px;
+            width: 100%;
+        }
+
+        .mood-card {
+            background: white; border-radius: 20px;
+            padding: 20px; text-align: center;
+            box-shadow: 0 10px 25px rgba(236, 72, 153, 0.15);
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            border: 2px solid transparent;
+            /* Mobile touch optimization */
+            touch-action: manipulation; 
+        }
+
+        .mood-card:active { transform: scale(0.95); } /* Tactile feel on tap */
+
+        .emoji { font-size: 3rem; display: block; margin-bottom: 10px; }
+        .label { font-weight: 700; color: #831843; font-size: 0.9rem; }
+
+        /* --- RESPONSE MODAL --- */
+        .response-overlay {
+            position: fixed; inset: 0;
+            background: rgba(255,255,255,0.95); /* More opaque for focus */
+            backdrop-filter: blur(5px);
+            display: flex; flex-direction: column;
+            align-items: center; justify-content: center;
+            opacity: 0; pointer-events: none;
+            transition: opacity 0.4s ease;
+            z-index: 50; padding: 20px; text-align: center;
+        }
+        .response-overlay.active { opacity: 1; pointer-events: auto; }
+
+        .response-content {
+            width: 90%; /* Responsive width */
+            max-width: 400px;
+            background: white; /* Card background for modal */
+            padding: 30px 20px;
+            border-radius: 25px;
+            box-shadow: 0 20px 60px rgba(236, 72, 153, 0.2);
+            animation: popIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            
+            /* MOBILE SCROLLING FIX */
+            max-height: 80vh; /* Limit height to 80% of screen */
+            overflow-y: auto; /* Enable scrolling inside the card if text is long */
+            -webkit-overflow-scrolling: touch; /* Smooth scroll on iOS */
+        }
+
+        .res-emoji { font-size: 4rem; margin-bottom: 15px; }
+        .res-title { font-size: 1.5rem; font-weight: bold; color: #db2777; margin-bottom: 10px; line-height: 1.3; }
+        .res-text { font-size: 1rem; color: #4b5563; line-height: 1.6; margin-bottom: 25px; white-space: pre-wrap; }
+
+        .action-btn {
+            background: #db2777; color: white; border: none;
+            padding: 12px 30px; border-radius: 99px;
+            font-weight: bold; cursor: pointer;
+            box-shadow: 0 5px 15px rgba(219, 39, 119, 0.3);
+            transition: transform 0.2s;
+            width: 100%; /* Full width button on mobile is easier to tap */
+            margin-top: 10px;
+        }
+        .action-btn:active { transform: scale(0.95); }
+
+        @keyframes popIn { from { transform: scale(0.8); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+
+    </style>
+</head>
+<body>
+
+    <a href="index.html" class="back-btn">🏠 Home</a>
+
+    <h1 class="title">Apa kabar kamuu hari ini?</h1>
+
+    <div class="mood-grid">
+        <div class="mood-card" onclick="showMood('happy')">
+            <span class="emoji">🥰</span>
+            <span class="label">Happy / Ceria</span>
+        </div>
+        <div class="mood-card" onclick="showMood('sad')">
+            <span class="emoji">🥺</span> 
+            <span class="label">Sedih / Capek</span>
+        </div>
+        <div class="mood-card" onclick="showMood('miss')">
+            <span class="emoji">😣</span>
+            <span class="label">Kangen Kamu</span>
+        </div>
+        <div class="mood-card" onclick="showMood('mad')">
+            <span class="emoji">😠</span>
+            <span class="label">Kesel / Badmood</span>
+        </div>
+    </div>
+
+    <div id="modal" class="response-overlay">
+        <div class="response-content">
+            <div id="res-emoji" class="res-emoji"></div>
+            <h2 id="res-title" class="res-title"></h2>
+            <p id="res-text" class="res-text"></p>
+            <button class="action-btn" onclick="closeModal()">Oke sayang ❤️</button>
+        </div>
+    </div>
+
+    <script>
+        const modal = document.getElementById('modal');
+        const resEmoji = document.getElementById('res-emoji');
+        const resTitle = document.getElementById('res-title');
+        const resText = document.getElementById('res-text');
+
+        // DATABASE RESPON
+        const responses = {
+            happy: {
+                emoji: "🥳✨",
+                title: "IIII PINTER BANGETTT GITUU DONGG, HAPPY TERUSSS CANTIKKK!",
+                text: "Ululuuuu seneng bangettt tauu kalo ngeliat kamu happy tuh, aku juga ikutan happy loh kalo kamu happy, senyuman kamu itu nular tau ga? Pertahanin yaaaaa sayanggg moodnya, jangan lupa makan yang enak sebagai hadiah buat hari iniiii, MWUAH WUVV YOUUUU BABYYY!!"
+            },
+            sad: {
+                emoji: "🤗❤️",
+                title: "ULULUUUU SINIII PEYUKKK",
+                text: "Gapapa kalo lagi capek atau sedih. Kamu ga harus kuat terus kok. Istirahat yaaaa? Tarik napas, ikhlasin semuanya sayangg, meskipun apapun yang terjadi, tetep inget yaa sayanggg aku sentiasa disini buat kamu, ceritain ke aku, aku bakalan sentiasa ngedukung kamu cantikkk, jangan pernah ragu, atau takut yaaa sayangg buat ceritain apa aja ke akuuu. Badai pasti berlalu sayang."
+            },
+            miss: {
+                emoji: "🫂✈️",
+                title: "Yang sabar yaaaa sayangg, aku juga kangennnn bangett sama kamuu!",
+                text: "Rasanya pengen teleport ke sana sekarang juga ya? Sabar ya cantikkk, kita lagi berjuang buat masa depan, semua yang kita lakuin ini bakalan worth it banget sayang, kalo kita bisa hadapin ini, sumpil kita bisa hadapin semuanya, bentuk cinta yang paling murni ada didalam hubungan jarak jauh tau, karena yang kita ada cuman hati doang, bukan tubuh, yang penting jangan pernah sesekali kepikiran buat orang yang ketiga yaaa sayangg, aku jaga diri aku sendiri disini buat kamu, kamu juga disitu jaga diri baik2 yaa cantikkk, aku mohonn bangetttt2." 
+            },
+            mad: {
+                emoji: "💆🏻‍♀️🧊",
+                title: "Kenapa nihhhh cayanggg, ayoo sini ceritain, kepalanya dinginin duluuu",
+                text: "HAYOOOO SIAPA NIHH YANG IKIN KESELL??? Sini aku gebukin coba, gas ae siapa yang udaa berani bikin princess akuu betmut, nohhhh udah meninggoy merekenya yanggg :v udah yaaa jangan cemberut teruss nanti cowo2 pada lari tau sayangg, pada takut sama kamu kalo kamu betmut terussss."
+            }
+        };
+
+        function showMood(mood) {
+            const data = responses[mood];
+            resEmoji.innerText = data.emoji;
+            resTitle.innerText = data.title;
+            resText.innerText = data.text;
+            modal.classList.add('active');
+        }
+
+        function closeModal() {
+            modal.classList.remove('active');
+        }
+    </script>
+</body>
+</html>

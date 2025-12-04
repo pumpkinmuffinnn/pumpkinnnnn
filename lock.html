@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Our Promise Lock 🔒</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Pacifico&family=Quicksand:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        * { box-sizing: border-box; touch-action: manipulation; }
+        body, html {
+            height: 100%; width: 100%; margin: 0; padding: 0;
+            font-family: 'Quicksand', sans-serif;
+            background: linear-gradient(135deg, #f9a8d4 0%, #c4b5fd 100%);
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            overflow: hidden;
+        }
+
+        /* --- UI ELEMENTS --- */
+        .back-btn {
+            position: absolute; top: 20px; left: 20px; z-index: 50;
+            background: white; padding: 10px 24px; border-radius: 99px;
+            color: #db2777; font-weight: bold; text-decoration: none;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1); transition: transform 0.2s;
+        }
+        .back-btn:active { transform: scale(0.95); }
+
+        .container {
+            text-align: center;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            padding: 30px;
+            border-radius: 30px;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.15);
+            width: 90%; max-width: 400px; /* Responsive Width */
+            position: relative;
+            transform: translateY(0);
+            transition: all 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        h1 {
+            font-family: 'Pacifico', cursive; font-size: 2.2rem; color: #be185d;
+            margin-bottom: 10px; line-height: 1.2;
+        }
+
+        p { color: #6b7280; margin-bottom: 20px; line-height: 1.5; font-size: 0.95rem; }
+
+        /* --- THE LOCK --- */
+        .lock-container {
+            position: relative;
+            width: 100px; height: 140px; /* Slightly smaller for mobile safety */
+            margin: 0 auto 25px;
+            cursor: pointer;
+        }
+
+        .shackle {
+            position: absolute; top: 0; left: 50%; transform: translateX(-50%);
+            width: 70px; height: 60px;
+            border: 12px solid #94a3b8;
+            border-bottom: none;
+            border-radius: 50px 50px 0 0;
+            transition: top 0.5s ease-in-out, border-color 0.3s;
+            z-index: 1;
+        }
+        
+        .body {
+            position: absolute; bottom: 0; left: 0; width: 100%; height: 90px;
+            background: linear-gradient(135deg, #ec4899, #db2777);
+            border-radius: 15px;
+            box-shadow: 0 10px 20px rgba(236, 72, 153, 0.4);
+            z-index: 2;
+            display: flex; align-items: center; justify-content: center;
+            flex-direction: column;
+        }
+
+        /* LOCKED STATE */
+        .is-locked .shackle {
+            top: 25px; /* Moves down */
+            border-color: #fbbf24; /* Turns Gold */
+        }
+        
+        .keyhole {
+            width: 12px; height: 20px; background: #831843;
+            border-radius: 10px; margin-top: 5px;
+        }
+
+        /* --- INPUTS --- */
+        .input-group {
+            display: flex; gap: 10px; margin-bottom: 20px;
+        }
+        input {
+            width: 100%; padding: 12px; border: 2px solid #fbcfe8;
+            border-radius: 10px; outline: none; text-align: center;
+            font-weight: bold; color: #be185d; font-size: 16px; /* Prevents iOS zoom */
+            transition: border 0.3s; background: #fff;
+        }
+        input:focus { border-color: #ec4899; }
+
+        .btn-lock {
+            background: #ec4899; color: white; border: none;
+            padding: 15px 0; border-radius: 99px; /* Full width padding */
+            font-size: 1.1rem; font-weight: bold; cursor: pointer;
+            box-shadow: 0 5px 15px rgba(236, 72, 153, 0.4);
+            transition: transform 0.1s;
+            width: 100%; display: block;
+        }
+        .btn-lock:active { transform: scale(0.95); }
+
+        /* --- SUCCESS STATE --- */
+        .locked-info {
+            display: none;
+            flex-direction: column; gap: 5px;
+            animation: fadeIn 1s forwards;
+        }
+        .locked-names {
+            font-size: 1.4rem; font-weight: bold; color: #be185d;
+            font-family: 'Pacifico', cursive;
+        }
+        .locked-date {
+            font-size: 0.85rem; color: #9ca3af; font-weight: 600;
+            text-transform: uppercase; letter-spacing: 1px;
+        }
+        .locked-msg {
+            color: #ec4899; font-weight: bold; margin-top: 15px;
+            font-size: 0.9rem;
+        }
+
+        /* Key Animation */
+        .throwing-key {
+            position: fixed; font-size: 3rem; /* Bigger key */
+            top: 50%; left: 50%; pointer-events: none;
+            opacity: 0; z-index: 100;
+        }
+
+        @keyframes throwKey {
+            0% { transform: translate(-50%, -50%) rotate(0deg) scale(1); opacity: 1; }
+            50% { transform: translate(40vw, -40vh) rotate(360deg) scale(0.5); opacity: 1; }
+            100% { transform: translate(100vw, 100vh) rotate(720deg) scale(0); opacity: 0; }
+        }
+        
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        .hide { display: none !important; }
+        .show { display: flex !important; }
+
+        #loading {
+            position: absolute; top: 10px; width: 100%; text-align: center;
+            font-weight: bold; color: #db2777; font-size: 0.8rem;
+        }
+
+    </style>
+</head>
+<body>
+
+    <a href="index.html" class="back-btn">🏠 Home</a>
+
+    <div class="container">
+        <div id="loading">Checking Cloud Lock... ☁️</div>
+
+        <!-- Visual Lock -->
+        <div class="lock-container" id="visual-lock">
+            <div class="shackle"></div>
+            <div class="body">
+                <div class="keyhole"></div>
+            </div>
+        </div>
+
+        <!-- FORM (Before Locking) -->
+        <div id="unlock-state">
+            <h1>Lock Our Love</h1>
+            <p>Tulis nama kita, kunci, dan buang kuncinya biar ga ada yang bisa misahin. 🗝️</p>
+            
+            <div class="input-group">
+                <input type="text" id="name1" placeholder="Nama Kamu" value="Dainel">
+                <input type="text" id="name2" placeholder="Nama Dia" value="Artika">
+            </div>
+            
+            <button class="btn-lock" onclick="lockLove()">Kunci Selamanya 🔒</button>
+        </div>
+
+        <!-- SUCCESS (After Locking) -->
+        <div id="locked-state" class="locked-info">
+            <h1>Officially Locked!</h1>
+            <div class="locked-names" id="display-names">You & Me</div>
+            <div class="locked-date" id="display-date">SINCE TODAY</div>
+            <p class="locked-msg">Kuncinya udah aku buang jauh-jauh, jadi kita gabakal bisa pisah. 🌊🗝️</p>
+        </div>
+    </div>
+
+    <!-- Floating Key Animation Element -->
+    <div id="key-anim" class="throwing-key">🗝️</div>
+
+    <!-- FIREBASE MODULE -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+        import { getFirestore, doc, onSnapshot, setDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+        // Your Configuration
+        const firebaseConfig = {
+          apiKey: "AIzaSyBr-t2wA_RyinYD1VH8v8egbK8j7PoD5L0",
+          authDomain: "pumpkinmuffin-42e59.firebaseapp.com",
+          projectId: "pumpkinmuffin-42e59",
+          storageBucket: "pumpkinmuffin-42e59.firebasestorage.app",
+          messagingSenderId: "263457826624",
+          appId: "1:263457826624:web:eecfb112115cf94c5dfca5"
+        };
+
+        // Initialize
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+        const docRef = doc(db, "locks", "main_lock"); // Shared Document
+
+        // UI Elements
+        const visualLock = document.getElementById('visual-lock');
+        const unlockState = document.getElementById('unlock-state');
+        const lockedState = document.getElementById('locked-state');
+        const displayNames = document.getElementById('display-names');
+        const displayDate = document.getElementById('display-date');
+        const name1In = document.getElementById('name1');
+        const name2In = document.getElementById('name2');
+        const keyAnim = document.getElementById('key-anim');
+        const loading = document.getElementById('loading');
+
+        // --- REALTIME SYNC ---
+        onSnapshot(docRef, (docSnap) => {
+            loading.style.display = 'none';
+            
+            if (docSnap.exists()) {
+                // If data exists in cloud, it means it's locked
+                const data = docSnap.data();
+                showLockedState(data.n1, data.n2, data.dateStr);
+            } else {
+                // Not locked yet
+                unlockState.classList.remove('hide');
+                lockedState.style.display = 'none';
+                visualLock.classList.remove('is-locked');
+            }
+        });
+
+        // --- ACTIONS ---
+        window.lockLove = async function() {
+            const n1 = name1In.value.trim() || "Aku";
+            const n2 = name2In.value.trim() || "Kamu";
+            
+            // 1. Visual Feedback immediately
+            visualLock.classList.add('is-locked');
+            
+            // 2. Play Animation
+            keyAnim.style.display = 'block';
+            void keyAnim.offsetWidth; 
+            keyAnim.style.animation = "throwKey 2.5s ease-in forwards";
+
+            // 3. Save to Cloud
+            const now = new Date();
+            const dateStr = now.toLocaleDateString('id-ID', { 
+                weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' 
+            });
+            
+            try {
+                await setDoc(docRef, {
+                    n1: n1,
+                    n2: n2,
+                    dateStr: dateStr,
+                    lockedAt: new Date().toISOString()
+                });
+                // UI updates automatically via onSnapshot
+            } catch (e) {
+                console.error("Error locking:", e);
+                alert("Gagal mengunci. Cek internet kamu.");
+                visualLock.classList.remove('is-locked'); // Revert visual
+            }
+        }
+
+        function showLockedState(n1, n2, date) {
+            visualLock.classList.add('is-locked'); 
+            unlockState.classList.add('hide');
+            
+            displayNames.innerText = `${n1} & ${n2}`;
+            displayDate.innerText = `TERKUNCI SEJAK ${date}`;
+            
+            lockedState.style.display = 'flex';
+        }
+
+    </script>
+</body>
+</html>
