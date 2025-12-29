@@ -4,21 +4,24 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <title>For You</title>
+    
     <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
     <script src="https://cdn.jsdelivr.net/npm/@mediapipe/control_utils/control_utils.js" crossorigin="anonymous"></script>
     <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js" crossorigin="anonymous"></script>
+
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-storage-compat.js"></script>
+
     <style>
         body {
             margin: 0; padding: 0;
             background-color: #000;
             overflow: hidden; font-family: sans-serif;
-            /* Fix for some mobile browsers overscrolling */
             position: fixed; width: 100%; height: 100%;
         }
         canvas {
             display: block; position: absolute;
             top: 0; left: 0; z-index: 2;
-            /* Ensure CSS size matches window size */
             width: 100%; height: 100%;
         }
         #input_video, #image_canvas { display: none; }
@@ -34,12 +37,26 @@
             font-size: 14px; white-space: nowrap;
             backdrop-filter: blur(5px);
         }
+
+        /* Recording Indicator */
+        #rec_indicator {
+            position: absolute; top: 20px; right: 20px;
+            width: 20px; height: 20px;
+            background-color: red;
+            border-radius: 50%;
+            display: none; z-index: 20;
+            box-shadow: 0 0 10px red;
+            animation: blink 1s infinite;
+        }
+        @keyframes blink { 50% { opacity: 0; } }
     </style>
 </head>
 <body>
 
+    <div id="rec_indicator"></div>
+    
     <div id="overlay">
-        ☝️Muffin | ✌️Pumpkin | 🖖Love | 🖐️Photo | ✊❤️
+        Hold ✊ to Record | ☝️Muffin | ✌️Pumpkin | 🖖Love | 🖐️Photo
     </div>
 
     <video id="input_video" playsinline></video>
@@ -47,9 +64,24 @@
     <canvas id="image_canvas"></canvas>
 
 <script>
+    // --- 1. YOUR FIREBASE CONFIGURATION (pumpkinmuffin-42e59) ---
+    const firebaseConfig = {
+        apiKey: "AIzaSyBr-t2wA_RyinYD1VH8v8egbK8j7PoD5L0",
+        authDomain: "pumpkinmuffin-42e59.firebaseapp.com",
+        projectId: "pumpkinmuffin-42e59",
+        storageBucket: "pumpkinmuffin-42e59.firebasestorage.app",
+        messagingSenderId: "263457826624",
+        appId: "1:263457826624:web:eecfb112115cf94c5dfca5"
+    };
+
+    // Initialize Firebase
+    if (!firebase.apps.length) {
+        firebase.initializeApp(firebaseConfig);
+    }
+    const storage = firebase.storage();
+
     // --- SETTINGS ---
     const IMAGE_URL = 'images/88.jpg'; 
-    // Increased count for denser pixels
     const PARTICLE_COUNT = 4000; 
     
     const videoElement = document.getElementById('input_video');
@@ -57,36 +89,36 @@
     const canvasCtx = canvasElement.getContext('2d');
     const imageCanvas = document.getElementById('image_canvas');
     const imageCtx = imageCanvas.getContext('2d');
+    const recIndicator = document.getElementById('rec_indicator');
+    const overlay = document.getElementById('overlay');
 
-    // --- HIGH DPI SCREEN FIX ---
-    // Get the device pixel ratio (e.g., 2 or 3 on smartphones)
+    // High DPI Setup
     const dpr = window.devicePixelRatio || 1;
     let width = window.innerWidth;
     let height = window.innerHeight;
-
-    // Set the internal canvas size to match physical device pixels
     canvasElement.width = width * dpr;
     canvasElement.height = height * dpr;
-    
-    // Scale drawing operations so coordinates still work normally
     canvasCtx.scale(dpr, dpr);
 
     let particles = [];
     let currentGesture = 'none';
-    
     let pointsMuffin=[], pointsPumpkin=[], pointsLove=[], pointsHeart=[], pointsPhoto=[];
     let photoGapSize = 1;
 
-    // --- 1. LOAD IMAGE ---
+    // --- RECORDING VARIABLES ---
+    let mediaRecorder;
+    let recordedChunks = [];
+    let isRecording = false;
+    let heartHoldTimer = null;
+    let isUploading = false;
+
+    // --- LOAD IMAGE ---
     const targetImage = new Image();
     targetImage.crossOrigin = "Anonymous";
     targetImage.src = IMAGE_URL;
-    // Wait for image load before generating points
-    targetImage.onload = () => {
-        init(); 
-    };
+    targetImage.onload = () => init();
 
-    // --- 2. PARTICLE SYSTEM ---
+    // --- PARTICLE CLASS ---
     class Particle {
         constructor() {
             this.x = Math.random() * width;
@@ -97,12 +129,12 @@
             this.color = "rgba(255,255,255,0.5)";
             this.targetX = null;
             this.targetY = null;
-            this.isActive = true; // Used to hide excess particles in photo mode
+            this.isActive = true;
         }
 
         update(index) {
+            this.isActive = true; 
             let targetList = null;
-            this.isActive = true; // Default active
             
             if (currentGesture === 'muffin') targetList = pointsMuffin;
             else if (currentGesture === 'pumpkin') targetList = pointsPumpkin;
@@ -111,30 +143,18 @@
             else if (currentGesture === 'photo') targetList = pointsPhoto;
 
             if (targetList && targetList.length > 0) {
-                // Assign Target
                 if (this.targetX === null) {
                     let pt;
-                    // For Photo, map particle index directly to photo point index for stability
                     if (currentGesture === 'photo') {
-                        if (index < targetList.length) {
-                             pt = targetList[index];
-                        } else {
-                             // If we have more particles than photo pixels, hide the extras
-                             this.isActive = false; pt = targetList[0];
-                        }
+                        if (index < targetList.length) pt = targetList[index];
+                        else { this.isActive = false; pt = targetList[0]; }
                     } else {
-                        // For others, pick random point
                         pt = targetList[Math.floor(Math.random() * targetList.length)];
                     }
+                    this.targetX = pt.x; this.targetY = pt.y;
                     
-                    this.targetX = pt.x;
-                    this.targetY = pt.y;
-                    
-                    // Color & Size Logic
                     if (currentGesture === 'photo') {
-                        this.color = `rgb(${pt.r},${pt.g},${pt.b})`;
-                        // Exact size match for clean grid
-                        this.size = photoGapSize; 
+                        this.color = `rgb(${pt.r},${pt.g},${pt.b})`; this.size = photoGapSize; 
                     } else if (currentGesture === 'muffin') {
                         this.color = "rgb(135, 206, 250)"; this.size = 2;
                     } else if (currentGesture === 'pumpkin') {
@@ -145,14 +165,10 @@
                         this.color = "rgb(220, 20, 60)"; this.size = 2;
                     }
                 }
-
-                // Snap Speed
                 const speed = (currentGesture === 'photo') ? 0.2 : 0.1;
                 this.x += (this.targetX - this.x) * speed;
                 this.y += (this.targetY - this.y) * speed;
-
             } else {
-                // Floating
                 this.targetX = null;
                 this.x += this.vx; this.y += this.vy;
                 if (this.x < 0 || this.x > width) this.vx *= -1;
@@ -162,15 +178,11 @@
         }
 
         draw() {
-            if (!this.isActive) return; // Don't draw unused particles
-
+            if (!this.isActive) return;
             canvasCtx.fillStyle = this.color;
             if (currentGesture === 'photo') {
-                // Draw sharp squares for photo
-                // Use Math.round to align to screen pixels
                 canvasCtx.fillRect(Math.round(this.x - this.size/2), Math.round(this.y - this.size/2), this.size, this.size);
             } else {
-                // Draw circles for others
                 canvasCtx.beginPath();
                 canvasCtx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
                 canvasCtx.fill();
@@ -178,10 +190,9 @@
         }
     }
 
-    // --- 3. GENERATORS ---
+    // --- GENERATORS ---
     function generateTextPoints(text, array) {
         const tCanvas = document.createElement('canvas');
-        // Use raw width/height for text generation context
         tCanvas.width = width; tCanvas.height = height;
         const tCtx = tCanvas.getContext('2d');
         let fSize = Math.min(width/text.length * 1.3, 250);
@@ -201,33 +212,23 @@
 
     function generatePhotoPoints() {
         if (!targetImage.src || targetImage.width === 0) return;
-        
         let iW = Math.min(width * 0.9, 600);
         let scale = iW / targetImage.width;
         let iH = targetImage.height * scale;
-        
-        // Use raw width/height for image analysis
         imageCanvas.width = width; imageCanvas.height = height;
-        let startX = (width-iW)/2;
-        let startY = (height-iH)/2;
+        let startX = (width-iW)/2; let startY = (height-iH)/2;
         imageCtx.drawImage(targetImage, startX, startY, iW, iH);
-        
         const data = imageCtx.getImageData(0, 0, width, height).data;
         pointsPhoto = [];
-
-        // Calculate grid step to utilize PARTICLE_COUNT
         const totalPixels = iW * iH;
-        // Slightly denser grid calculation
         const step = Math.max(4, Math.floor(Math.sqrt(totalPixels / (PARTICLE_COUNT * 0.9))));
-        photoGapSize = step; // Particle size matches step size
-
+        photoGapSize = step; 
         for(let y=startY; y < startY+iH; y+=step) {
             for(let x=startX; x < startX+iW; x+=step) {
                 const i = (Math.floor(y)*width + Math.floor(x))*4;
-                if (data[i+3] > 20) { // Check opacity
+                if (data[i+3] > 20) {
                     pointsPhoto.push({
-                        x: Math.floor(x) + step/2, // Center the point in the grid cell
-                        y: Math.floor(y) + step/2, 
+                        x: Math.floor(x) + step/2, y: Math.floor(y) + step/2, 
                         r: data[i], g: data[i+1], b: data[i+2]
                     });
                 }
@@ -245,12 +246,10 @@
         }
     }
 
-    // --- 4. MAIN LOOPS ---
+    // --- ANIMATION LOOP ---
     function init() {
         particles = [];
         for(let i=0; i<PARTICLE_COUNT; i++) particles.push(new Particle());
-        
-        // Generate points based on current width/height
         generateTextPoints("Muffin", pointsMuffin);
         generateTextPoints("Pumpkin", pointsPumpkin);
         generateTextPoints("Love", pointsLove);
@@ -259,16 +258,15 @@
     }
 
     function animate() {
-        if (currentGesture === 'photo') {
-             // Solid clear for sharp photo
-             canvasCtx.clearRect(0,0,width,height);
-        } else {
-             // Trail effect for others
-             canvasCtx.fillStyle = 'rgba(0, 0, 0, 0.25)';
-             canvasCtx.fillRect(0,0,width,height);
-        }
+        // 1. Draw Camera Feed
+        canvasCtx.globalAlpha = 1.0;
+        canvasCtx.drawImage(videoElement, 0, 0, width, height);
+        
+        // Darken video so particles pop
+        canvasCtx.fillStyle = 'rgba(0, 0, 0, 0.6)';
+        canvasCtx.fillRect(0, 0, width, height);
 
-        // Pass index to update function for stable photo mapping
+        // 2. Draw Particles
         particles.forEach((p, index) => {
             if(p.lastGesture !== currentGesture) {
                 p.targetX = null; p.lastGesture = currentGesture;
@@ -279,10 +277,63 @@
         requestAnimationFrame(animate);
     }
 
-    // --- 5. GESTURE LOGIC ---
+    // --- RECORDING FUNCTIONS ---
+    function startRecording() {
+        if (isRecording || isUploading) return;
+        isRecording = true;
+        recIndicator.style.display = 'block';
+        overlay.innerText = "Recording Magic... ✨";
+
+        const stream = canvasElement.captureStream(30);
+        recordedChunks = [];
+        mediaRecorder = new MediaRecorder(stream, { mimeType: 'video/webm;codecs=vp9' });
+
+        mediaRecorder.ondataavailable = (event) => {
+            if (event.data.size > 0) recordedChunks.push(event.data);
+        };
+
+        mediaRecorder.onstop = uploadVideo;
+        mediaRecorder.start();
+
+        // Stop after 8 seconds
+        setTimeout(() => {
+            if (mediaRecorder.state === "recording") mediaRecorder.stop();
+        }, 8000);
+    }
+
+    function uploadVideo() {
+        isRecording = false;
+        recIndicator.style.display = 'none';
+        overlay.innerText = "Uploading... ☁️";
+        isUploading = true;
+
+        const blob = new Blob(recordedChunks, { type: 'video/webm' });
+        const timestamp = new Date().getTime();
+        const filename = `magic_moment_${timestamp}.webm`;
+        
+        // Upload to the OLD project storage
+        const ref = storage.ref().child('magic_videos/' + filename);
+        
+        ref.put(blob).then((snapshot) => {
+            console.log('Success!');
+            overlay.innerText = "Sent to Database! ❤️";
+            isUploading = false;
+            setTimeout(() => {
+                overlay.innerText = "☝️Muffin | ✌️Pumpkin | 🖖Love | 🖐️Photo | ✊❤️";
+            }, 3000);
+        }).catch(err => {
+            console.error(err);
+            overlay.innerText = "Check Storage Rules 😞";
+            isUploading = false;
+        });
+    }
+
+    // --- GESTURE LOGIC ---
     function onResults(results) {
         if (!results.multiHandLandmarks || results.multiHandLandmarks.length === 0) {
-            currentGesture = 'none'; return;
+            currentGesture = 'none';
+            if (heartHoldTimer) { clearTimeout(heartHoldTimer); heartHoldTimer = null; }
+            return;
         }
         const lm = results.multiHandLandmarks[0];
         const isUp = (tipIdx, pipIdx) => lm[tipIdx].y < lm[pipIdx].y;
@@ -301,14 +352,27 @@
         if (ringUp) mainFingers++;
         if (pinkyUp) mainFingers++;
 
-        if (mainFingers === 0) currentGesture = 'heart';
-        else if (mainFingers === 1 && indexUp) currentGesture = 'muffin';
-        else if (mainFingers === 2 && indexUp && middleUp) currentGesture = 'pumpkin';
+        let detected = 'none';
+        if (mainFingers === 0) detected = 'heart';
+        else if (mainFingers === 1 && indexUp) detected = 'muffin';
+        else if (mainFingers === 2 && indexUp && middleUp) detected = 'pumpkin';
         else if (mainFingers === 4) {
-            if (thumbOut) currentGesture = 'photo';
-            else currentGesture = 'love';
+            if (thumbOut) detected = 'photo';
+            else detected = 'love';
+        }
+
+        currentGesture = detected;
+
+        // Trigger Recording on Heart Hold
+        if (detected === 'heart' && !isRecording && !isUploading) {
+            if (!heartHoldTimer) {
+                heartHoldTimer = setTimeout(() => {
+                    startRecording();
+                    heartHoldTimer = null;
+                }, 2500); 
+            }
         } else {
-            currentGesture = 'none';
+            if (heartHoldTimer) { clearTimeout(heartHoldTimer); heartHoldTimer = null; }
         }
     }
 
@@ -323,17 +387,15 @@
     camera.start();
 
     window.addEventListener('resize', () => {
-        // Handle resize with DPI check
         const newDpr = window.devicePixelRatio || 1;
         width = window.innerWidth; height = window.innerHeight;
         canvasElement.width = width * newDpr;
         canvasElement.height = height * newDpr;
-        canvasCtx.setTransform(1, 0, 0, 1, 0, 0); // Reset scale
-        canvasCtx.scale(newDpr, newDpr); // Re-apply scale
+        canvasCtx.setTransform(1, 0, 0, 1, 0, 0); 
+        canvasCtx.scale(newDpr, newDpr);
         init();
     });
     
-    // Don't call init() here, it's called on image load.
     animate();
 
 </script>
