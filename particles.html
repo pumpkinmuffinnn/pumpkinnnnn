@@ -12,7 +12,7 @@
     <style>
         body {
             margin: 0; padding: 0;
-            background-color: #000;
+            background-color: #000; /* Pure black background */
             overflow: hidden; font-family: sans-serif;
             position: fixed; width: 100%; height: 100%;
         }
@@ -26,13 +26,13 @@
         #overlay {
             position: absolute; bottom: 30px; left: 50%;
             transform: translateX(-50%);
-            color: rgba(255,255,255,0.8);
+            color: rgba(255,255,255,0.6);
             text-align: center; z-index: 10;
             pointer-events: none;
-            background: rgba(0,0,0,0.6);
-            padding: 12px 24px; border-radius: 30px;
-            font-size: 14px; white-space: nowrap;
-            backdrop-filter: blur(5px);
+            background: rgba(0,0,0,0.4);
+            padding: 10px 20px; border-radius: 20px;
+            font-size: 13px; white-space: nowrap;
+            backdrop-filter: blur(2px);
         }
     </style>
 </head>
@@ -43,13 +43,14 @@
     </div>
 
     <video id="input_video" playsinline></video>
+    
     <canvas id="output_canvas"></canvas>
     <canvas id="image_canvas"></canvas>
 
 <script>
     // --- SETTINGS ---
     const IMAGE_URL = 'images/88.jpg'; 
-    const PARTICLE_COUNT = 4000; // High quality visuals
+    const PARTICLE_COUNT = 4000; 
     
     const videoElement = document.getElementById('input_video');
     const canvasElement = document.getElementById('output_canvas');
@@ -58,7 +59,7 @@
     const imageCtx = imageCanvas.getContext('2d');
     const overlay = document.getElementById('overlay');
 
-    // High DPI Setup
+    // High DPI Setup (Sharpness Fix)
     const dpr = window.devicePixelRatio || 1;
     let width = window.innerWidth;
     let height = window.innerHeight;
@@ -72,18 +73,19 @@
     let photoGapSize = 1;
     let appStarted = false;
 
-    // --- MAIN INIT FUNCTION ---
+    // --- MAIN INIT ---
     function init() {
         if(appStarted) return; 
         appStarted = true;
         
         particles = [];
         for(let i=0; i<PARTICLE_COUNT; i++) particles.push(new Particle());
+        
+        // Generate Shapes
         generateTextPoints("Muffin", pointsMuffin);
         generateTextPoints("Pumpkin", pointsPumpkin);
         generateTextPoints("Love", pointsLove);
         generateHeartPoints();
-        // Only generate photo points if the image actually loaded
         if(targetImage.complete && targetImage.naturalWidth > 0) generatePhotoPoints();
 
         overlay.innerText = "☝️Muffin | ✌️Pumpkin | 🖖Love | 🖐️Photo | ✊❤️";
@@ -95,23 +97,9 @@
     targetImage.crossOrigin = "Anonymous";
     targetImage.src = IMAGE_URL;
     
-    targetImage.onload = () => {
-        console.log("Image loaded!");
-        init();
-    };
-    
-    // Safety Fallback: Start even if image fails
-    targetImage.onerror = () => {
-        console.warn("Image failed to load. Starting app without photo mode.");
-        init(); 
-    };
-
-    setTimeout(() => {
-        if (!appStarted) {
-            console.warn("Image took too long. Force starting...");
-            init();
-        }
-    }, 3000); 
+    targetImage.onload = () => { console.log("Image loaded!"); init(); };
+    targetImage.onerror = () => { console.warn("Image failed. Starting anyway."); init(); };
+    setTimeout(() => { if (!appStarted) { console.warn("Timeout. Force starting."); init(); } }, 3000); 
 
     // --- PARTICLE SYSTEM ---
     class Particle {
@@ -138,6 +126,7 @@
             else if (currentGesture === 'photo') targetList = pointsPhoto;
 
             if (targetList && targetList.length > 0) {
+                // Snap to Target
                 if (this.targetX === null) {
                     let pt;
                     if (currentGesture === 'photo') {
@@ -148,6 +137,7 @@
                     }
                     this.targetX = pt.x; this.targetY = pt.y;
                     
+                    // Colors
                     if (currentGesture === 'photo') {
                         this.color = `rgb(${pt.r},${pt.g},${pt.b})`; this.size = photoGapSize; 
                     } else if (currentGesture === 'muffin') {
@@ -164,6 +154,7 @@
                 this.x += (this.targetX - this.x) * speed;
                 this.y += (this.targetY - this.y) * speed;
             } else {
+                // Float Randomly
                 this.targetX = null;
                 this.x += this.vx; this.y += this.vy;
                 if (this.x < 0 || this.x > width) this.vx *= -1;
@@ -185,7 +176,7 @@
         }
     }
 
-    // --- GENERATORS ---
+    // --- POINT GENERATORS ---
     function generateTextPoints(text, array) {
         const tCanvas = document.createElement('canvas');
         tCanvas.width = width; tCanvas.height = height;
@@ -241,12 +232,18 @@
     }
 
     function animate() {
-        // Draw Camera
-        canvasCtx.globalAlpha = 1.0;
-        canvasCtx.drawImage(videoElement, 0, 0, width, height);
-        // Darken
-        canvasCtx.fillStyle = 'rgba(0, 0, 0, 0.6)';
-        canvasCtx.fillRect(0, 0, width, height);
+        // --- BACKGROUND LOGIC ---
+        // Instead of drawing the camera, we just fill with black.
+        // We use a very slight transparency to create "trails" for moving particles.
+        if (currentGesture === 'photo') {
+             // For Photo mode, clear fully so pixels are sharp
+             canvasCtx.fillStyle = 'black';
+             canvasCtx.fillRect(0, 0, width, height);
+        } else {
+             // For other modes, use trails
+             canvasCtx.fillStyle = 'rgba(0, 0, 0, 0.25)';
+             canvasCtx.fillRect(0, 0, width, height);
+        }
 
         // Draw Particles
         particles.forEach((p, index) => {
@@ -259,7 +256,7 @@
         requestAnimationFrame(animate);
     }
 
-    // --- HAND TRACKING ---
+    // --- GESTURE LOGIC ---
     function onResults(results) {
         if (!results.multiHandLandmarks || results.multiHandLandmarks.length === 0) {
             currentGesture = 'none';
@@ -267,6 +264,7 @@
         }
         const lm = results.multiHandLandmarks[0];
         const isUp = (tipIdx, pipIdx) => lm[tipIdx].y < lm[pipIdx].y;
+        
         const indexUp = isUp(8, 6);
         const middleUp = isUp(12, 10);
         const ringUp = isUp(16, 14);
