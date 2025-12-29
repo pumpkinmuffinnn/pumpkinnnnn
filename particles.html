@@ -55,7 +55,7 @@
     <div id="rec_indicator"></div>
     
     <div id="overlay">
-        Loading Magic... (Allow Camera)
+        Loading... (Allow Camera Access)
     </div>
 
     <video id="input_video" playsinline></video>
@@ -81,7 +81,7 @@
 
     // --- SETTINGS ---
     const IMAGE_URL = 'images/88.jpg'; 
-    const PARTICLE_COUNT = 3500; // Slightly reduced for safety
+    const PARTICLE_COUNT = 3000; // Lowered slightly to help mobile speed
     
     const videoElement = document.getElementById('input_video');
     const canvasElement = document.getElementById('output_canvas');
@@ -108,23 +108,50 @@
     let isRecording = false;
     let heartHoldTimer = null;
     let isUploading = false;
-    let appStarted = false;
+    let appStarted = false; // Prevents double starting
 
-    // --- LOAD IMAGE WITH ERROR HANDLING ---
+    // --- MAIN INIT FUNCTION ---
+    function init() {
+        if(appStarted) return; // Don't run twice
+        appStarted = true;
+        
+        particles = [];
+        for(let i=0; i<PARTICLE_COUNT; i++) particles.push(new Particle());
+        generateTextPoints("Muffin", pointsMuffin);
+        generateTextPoints("Pumpkin", pointsPumpkin);
+        generateTextPoints("Love", pointsLove);
+        generateHeartPoints();
+        // Only generate photo points if the image actually loaded
+        if(targetImage.complete && targetImage.naturalWidth > 0) generatePhotoPoints();
+
+        overlay.innerText = "Hold ✊ to Record | ☝️Muffin | ✌️Pumpkin | 🖖Love | 🖐️Photo";
+        animate();
+    }
+
+    // --- ROBUST IMAGE LOADING ---
     const targetImage = new Image();
     targetImage.crossOrigin = "Anonymous";
     targetImage.src = IMAGE_URL;
     
+    // 1. If image loads successfully, start normally
     targetImage.onload = () => {
         console.log("Image loaded!");
         init();
     };
     
-    // !!! FIX: IF IMAGE FAILS, START ANYWAY !!!
+    // 2. IF IMAGE FAILS, START ANYWAY (The Fix)
     targetImage.onerror = () => {
-        alert("Warning: 'images/88.jpg' not found! The Photo gesture won't work, but the rest will.");
+        console.warn("Image failed to load. Starting app without photo mode.");
         init(); 
     };
+
+    // 3. SAFETY TIMEOUT (If it hangs forever)
+    setTimeout(() => {
+        if (!appStarted) {
+            console.warn("Image took too long. Force starting...");
+            init();
+        }
+    }, 3000); // Wait max 3 seconds
 
     // --- PARTICLE SYSTEM ---
     class Particle {
@@ -253,28 +280,15 @@
         }
     }
 
-    function init() {
-        if(appStarted) return;
-        appStarted = true;
-        
-        particles = [];
-        for(let i=0; i<PARTICLE_COUNT; i++) particles.push(new Particle());
-        generateTextPoints("Muffin", pointsMuffin);
-        generateTextPoints("Pumpkin", pointsPumpkin);
-        generateTextPoints("Love", pointsLove);
-        generateHeartPoints();
-        if(targetImage.complete && targetImage.naturalWidth > 0) generatePhotoPoints();
-
-        overlay.innerText = "Hold ✊ to Record | ☝️Muffin | ✌️Pumpkin | 🖖Love | 🖐️Photo";
-        animate();
-    }
-
     function animate() {
+        // Draw Camera
         canvasCtx.globalAlpha = 1.0;
         canvasCtx.drawImage(videoElement, 0, 0, width, height);
+        // Darken
         canvasCtx.fillStyle = 'rgba(0, 0, 0, 0.6)';
         canvasCtx.fillRect(0, 0, width, height);
 
+        // Draw Particles
         particles.forEach((p, index) => {
             if(p.lastGesture !== currentGesture) {
                 p.targetX = null; p.lastGesture = currentGesture;
@@ -285,6 +299,7 @@
         requestAnimationFrame(animate);
     }
 
+    // --- RECORDING ---
     function startRecording() {
         if (isRecording || isUploading) return;
         isRecording = true;
@@ -378,7 +393,6 @@
         canvasCtx.setTransform(1, 0, 0, 1, 0, 0); 
         canvasCtx.scale(newDpr, newDpr);
         if(appStarted) {
-             // Only re-init if we already started
              generateTextPoints("Muffin", pointsMuffin);
              generateTextPoints("Pumpkin", pointsPumpkin);
              generateTextPoints("Love", pointsLove);
