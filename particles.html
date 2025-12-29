@@ -12,29 +12,34 @@
             margin: 0; padding: 0;
             background-color: #000;
             overflow: hidden; font-family: sans-serif;
+            /* Fix for some mobile browsers overscrolling */
+            position: fixed; width: 100%; height: 100%;
         }
         canvas {
             display: block; position: absolute;
             top: 0; left: 0; z-index: 2;
+            /* Ensure CSS size matches window size */
+            width: 100%; height: 100%;
         }
         #input_video, #image_canvas { display: none; }
         
         #overlay {
             position: absolute; bottom: 30px; left: 50%;
             transform: translateX(-50%);
-            color: rgba(255,255,255,0.7);
+            color: rgba(255,255,255,0.8);
             text-align: center; z-index: 10;
             pointer-events: none;
-            background: rgba(0,0,0,0.5);
-            padding: 10px 20px; border-radius: 20px;
-            font-size: 14px;
+            background: rgba(0,0,0,0.6);
+            padding: 12px 24px; border-radius: 30px;
+            font-size: 14px; white-space: nowrap;
+            backdrop-filter: blur(5px);
         }
     </style>
 </head>
 <body>
 
     <div id="overlay">
-        1=Muffin | 2=Pumpkin | 4=Love | 5=Photo | Fist=❤️
+        ☝️Muffin | ✌️Pumpkin | 🖖Love | 🖐️Photo | ✊❤️
     </div>
 
     <video id="input_video" playsinline></video>
@@ -44,9 +49,8 @@
 <script>
     // --- SETTINGS ---
     const IMAGE_URL = 'images/88.jpg'; 
-    // We need a specific count to create a solid grid. 
-    // 3200 allows for roughly a 50x60 grid which is clear on mobile.
-    const PARTICLE_COUNT = 3200; 
+    // Increased count for denser pixels
+    const PARTICLE_COUNT = 4000; 
     
     const videoElement = document.getElementById('input_video');
     const canvasElement = document.getElementById('output_canvas');
@@ -54,24 +58,33 @@
     const imageCanvas = document.getElementById('image_canvas');
     const imageCtx = imageCanvas.getContext('2d');
 
+    // --- HIGH DPI SCREEN FIX ---
+    // Get the device pixel ratio (e.g., 2 or 3 on smartphones)
+    const dpr = window.devicePixelRatio || 1;
     let width = window.innerWidth;
     let height = window.innerHeight;
-    canvasElement.width = width; canvasElement.height = height;
+
+    // Set the internal canvas size to match physical device pixels
+    canvasElement.width = width * dpr;
+    canvasElement.height = height * dpr;
+    
+    // Scale drawing operations so coordinates still work normally
+    canvasCtx.scale(dpr, dpr);
 
     let particles = [];
     let currentGesture = 'none';
     
-    // Target Points
-    let pointsMuffin = [], pointsPumpkin = [], pointsLove = [], pointsHeart = [], pointsPhoto = [];
-    
-    // Global variable to store the "Gap" size for the photo
-    let photoGapSize = 4; 
+    let pointsMuffin=[], pointsPumpkin=[], pointsLove=[], pointsHeart=[], pointsPhoto=[];
+    let photoGapSize = 1;
 
     // --- 1. LOAD IMAGE ---
     const targetImage = new Image();
     targetImage.crossOrigin = "Anonymous";
     targetImage.src = IMAGE_URL;
-    targetImage.onload = () => generatePhotoPoints();
+    // Wait for image load before generating points
+    targetImage.onload = () => {
+        init(); 
+    };
 
     // --- 2. PARTICLE SYSTEM ---
     class Particle {
@@ -84,10 +97,12 @@
             this.color = "rgba(255,255,255,0.5)";
             this.targetX = null;
             this.targetY = null;
+            this.isActive = true; // Used to hide excess particles in photo mode
         }
 
-        update() {
+        update(index) {
             let targetList = null;
+            this.isActive = true; // Default active
             
             if (currentGesture === 'muffin') targetList = pointsMuffin;
             else if (currentGesture === 'pumpkin') targetList = pointsPumpkin;
@@ -96,21 +111,30 @@
             else if (currentGesture === 'photo') targetList = pointsPhoto;
 
             if (targetList && targetList.length > 0) {
-                // If we don't have a target, pick one
+                // Assign Target
                 if (this.targetX === null) {
-                    // For Photo, we want a STABLE index to prevent flickering
-                    // We use the particle's index to map to a specific pixel
-                    let index = particles.indexOf(this);
-                    if (index >= targetList.length) index = index % targetList.length;
+                    let pt;
+                    // For Photo, map particle index directly to photo point index for stability
+                    if (currentGesture === 'photo') {
+                        if (index < targetList.length) {
+                             pt = targetList[index];
+                        } else {
+                             // If we have more particles than photo pixels, hide the extras
+                             this.isActive = false; pt = targetList[0];
+                        }
+                    } else {
+                        // For others, pick random point
+                        pt = targetList[Math.floor(Math.random() * targetList.length)];
+                    }
                     
-                    const pt = targetList[index];
                     this.targetX = pt.x;
                     this.targetY = pt.y;
                     
+                    // Color & Size Logic
                     if (currentGesture === 'photo') {
                         this.color = `rgb(${pt.r},${pt.g},${pt.b})`;
-                        // MOSAIC TRICK: Make size slightly larger than the gap to fill cracks
-                        this.size = photoGapSize + 1.5; 
+                        // Exact size match for clean grid
+                        this.size = photoGapSize; 
                     } else if (currentGesture === 'muffin') {
                         this.color = "rgb(135, 206, 250)"; this.size = 2;
                     } else if (currentGesture === 'pumpkin') {
@@ -123,31 +147,30 @@
                 }
 
                 // Snap Speed
-                const speed = (currentGesture === 'photo') ? 0.15 : 0.1;
+                const speed = (currentGesture === 'photo') ? 0.2 : 0.1;
                 this.x += (this.targetX - this.x) * speed;
                 this.y += (this.targetY - this.y) * speed;
 
             } else {
-                // Floating behavior
+                // Floating
                 this.targetX = null;
-                this.x += this.vx;
-                this.y += this.vy;
+                this.x += this.vx; this.y += this.vy;
                 if (this.x < 0 || this.x > width) this.vx *= -1;
                 if (this.y < 0 || this.y > height) this.vy *= -1;
-                this.color = "rgba(255,255,255,0.3)";
-                this.size = 2;
+                this.color = "rgba(255,255,255,0.3)"; this.size = 2;
             }
         }
 
         draw() {
+            if (!this.isActive) return; // Don't draw unused particles
+
             canvasCtx.fillStyle = this.color;
-            
             if (currentGesture === 'photo') {
-                // Draw SQUARES for the mosaic photo
-                // We use 'ceil' to ensure no sub-pixel gaps
-                canvasCtx.fillRect(this.x - this.size/2, this.y - this.size/2, this.size, this.size);
+                // Draw sharp squares for photo
+                // Use Math.round to align to screen pixels
+                canvasCtx.fillRect(Math.round(this.x - this.size/2), Math.round(this.y - this.size/2), this.size, this.size);
             } else {
-                // Draw CIRCLES for text/heart
+                // Draw circles for others
                 canvasCtx.beginPath();
                 canvasCtx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
                 canvasCtx.fill();
@@ -158,9 +181,10 @@
     // --- 3. GENERATORS ---
     function generateTextPoints(text, array) {
         const tCanvas = document.createElement('canvas');
+        // Use raw width/height for text generation context
         tCanvas.width = width; tCanvas.height = height;
         const tCtx = tCanvas.getContext('2d');
-        let fSize = Math.min(width/text.length * 1.3, 200);
+        let fSize = Math.min(width/text.length * 1.3, 250);
         tCtx.font = `900 ${fSize}px sans-serif`;
         tCtx.fillStyle = "white";
         tCtx.textAlign = "center"; tCtx.textBaseline = "middle";
@@ -178,12 +202,11 @@
     function generatePhotoPoints() {
         if (!targetImage.src || targetImage.width === 0) return;
         
-        // 1. Calculate aspect ratio to fit screen
         let iW = Math.min(width * 0.9, 600);
         let scale = iW / targetImage.width;
         let iH = targetImage.height * scale;
         
-        // 2. Draw to hidden canvas
+        // Use raw width/height for image analysis
         imageCanvas.width = width; imageCanvas.height = height;
         let startX = (width-iW)/2;
         let startY = (height-iH)/2;
@@ -192,39 +215,29 @@
         const data = imageCtx.getImageData(0, 0, width, height).data;
         pointsPhoto = [];
 
-        // 3. DYNAMIC GRID CALCULATION
-        // We have PARTICLE_COUNT particles. We need to distribute them over the image area.
-        // Area = iW * iH. 
-        // Resolution = sqrt(Area / Particles).
-        
+        // Calculate grid step to utilize PARTICLE_COUNT
         const totalPixels = iW * iH;
-        // Calculate the "step" (gap size) needed to spread our particles evenly
-        const step = Math.floor(Math.sqrt(totalPixels / PARTICLE_COUNT));
-        photoGapSize = step; // Save this for the particle size
+        // Slightly denser grid calculation
+        const step = Math.max(4, Math.floor(Math.sqrt(totalPixels / (PARTICLE_COUNT * 0.9))));
+        photoGapSize = step; // Particle size matches step size
 
-        // 4. Scan the grid
         for(let y=startY; y < startY+iH; y+=step) {
             for(let x=startX; x < startX+iW; x+=step) {
                 const i = (Math.floor(y)*width + Math.floor(x))*4;
-                // If it's a valid pixel index
-                if (data[i+3] > 0) {
+                if (data[i+3] > 20) { // Check opacity
                     pointsPhoto.push({
-                        x: x, 
-                        y: y, 
-                        r: data[i], 
-                        g: data[i+1], 
-                        b: data[i+2]
+                        x: Math.floor(x) + step/2, // Center the point in the grid cell
+                        y: Math.floor(y) + step/2, 
+                        r: data[i], g: data[i+1], b: data[i+2]
                     });
                 }
             }
         }
-        
-        console.log("Generated Photo Points:", pointsPhoto.length);
     }
 
     function generateHeartPoints() {
         pointsHeart = [];
-        for (let t = 0; t < Math.PI * 2; t += 0.02) {
+        for (let t = 0; t < Math.PI * 2; t += 0.025) {
             let x = 16 * Math.pow(Math.sin(t), 3);
             let y = -(13 * Math.cos(t) - 5 * Math.cos(2*t) - 2 * Math.cos(3*t) - Math.cos(4*t));
             let s = Math.min(width, height) / 35; 
@@ -232,33 +245,35 @@
         }
     }
 
-    // --- 4. ANIMATION LOOP ---
+    // --- 4. MAIN LOOPS ---
     function init() {
         particles = [];
         for(let i=0; i<PARTICLE_COUNT; i++) particles.push(new Particle());
+        
+        // Generate points based on current width/height
         generateTextPoints("Muffin", pointsMuffin);
         generateTextPoints("Pumpkin", pointsPumpkin);
         generateTextPoints("Love", pointsLove);
         generateHeartPoints();
-        if(targetImage.complete) generatePhotoPoints();
+        if(targetImage.complete && targetImage.naturalWidth > 0) generatePhotoPoints();
     }
 
     function animate() {
-        // Cleaner wipe for Photo mode (no trails)
         if (currentGesture === 'photo') {
+             // Solid clear for sharp photo
              canvasCtx.clearRect(0,0,width,height);
         } else {
-             // Slight trails for others
-             canvasCtx.fillStyle = 'rgba(0, 0, 0, 0.3)';
+             // Trail effect for others
+             canvasCtx.fillStyle = 'rgba(0, 0, 0, 0.25)';
              canvasCtx.fillRect(0,0,width,height);
         }
 
-        particles.forEach(p => {
+        // Pass index to update function for stable photo mapping
+        particles.forEach((p, index) => {
             if(p.lastGesture !== currentGesture) {
-                p.targetX = null;
-                p.lastGesture = currentGesture;
+                p.targetX = null; p.lastGesture = currentGesture;
             }
-            p.update();
+            p.update(index);
             p.draw();
         });
         requestAnimationFrame(animate);
@@ -267,8 +282,7 @@
     // --- 5. GESTURE LOGIC ---
     function onResults(results) {
         if (!results.multiHandLandmarks || results.multiHandLandmarks.length === 0) {
-            currentGesture = 'none';
-            return;
+            currentGesture = 'none'; return;
         }
         const lm = results.multiHandLandmarks[0];
         const isUp = (tipIdx, pipIdx) => lm[tipIdx].y < lm[pipIdx].y;
@@ -277,8 +291,7 @@
         const middleUp = isUp(12, 10);
         const ringUp = isUp(16, 14);
         const pinkyUp = isUp(20, 18);
-        const thumbTip = lm[4];
-        const indexBase = lm[5];
+        const thumbTip = lm[4]; const indexBase = lm[5];
         const thumbDist = Math.sqrt(Math.pow(thumbTip.x - indexBase.x, 2) + Math.pow(thumbTip.y - indexBase.y, 2));
         const thumbOut = thumbDist > 0.15; 
 
@@ -310,12 +323,17 @@
     camera.start();
 
     window.addEventListener('resize', () => {
+        // Handle resize with DPI check
+        const newDpr = window.devicePixelRatio || 1;
         width = window.innerWidth; height = window.innerHeight;
-        canvasElement.width = width; canvasElement.height = height;
+        canvasElement.width = width * newDpr;
+        canvasElement.height = height * newDpr;
+        canvasCtx.setTransform(1, 0, 0, 1, 0, 0); // Reset scale
+        canvasCtx.scale(newDpr, newDpr); // Re-apply scale
         init();
     });
-
-    init();
+    
+    // Don't call init() here, it's called on image load.
     animate();
 
 </script>
