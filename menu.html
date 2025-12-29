@@ -131,16 +131,13 @@
 </head>
 <body>
 
-  <!-- MUSIC TOGGLE -->
   <button class="music-btn animate-float" id="musicToggle">🎵</button>
   <audio id="bgMusic" loop>
     <source src="audio/audio.mp3" type="audio/mpeg" />
   </audio>
 
-  <!-- MAIN CONTENT -->
   <main class="pb-20">
     
-    <!-- HERO SECTION -->
     <section class="text-center pt-12 pb-2 px-4 fade-in-up">
       <div class="inline-block px-3 py-1 mb-4 text-xs font-semibold tracking-wider text-pink-500 uppercase bg-pink-100 rounded-full">
         For My Princess 👑
@@ -154,7 +151,6 @@
       </p>
     </section>
 
-    <!-- DUAL CLOCK WIDGET -->
     <div class="clock-wrapper fade-in-up" style="animation-delay: 0.1s;">
       <div class="text-center">
         <div class="text-2xl mb-1">🇧🇳</div>
@@ -169,10 +165,14 @@
       </div>
     </div>
 
-    <!-- BENTO GRID MENU (Symmetrical Layout) -->
     <div class="bento-grid fade-in-up" style="animation-delay: 0.2s;">
       
-      <!-- Row 1: Communication & Fun (2 Large Cards) -->
+      <a href="particles.html" class="bento-card large bg-gradient-to-br from-rose-50 to-white border-rose-100">
+        <div class="card-icon">✨</div>
+        <div class="card-title">Tangan Ajaib</div>
+        <div class="card-desc">Ada kejutan kalau kamu gerakin tangan!</div>
+      </a>
+
       <a href="chat.html" class="bento-card large bg-gradient-to-br from-pink-50 to-white border-pink-100">
         <div class="card-icon">💬</div>
         <div class="card-title">Obrolan Kita</div>
@@ -185,7 +185,6 @@
         <div class="card-desc">Main game bareng yuk!</div>
       </a>
 
-      <!-- Row 2: Visuals & Audio (2 Small Cards) -->
       <a href="gallery.html" class="bento-card">
         <div class="card-icon">📸</div>
         <div class="card-title">Galeri</div>
@@ -198,7 +197,6 @@
         <div class="card-desc">Dengerin lagu.</div>
       </a>
 
-      <!-- Row 3: Future & Promises (2 Large Cards) -->
       <a href="mail.html" class="bento-card large bg-gradient-to-r from-blue-50 to-indigo-50">
         <div class="card-icon">📨</div>
         <div class="card-title">Surat Masa Depan</div>
@@ -211,7 +209,6 @@
         <div class="card-desc">Masa depan kita nanti.</div>
       </a>
 
-      <!-- Row 4: Daily Check-ins (2 Small Cards) -->
       <a href="mood.html" class="bento-card">
         <div class="card-icon">🥰</div>
         <div class="card-title">Mood</div>
@@ -224,7 +221,6 @@
         <div class="card-desc">List impian kita.</div>
       </a>
 
-      <!-- Row 5: Connection & Love (2 Small Cards) -->
       <a href="lock.html" class="bento-card">
         <div class="card-icon">🔒</div>
         <div class="card-title">Kunci</div>
@@ -237,7 +233,6 @@
         <div class="card-desc">Jarak cuman angka.</div>
       </a>
 
-      <!-- Row 6: Sentimental (2 Large Cards) -->
       <a href="letter.html" class="bento-card large">
         <div class="card-icon">💌</div>
         <div class="card-title">Surat</div>
@@ -252,7 +247,6 @@
 
     </div>
 
-    <!-- FOOTER -->
     <footer>
       <p>Dibuat dengan ❤️</p>
       <p class="mt-1 opacity-50">Since 02.08.2025</p>
@@ -260,7 +254,6 @@
 
   </main>
 
-  <!-- SCRIPTS -->
   <script>
     /* --- DUAL CLOCKS --- */
     function initDualClocks() {
