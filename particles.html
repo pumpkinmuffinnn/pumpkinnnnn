@@ -9,62 +9,56 @@
     <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js" crossorigin="anonymous"></script>
     <style>
         body {
-            margin: 0;
-            padding: 0;
-            background-color: #050505; /* Pitch black for contrast */
-            overflow: hidden;
-            font-family: sans-serif;
+            margin: 0; padding: 0;
+            background-color: #020202; /* Almost pure black */
+            overflow: hidden; font-family: sans-serif;
         }
         canvas {
-            display: block;
-            position: absolute;
-            top: 0; left: 0;
-            z-index: 2;
+            display: block; position: absolute;
+            top: 0; left: 0; z-index: 2;
         }
-        #input_video { display: none; }
+        #input_video, #image_canvas { display: none; }
         
         #overlay {
-            position: absolute;
-            top: 50%; left: 50%;
+            position: absolute; top: 50%; left: 50%;
             transform: translate(-50%, -50%);
-            color: white;
-            text-align: center;
-            z-index: 10;
+            color: rgba(255,255,255,0.9);
+            text-align: center; z-index: 10;
             pointer-events: none;
-            background: rgba(0,0,0,0.6);
-            padding: 20px;
-            border-radius: 15px;
+            background: rgba(0,0,0,0.7);
+            padding: 20px 30px; border-radius: 20px;
             transition: opacity 0.5s;
+            backdrop-filter: blur(5px);
         }
-        
         .hidden { opacity: 0; }
-        
-        /* Hidden canvas for analyzing the image pixels */
-        #image_canvas { display: none; }
+        h3 { margin: 0 0 15px 0; color: #ffb6c1; }
+        p { margin: 5px 0; font-size: 1.1em; }
     </style>
 </head>
 <body>
 
     <div id="overlay">
-        <h3>Magic Gestures</h3>
-        <p>☝️ = "I"</p>
-        <p>🫰 (Finger Heart) = "LOVE"</p>
-        <p>✌️ (Peace) = "YOU"</p>
-        <p>✊ (Fist) = ❤️</p>
-        <p>✋ (Open Hand) = ???</p>
-        <small style="color: #aaa;">Allow camera to start</small>
+        <h3>Magic Guide</h3>
+        <p>☝️ 1 Finger = Muffin</p>
+        <p>✌️ 2 Fingers = Pumpkin</p>
+        <p>✋ 4 Fingers = Love</p>
+        <p>🖐️ 5 Fingers = Photo</p>
+        <p>✊ Fist = ❤️</p>
+        <small style="color: #aaa; display:block; margin-top:15px;">Waiting for camera...</small>
     </div>
 
     <video id="input_video" playsinline></video>
     <canvas id="output_canvas"></canvas>
-    
     <canvas id="image_canvas"></canvas>
 
 <script>
-    // --- SETTINGS ---
-    const IMAGE_URL = 'images/88.jpg'; // CHANGE THIS TO YOUR IMAGE FILENAME
-    const PARTICLE_COUNT = 600; // Increased for better text/image resolution
-    const FONT_SIZE = 120;
+    // --- CONFIGURATION ---
+    // MAKE SURE THIS PATH IS CORRECT
+    const IMAGE_URL = 'images/88.jpg'; 
+    
+    // Increased significantly for denser, cleaner shapes
+    const PARTICLE_COUNT = 1800; 
+    const SCAN_DETAIL = 3; // Lower = denser text scanning (was 6)
 
     const videoElement = document.getElementById('input_video');
     const canvasElement = document.getElementById('output_canvas');
@@ -79,123 +73,147 @@
     canvasElement.height = height;
 
     let particles = [];
-    let currentGesture = 'none'; // 'i', 'love', 'you', 'heart', 'photo', 'none'
+    // Possible states: 'muffin', 'pumpkin', 'love', 'heart', 'photo', 'none'
+    let currentGesture = 'none'; 
     
-    // Coordinate Arrays
-    let pointsI = [];
+    // Point Clouds
+    let pointsMuffin = [];
+    let pointsPumpkin = [];
     let pointsLove = [];
-    let pointsYou = [];
     let pointsHeart = [];
-    let pointsPhoto = []; // Stores {x, y, r, g, b}
+    let pointsPhoto = []; 
 
     // --- LOAD IMAGE ---
     const targetImage = new Image();
     targetImage.crossOrigin = "Anonymous";
     targetImage.src = IMAGE_URL;
     targetImage.onload = () => {
-        console.log("Image Loaded");
+        console.log("Image Loaded Success");
         generatePhotoPoints();
     };
+    targetImage.onerror = () => {
+        console.error("IMAGE NOT FOUND AT:", IMAGE_URL);
+        alert("Image not found! Check the file path inside the script.");
+    }
 
     // --- PARTICLE SYSTEM ---
     class Particle {
         constructor() {
             this.x = Math.random() * width;
             this.y = Math.random() * height;
-            this.vx = (Math.random() - 0.5) * 2;
-            this.vy = (Math.random() - 0.5) * 2;
-            this.size = Math.random() * 2 + 1.5;
-            this.color = "rgba(255, 255, 255, 0.8)";
+            // Slower floating speed for calmness
+            this.vx = (Math.random() - 0.5) * 1;
+            this.vy = (Math.random() - 0.5) * 1;
+            this.size = Math.random() * 2 + 1; // Slightly varied size
+            this.baseColor = "rgba(255, 255, 255, ";
+            this.opacity = 0.5;
             this.targetX = null;
             this.targetY = null;
-            this.targetColor = null;
+            this.targetRgb = null;
+            this.assignedGesture = 'none';
         }
 
         update() {
-            let targetList = null;
-            let speed = 0.1;
+            // 1. Check for Gesture Change
+            // If the global gesture changed, release this particle from its old target
+            if (this.assignedGesture !== currentGesture) {
+                this.targetX = null;
+                this.assignedGesture = currentGesture;
+            }
 
-            // Select Target List based on Gesture
-            if (currentGesture === 'i') targetList = pointsI;
+            let targetList = null;
+            let snapSpeed = 0.12; // How fast they snap to position
+
+            // Select Point Cloud based on gesture
+            if (currentGesture === 'muffin') targetList = pointsMuffin;
+            else if (currentGesture === 'pumpkin') targetList = pointsPumpkin;
             else if (currentGesture === 'love') targetList = pointsLove;
-            else if (currentGesture === 'you') targetList = pointsYou;
             else if (currentGesture === 'heart') targetList = pointsHeart;
             else if (currentGesture === 'photo') targetList = pointsPhoto;
 
+            // --- SHAPE FORMING BEHAVIOR ---
             if (targetList && targetList.length > 0) {
-                // Assign a target if we don't have one or if gesture changed
-                if (this.targetX === null || Math.random() < 0.05) { 
+                // Only assign a NEW target if we don't have one yet.
+                // This stops the jittering/swarming effect.
+                if (this.targetX === null) { 
                     const pt = targetList[Math.floor(Math.random() * targetList.length)];
                     this.targetX = pt.x;
                     this.targetY = pt.y;
                     
-                    // Specific Color Logic
+                    // Color assignment based on gesture
                     if (currentGesture === 'photo') {
-                        this.targetColor = `rgba(${pt.r}, ${pt.g}, ${pt.b}, 0.9)`;
-                        speed = 0.15; // Faster snap for photo
+                        this.targetRgb = `${pt.r},${pt.g},${pt.b}`;
+                        this.opacity = 0.9; // Opaque for photos
+                        snapSpeed = 0.15; // Faster snap for photos
                     } else if (currentGesture === 'heart') {
-                        this.targetColor = "rgba(255, 50, 50, 0.9)";
+                        this.targetRgb = "255, 50, 80"; // Red
+                        this.opacity = 0.9;
                     } else if (currentGesture === 'love') {
-                        this.targetColor = "rgba(255, 105, 180, 0.9)"; // Hot Pink
-                    } else if (currentGesture === 'you') {
-                        this.targetColor = "rgba(100, 255, 218, 0.9)"; // Cyan
-                    } else {
-                        this.targetColor = "rgba(255, 255, 255, 0.9)";
+                         this.targetRgb = "255, 105, 180"; // Hot Pink
+                         this.opacity = 0.9;
+                    } else if (currentGesture === 'pumpkin') {
+                        this.targetRgb = "255, 165, 0"; // Orange
+                        this.opacity = 0.9;
+                    } else if (currentGesture === 'muffin') {
+                        this.targetRgb = "135, 206, 235"; // Sky Blue
+                        this.opacity = 0.9;
                     }
                 }
 
-                // Move towards target
-                this.x += (this.targetX - this.x) * speed;
-                this.y += (this.targetY - this.y) * speed;
-                this.color = this.targetColor;
+                // Smooth movement towards target (Erease function)
+                this.x += (this.targetX - this.x) * snapSpeed;
+                this.y += (this.targetY - this.y) * snapSpeed;
 
-            } else {
-                // Floating Mode (No Gesture)
+            } 
+            // --- FREE FLOATING BEHAVIOR ---
+            else {
                 this.x += this.vx;
                 this.y += this.vy;
-                this.targetX = null;
                 
-                // Bounce edges
+                // Bounce off screen edges
                 if (this.x < 0 || this.x > width) this.vx *= -1;
                 if (this.y < 0 || this.y > height) this.vy *= -1;
                 
-                // Default Color
-                this.color = "rgba(255, 255, 255, 0.4)";
+                // Dim color when floating randomly
+                this.targetRgb = "255, 255, 255";
+                this.opacity = 0.3;
             }
         }
 
         draw() {
             canvasCtx.beginPath();
             canvasCtx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
-            canvasCtx.fillStyle = this.color;
+            // Dynamically set color and opacity
+            canvasCtx.fillStyle = this.baseColor + this.opacity + ")";
+            if (this.targetRgb) {
+                 canvasCtx.fillStyle = `rgba(${this.targetRgb}, ${this.opacity})`;
+            }
             canvasCtx.fill();
         }
     }
 
-    // --- POINT GENERATORS ---
+    // --- POINT GENERATORS (The Architects) ---
     
-    // 1. TEXT GENERATOR
+    // 1. TEXT GENERATOR (Makes words denser)
     function generateTextPoints(text, array) {
-        // Create a temporary canvas to draw text and read pixels
         const tCanvas = document.createElement('canvas');
-        tCanvas.width = width;
-        tCanvas.height = height;
+        tCanvas.width = width; height = height;
         const tCtx = tCanvas.getContext('2d');
         
-        tCtx.font = `bold ${Math.min(width/4, 150)}px sans-serif`;
+        // Big, bold font centered on screen
+        let fontSize = Math.min(width/text.length * 1.5, height/3);
+        tCtx.font = `900 ${fontSize}px sans-serif`;
         tCtx.fillStyle = "white";
-        tCtx.textAlign = "center";
-        tCtx.textBaseline = "middle";
+        tCtx.textAlign = "center"; tCtx.textBaseline = "middle";
         tCtx.fillText(text, width / 2, height / 2);
 
         const imgData = tCtx.getImageData(0, 0, width, height).data;
-        array.length = 0; // Clear existing
+        array.length = 0; 
 
-        // Scan pixels (skip step for performance)
-        for (let y = 0; y < height; y += 6) {
-            for (let x = 0; x < width; x += 6) {
-                const index = (y * width + x) * 4;
-                if (imgData[index + 3] > 128) { // If pixel is not transparent
+        // Scan for pixels. SCAN_DETAIL = 3 means check every 3rd pixel (denser)
+        for (let y = 0; y < height; y += SCAN_DETAIL) {
+            for (let x = 0; x < width; x += SCAN_DETAIL) {
+                if (imgData[(y * width + x) * 4 + 3] > 128) {
                     array.push({x, y});
                 }
             }
@@ -205,50 +223,39 @@
     // 2. HEART GENERATOR
     function generateHeartPoints() {
         pointsHeart = [];
-        for (let t = 0; t < Math.PI * 2; t += 0.05) {
+        for (let t = 0; t < Math.PI * 2; t += 0.04) { // 0.04 step for smoother heart
             let x = 16 * Math.pow(Math.sin(t), 3);
             let y = -(13 * Math.cos(t) - 5 * Math.cos(2*t) - 2 * Math.cos(3*t) - Math.cos(4*t));
             let scale = Math.min(width, height) / 30; 
-            x = x * scale + width / 2;
-            y = y * scale + height / 2;
-            pointsHeart.push({x, y});
+            pointsHeart.push({
+                x: x * scale + width / 2,
+                y: y * scale + height / 2
+            });
         }
     }
 
     // 3. PHOTO GENERATOR
     function generatePhotoPoints() {
-        if (!targetImage.src) return;
+        if (!targetImage.src || targetImage.width === 0) return;
         
-        // Scale image to fit screen but keep aspect ratio
-        let iWidth = Math.min(width * 0.8, 500); 
+        // Fit image nicely on screen
+        let iWidth = Math.min(width * 0.9, 600); 
         let scale = iWidth / targetImage.width;
         let iHeight = targetImage.height * scale;
 
-        imageCanvas.width = width;
-        imageCanvas.height = height;
-        
-        // Draw image centered
-        let offsetX = (width - iWidth) / 2;
-        let offsetY = (height - iHeight) / 2;
-        
-        imageCtx.drawImage(targetImage, offsetX, offsetY, iWidth, iHeight);
+        imageCanvas.width = width; imageCanvas.height = height;
+        imageCtx.drawImage(targetImage, (width - iWidth)/2, (height - iHeight)/2, iWidth, iHeight);
         
         const data = imageCtx.getImageData(0, 0, width, height).data;
         pointsPhoto = [];
 
-        // Sample pixels
-        const step = 6; // density
+        // Scan photo pixels. Denser scan for better resolution.
+        const step = SCAN_DETAIL + 1; 
         for (let y = 0; y < height; y += step) {
             for (let x = 0; x < width; x += step) {
                 const i = (y * width + x) * 4;
-                if (data[i+3] > 128) { // Visible pixel
-                    pointsPhoto.push({
-                        x: x, 
-                        y: y, 
-                        r: data[i], 
-                        g: data[i+1], 
-                        b: data[i+2]
-                    });
+                if (data[i+3] > 128) { 
+                    pointsPhoto.push({ x, y, r: data[i], g: data[i+1], b: data[i+2] });
                 }
             }
         }
@@ -257,85 +264,81 @@
     // --- MAIN LOOPS ---
     function init() {
         particles = [];
+        // Create the massive particle pool
         for (let i = 0; i < PARTICLE_COUNT; i++) {
             particles.push(new Particle());
         }
         
-        // Pre-generate Shapes
-        generateTextPoints("I", pointsI);
-        generateTextPoints("LOVE", pointsLove);
-        generateTextPoints("YOU", pointsYou);
+        // Pre-calculate shape positions
+        generateTextPoints("Muffin", pointsMuffin);
+        generateTextPoints("Pumpkin", pointsPumpkin);
+        generateTextPoints("Love", pointsLove);
         generateHeartPoints();
-        // generatePhotoPoints() is called when image loads
+        if(targetImage.complete) generatePhotoPoints();
     }
 
     function animate() {
-        canvasCtx.clearRect(0, 0, width, height);
+        // Use semi-transparent clear for slight trail effect (optional, change 0.3 to 1 for no trails)
+        canvasCtx.fillStyle = 'rgba(2, 2, 2, 0.3)';
+        canvasCtx.fillRect(0, 0, width, height);
+        // canvasCtx.clearRect(0,0,width,height); // Use this line instead if you want zero trails
+
         particles.forEach(p => { p.update(); p.draw(); });
         requestAnimationFrame(animate);
     }
 
-    // --- HAND GESTURE LOGIC ---
+    // --- HAND GESTURE RECOGNITION ---
     function onResults(results) {
-        if(overlay && !overlay.classList.contains('hidden')) {
+        // Hide overlay on first detection
+        if(overlay && !overlay.classList.contains('hidden') && results.multiHandLandmarks.length > 0) {
              overlay.classList.add('hidden');
         }
 
         if (results.multiHandLandmarks && results.multiHandLandmarks.length > 0) {
-            const landmarks = results.multiHandLandmarks[0];
+            const lm = results.multiHandLandmarks[0];
             
-            // Key Points
-            const wrist = landmarks[0];
-            const thumbTip = landmarks[4];
-            const indexTip = landmarks[8];
-            const middleTip = landmarks[12];
-            const ringTip = landmarks[16];
-            const pinkyTip = landmarks[20];
-            
-            // Helpers
-            const isFingerUp = (tip, base) => tip.y < base.y; // Y is inverted in canvas
-            const dist = (a, b) => Math.sqrt(Math.pow(a.x - b.x, 2) + Math.pow(a.y - b.y, 2));
+            // Finger States (Is tip higher than middle joint?)
+            // Note: Y axis is inverted (0 is top of screen)
+            const indexUp = lm[8].y < lm[6].y;
+            const middleUp = lm[12].y < lm[10].y;
+            const ringUp = lm[16].y < lm[14].y;
+            const pinkyUp = lm[20].y < lm[18].y;
+            // Thumb is tricky. Check if tip is far from base of index finger relative to hand width
+            const thumbUp = Math.abs(lm[4].x - lm[2].x) > Math.abs(lm[3].x - lm[17].x) * 0.5;
 
-            // Fingers Up Status (using PIP joint 6, 10, 14, 18 as reference)
-            const indexUp = isFingerUp(indexTip, landmarks[6]);
-            const middleUp = isFingerUp(middleTip, landmarks[10]);
-            const ringUp = isFingerUp(ringTip, landmarks[14]);
-            const pinkyUp = isFingerUp(pinkyTip, landmarks[18]);
+            let fingersUpCount = 0;
+            if (indexUp) fingersUpCount++;
+            if (middleUp) fingersUpCount++;
+            if (ringUp) fingersUpCount++;
+            if (pinkyUp) fingersUpCount++;
+            if (thumbUp) fingersUpCount++;
             
-            // --- DETECT GESTURES ---
+            // --- GESTURE MAPPING ---
             
-            // 1. OPEN HAND (Photo) -> All fingers up
-            if (indexUp && middleUp && ringUp && pinkyUp) {
+            // FIST (0 fingers) -> Heart
+            if (fingersUpCount === 0 || (fingersUpCount === 1 && thumbUp)) {
+                 currentGesture = 'heart';
+            }
+            // 1 FINGER (Index) -> Muffin
+            else if (fingersUpCount === 1 && indexUp) {
+                currentGesture = 'muffin';
+            }
+             // 2 FINGERS (Peace) -> Pumpkin
+            else if (fingersUpCount === 2 && indexUp && middleUp) {
+                currentGesture = 'pumpkin';
+            }
+            // 4 FINGERS -> Love
+            else if (fingersUpCount === 4 && !thumbUp) {
+                 currentGesture = 'love';
+            }
+            // 5 FINGERS (Open Hand) -> Photo
+            else if (fingersUpCount === 5) {
                 currentGesture = 'photo';
             }
-            
-            // 2. PEACE SIGN (You) -> Index & Middle Up, others down
-            else if (indexUp && middleUp && !ringUp && !pinkyUp) {
-                currentGesture = 'you';
-            }
-            
-            // 3. INDEX ONLY (I) -> Index Up, others down
-            else if (indexUp && !middleUp && !ringUp && !pinkyUp) {
-                // Ensure thumb isn't crossing (to distinguish from finger heart)
-                if (dist(thumbTip, indexTip) > 0.05) {
-                    currentGesture = 'i';
-                }
-            }
-            
-            // 4. FIST (Heart) -> No fingers up
-            else if (!indexUp && !middleUp && !ringUp && !pinkyUp) {
-                currentGesture = 'heart';
-            }
-            
-            // 5. FINGER HEART (Love) -> Thumb and Index close, others down
-            // Usually Index is technically "down" or crossed.
-            // Check distance between thumb tip and index tip
-            else if (dist(thumbTip, indexTip) < 0.05) { 
-                currentGesture = 'love';
-            } 
-            
+            // Transition state
             else {
-                currentGesture = 'none';
+                // Optional: Keep last gesture or reset to none. Resetting feels snappier.
+                // currentGesture = 'none'; 
             }
 
         } else {
@@ -343,10 +346,11 @@
         }
     }
 
+    // --- MEDIAPIPE SETUP ---
     const hands = new Hands({locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}`});
     hands.setOptions({
         maxNumHands: 1,
-        modelComplexity: 0,
+        modelComplexity: 0, // Lite model for speed
         minDetectionConfidence: 0.5,
         minTrackingConfidence: 0.5
     });
@@ -354,18 +358,15 @@
 
     const camera = new Camera(videoElement, {
         onFrame: async () => await hands.send({image: videoElement}),
-        width: 480, height: 360, facingMode: "user"
+        width: 640, height: 480, facingMode: "user" // Slightly higher res input for better finger counting
     });
     camera.start();
 
-    // Resize Handler
+    // Handle window resize
     window.addEventListener('resize', () => {
-        width = window.innerWidth;
-        height = window.innerHeight;
-        canvasElement.width = width;
-        canvasElement.height = height;
-        init(); // Re-calc shapes
-        generatePhotoPoints(); // Re-calc photo
+        width = window.innerWidth; height = window.innerHeight;
+        canvasElement.width = width; canvasElement.height = height;
+        init(); 
     });
 
     init();
