@@ -9,9 +9,6 @@
     <script src="https://cdn.jsdelivr.net/npm/@mediapipe/control_utils/control_utils.js" crossorigin="anonymous"></script>
     <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js" crossorigin="anonymous"></script>
 
-    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-storage-compat.js"></script>
-
     <style>
         body {
             margin: 0; padding: 0;
@@ -37,22 +34,9 @@
             font-size: 14px; white-space: nowrap;
             backdrop-filter: blur(5px);
         }
-
-        #rec_indicator {
-            position: absolute; top: 20px; right: 20px;
-            width: 20px; height: 20px;
-            background-color: red;
-            border-radius: 50%;
-            display: none; z-index: 20;
-            box-shadow: 0 0 10px red;
-            animation: blink 1s infinite;
-        }
-        @keyframes blink { 50% { opacity: 0; } }
     </style>
 </head>
 <body>
-
-    <div id="rec_indicator"></div>
     
     <div id="overlay">
         Loading... (Allow Camera Access)
@@ -63,34 +47,18 @@
     <canvas id="image_canvas"></canvas>
 
 <script>
-    // --- 1. FIREBASE CONFIGURATION (pumpkinmuffin-42e59) ---
-    const firebaseConfig = {
-        apiKey: "AIzaSyBr-t2wA_RyinYD1VH8v8egbK8j7PoD5L0",
-        authDomain: "pumpkinmuffin-42e59.firebaseapp.com",
-        projectId: "pumpkinmuffin-42e59",
-        storageBucket: "pumpkinmuffin-42e59.firebasestorage.app",
-        messagingSenderId: "263457826624",
-        appId: "1:263457826624:web:eecfb112115cf94c5dfca5"
-    };
-
-    // Initialize Firebase
-    if (!firebase.apps.length) {
-        firebase.initializeApp(firebaseConfig);
-    }
-    const storage = firebase.storage();
-
     // --- SETTINGS ---
     const IMAGE_URL = 'images/88.jpg'; 
-    const PARTICLE_COUNT = 3000; 
+    const PARTICLE_COUNT = 4000; // High quality visuals
     
     const videoElement = document.getElementById('input_video');
     const canvasElement = document.getElementById('output_canvas');
     const canvasCtx = canvasElement.getContext('2d');
     const imageCanvas = document.getElementById('image_canvas');
     const imageCtx = imageCanvas.getContext('2d');
-    const recIndicator = document.getElementById('rec_indicator');
     const overlay = document.getElementById('overlay');
 
+    // High DPI Setup
     const dpr = window.devicePixelRatio || 1;
     let width = window.innerWidth;
     let height = window.innerHeight;
@@ -102,13 +70,7 @@
     let currentGesture = 'none';
     let pointsMuffin=[], pointsPumpkin=[], pointsLove=[], pointsHeart=[], pointsPhoto=[];
     let photoGapSize = 1;
-
-    let mediaRecorder;
-    let recordedChunks = [];
-    let isRecording = false;
-    let heartHoldTimer = null;
-    let isUploading = false;
-    let appStarted = false; 
+    let appStarted = false;
 
     // --- MAIN INIT FUNCTION ---
     function init() {
@@ -124,7 +86,7 @@
         // Only generate photo points if the image actually loaded
         if(targetImage.complete && targetImage.naturalWidth > 0) generatePhotoPoints();
 
-        overlay.innerText = "Hold ✊ to Record | ☝️Muffin | ✌️Pumpkin | 🖖Love | 🖐️Photo";
+        overlay.innerText = "☝️Muffin | ✌️Pumpkin | 🖖Love | 🖐️Photo | ✊❤️";
         animate();
     }
 
@@ -138,7 +100,7 @@
         init();
     };
     
-    // SAFETY START: If image fails, start anyway
+    // Safety Fallback: Start even if image fails
     targetImage.onerror = () => {
         console.warn("Image failed to load. Starting app without photo mode.");
         init(); 
@@ -279,11 +241,14 @@
     }
 
     function animate() {
+        // Draw Camera
         canvasCtx.globalAlpha = 1.0;
         canvasCtx.drawImage(videoElement, 0, 0, width, height);
+        // Darken
         canvasCtx.fillStyle = 'rgba(0, 0, 0, 0.6)';
         canvasCtx.fillRect(0, 0, width, height);
 
+        // Draw Particles
         particles.forEach((p, index) => {
             if(p.lastGesture !== currentGesture) {
                 p.targetX = null; p.lastGesture = currentGesture;
@@ -294,49 +259,10 @@
         requestAnimationFrame(animate);
     }
 
-    // --- RECORDING ---
-    function startRecording() {
-        if (isRecording || isUploading) return;
-        isRecording = true;
-        recIndicator.style.display = 'block';
-        overlay.innerText = "Recording Magic... ✨";
-        
-        // --- 30 FPS Standard ---
-        const stream = canvasElement.captureStream(30);
-        
-        recordedChunks = [];
-        mediaRecorder = new MediaRecorder(stream, { mimeType: 'video/webm;codecs=vp9' });
-        mediaRecorder.ondataavailable = (event) => { if (event.data.size > 0) recordedChunks.push(event.data); };
-        mediaRecorder.onstop = uploadVideo;
-        mediaRecorder.start();
-        setTimeout(() => { if (mediaRecorder.state === "recording") mediaRecorder.stop(); }, 8000);
-    }
-
-    function uploadVideo() {
-        isRecording = false;
-        recIndicator.style.display = 'none';
-        overlay.innerText = "Uploading... ☁️";
-        isUploading = true;
-        const blob = new Blob(recordedChunks, { type: 'video/webm' });
-        const timestamp = new Date().getTime();
-        const filename = `magic_moment_${timestamp}.webm`;
-        const ref = storage.ref().child('magic_videos/' + filename);
-        ref.put(blob).then((snapshot) => {
-            console.log('Success!');
-            overlay.innerText = "Sent to Database! ❤️";
-            isUploading = false;
-            setTimeout(() => { overlay.innerText = "Hold ✊ to Record | ☝️Muffin | ✌️Pumpkin | 🖖Love | 🖐️Photo"; }, 3000);
-        }).catch(err => {
-            console.error(err);
-            overlay.innerText = "Check Storage Rules 😞";
-            isUploading = false;
-        });
-    }
-
+    // --- HAND TRACKING ---
     function onResults(results) {
         if (!results.multiHandLandmarks || results.multiHandLandmarks.length === 0) {
             currentGesture = 'none';
-            if (heartHoldTimer) { clearTimeout(heartHoldTimer); heartHoldTimer = null; }
             return;
         }
         const lm = results.multiHandLandmarks[0];
@@ -355,21 +281,14 @@
         if (ringUp) mainFingers++;
         if (pinkyUp) mainFingers++;
 
-        let detected = 'none';
-        if (mainFingers === 0) detected = 'heart';
-        else if (mainFingers === 1 && indexUp) detected = 'muffin';
-        else if (mainFingers === 2 && indexUp && middleUp) detected = 'pumpkin';
+        if (mainFingers === 0) currentGesture = 'heart';
+        else if (mainFingers === 1 && indexUp) currentGesture = 'muffin';
+        else if (mainFingers === 2 && indexUp && middleUp) currentGesture = 'pumpkin';
         else if (mainFingers === 4) {
-            if (thumbOut) detected = 'photo';
-            else detected = 'love';
-        }
-        currentGesture = detected;
-        if (detected === 'heart' && !isRecording && !isUploading) {
-            if (!heartHoldTimer) {
-                heartHoldTimer = setTimeout(() => { startRecording(); heartHoldTimer = null; }, 2500); 
-            }
+            if (thumbOut) currentGesture = 'photo';
+            else currentGesture = 'love';
         } else {
-            if (heartHoldTimer) { clearTimeout(heartHoldTimer); heartHoldTimer = null; }
+            currentGesture = 'none';
         }
     }
 
